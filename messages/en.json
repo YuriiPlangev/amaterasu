@@ -1,0 +1,84 @@
+{
+  "header": {
+    "catalog": "Catalog",
+    "home": "Home",
+    "delivery": "Delivery and Payment",
+    "contacts": "Contacts",
+    "news": "News"
+  },
+  "hero": {
+    "title": "See anime in a completely new way with amaterasu",
+    "description": "Here you'll find anime merchandise from any universe, and you can also order posters, stickers, and much more with your own unique design.",
+    "cta": "Go Shopping"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "subtitle": "Enter your credentials to access your account",
+      "username": "Username",
+      "usernamePlaceholder": "Enter your username",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submit": "Sign In",
+      "submitting": "Logging in...",
+      "noAccount": "Don't have an account?",
+      "register": "Register",
+      "error": "Login error",
+      "serverError": "Server error. Please try again later.",
+      "generalError": "An error occurred. Please try again later."
+    },
+    "register": {
+      "title": "Register",
+      "subtitle": "Create a new account",
+      "username": "Username",
+      "usernamePlaceholder": "Enter your username",
+      "email": "Email",
+      "emailPlaceholder": "Enter your email",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submit": "Create Account",
+      "submitting": "Registering...",
+      "success": "Success!",
+      "hasAccount": "Already have an account?",
+      "login": "Sign In",
+      "error": "Registration error",
+      "generalError": "An error occurred. Please try again later.",
+      "successMessage": "Registration successful! Redirecting to login page..."
+    }
+  },
+  "cart": {
+    "title": "Cart",
+    "empty": "Your cart is empty",
+    "goToCatalog": "Go to Catalog",
+    "clear": "Clear Cart",
+    "remove": "Remove",
+    "items": "Items:",
+    "total": "Total:",
+    "sum": "Sum:",
+    "checkout": "Checkout",
+    "back": "Back",
+    "confirm": "Confirm Order",
+    "processing": "Processing...",
+    "orderSuccess": "Order successfully placed!",
+    "orderNumber": "Order Number:",
+    "orderMessage": "We will contact you shortly to confirm your order.",
+    "returnHome": "Return to Home",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "city": "City",
+    "postcode": "Postal Code",
+    "paymentMethod": "Payment Method",
+    "cashOnDelivery": "Cash on Delivery",
+    "card": "Card Payment",
+    "notes": "Order Notes (optional)",
+    "orderError": "Error placing order. Please try again."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error"
+  }
+}
+
