@@ -1,4 +1,7 @@
 import React from 'react';
+
+export const dynamic = 'force-dynamic';
+
 import Hero from '../components/sections/Hero';
 import Image from 'next/image';
 import BestSellers from '../components/sections/BestSellers';

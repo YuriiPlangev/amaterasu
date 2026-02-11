@@ -25,7 +25,7 @@ const PopularCategories = () => {
                     <SquareSkeleton />
                   </div>
                 ))
-              : visibleCategories.map((category) => (
+              : visibleCategories.map((category: { id: number; [key: string]: unknown }) => (
                 <PopularCategory key={category.id} category={category} />
               ))}
           </div>

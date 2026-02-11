@@ -1,14 +1,9 @@
 import React from 'react';
-import { Noto_Sans } from 'next/font/google';
 import NextTopLoader from 'nextjs-toploader';
+
+export const dynamic = 'force-dynamic';
 import './globals.css';
 import Providers from '../components/Providers';
-
-const notoSans = Noto_Sans({
-  subsets: ['latin', 'cyrillic'],
-  weight: ['300', '500', '600', '700'],
-  display: 'swap',
-});
 
 export const metadata = {
   title: 'Amaterasu',
@@ -27,7 +22,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={notoSans.className}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body className="font-sans" style={{ fontFamily: "'Noto Sans', sans-serif" }}>
         <NextTopLoader color="#9C0000" height={3} showSpinner={false} />
         <Providers>{children}</Providers>
       </body>
