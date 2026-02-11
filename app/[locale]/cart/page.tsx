@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useCartStore } from '../../../store/cartStore';
 
 export default function CartPage() {
   const t = useTranslations('cart');
+  const locale = useLocale();
+  const basePath = `/${locale}`;
   const router = useRouter();
   const items = useCartStore((state) => state.items);
   const remove = useCartStore((state) => state.remove);
@@ -81,7 +83,7 @@ export default function CartPage() {
         setOrderNumber(data.orderNumber || data.orderId);
         clear();
         setTimeout(() => {
-          router.push('/');
+          router.push(basePath);
         }, 3000);
       } else {
         alert(`${t('error')}: ${data.error || t('orderError')}`);
@@ -96,8 +98,8 @@ export default function CartPage() {
 
   if (orderSuccess) {
     return (
-      <main className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-[1920px] w-full mx-auto px-10 sm:px-6 lg:px-[144px]">
+      <main className="min-h-screen bg-white py-12">
+        <div className="max-w-[1920px] w-full mx-auto site-padding-x">
           <div className="max-w-2xl mx-auto bg-white border border-[#D8D8D8] rounded-lg p-8 text-center">
             <div className="mb-6">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -116,7 +118,7 @@ export default function CartPage() {
               </p>
             </div>
             <Link
-              href="/"
+              href={basePath}
               className="inline-block bg-[#9C0000] text-white px-8 py-3 rounded-md hover:bg-white hover:text-[#9C0000] hover:border-[#9C0000] hover:border transition-all duration-300 font-bold text-lg"
             >
               {t('returnHome')}
@@ -129,13 +131,13 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <main className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-[1920px] w-full mx-auto px-10 sm:px-6 lg:px-[144px]">
+      <main className="min-h-screen bg-white py-12 mt-12">
+        <div className="max-w-[1920px] w-full mx-auto site-padding-x">
           <h1 className="text-[55px] font-bold uppercase text-black mb-8">{t('title')}</h1>
           <div className="flex flex-col items-center justify-center py-20">
             <p className="text-2xl text-gray-600 mb-6">{t('empty')}</p>
             <Link
-              href="/shop"
+              href={`${basePath}/catalog`}
               className="bg-[#9C0000] text-white px-8 py-3 rounded-md hover:bg-white hover:text-[#9C0000] hover:border-[#9C0000] hover:border transition-all duration-300 font-bold text-lg"
             >
               {t('goToCatalog')}
@@ -147,8 +149,13 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-[1920px] w-full mx-auto px-10 sm:px-6 lg:px-[144px]">
+    <main className="min-h-screen bg-white py-12 mt-14">
+      <div className="max-w-[1920px] w-full mx-auto site-padding-x">
+        <nav className="text-sm text-[#9C9C9C] mb-4">
+          <Link href={basePath} className="hover:text-black">Головна</Link>
+          <span className="mx-2">/</span>
+          <span className="text-black">{t('title')}</span>
+        </nav>
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-[55px] font-bold uppercase text-black">{t('title')}</h1>
           <button
@@ -168,7 +175,7 @@ export default function CartPage() {
               return (
                 <div
                   key={item.id}
-                  className="bg-white border border-[#D8D8D8] rounded-lg p-6 flex gap-6 items-center"
+                  className="bg-white border border-[#D8D8D8] rounded-2xl p-6 flex flex-col sm:flex-row gap-6 items-center"
                 >
                   {item.image && (
                     <Image
@@ -176,7 +183,7 @@ export default function CartPage() {
                       alt={item.name}
                       width={120}
                       height={120}
-                      className="object-contain rounded"
+                      className="object-contain rounded max-w-[140px]"
                     />
                   )}
                   
@@ -186,7 +193,7 @@ export default function CartPage() {
                       {item.price} ₴
                     </p>
                     
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-4">
                       <div className="flex items-center border border-[#D8D8D8] rounded-md">
                         <button
                           onClick={() => updateQty(item.id, item.qty - 1)}
@@ -214,7 +221,7 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-right w-full sm:w-auto">
                     <p className="text-2xl font-bold text-black">
                       {itemTotal.toFixed(2)} ₴
                     </p>
@@ -225,7 +232,7 @@ export default function CartPage() {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-white border border-[#D8D8D8] rounded-lg p-6 sticky top-4">
+            <div className="bg-white border border-[#D8D8D8] rounded-2xl p-6 sticky top-4">
               <h2 className="text-2xl font-bold text-black mb-6">{t('title')}</h2>
               
               <div className="space-y-4 mb-6">
@@ -243,6 +250,14 @@ export default function CartPage() {
                     <span className="font-bold text-[#9C0000]">{total.toFixed(2)} ₴</span>
                   </div>
                 </div>
+              </div>
+              <div className="bg-[#FFF7F7] border border-[#F5B7B7] rounded-xl p-4 text-sm text-black mb-6">
+                <p className="font-semibold mb-2">Доставка та оплата</p>
+                <ul className="space-y-1 text-[#5A5A5A]">
+                  <li>• Нова Пошта: від 45 грн</li>
+                  <li>• Укрпошта: від 45 грн</li>
+                  <li>• Оплата при отриманні</li>
+                </ul>
               </div>
 
               {!showCheckout ? (
@@ -366,6 +381,24 @@ export default function CartPage() {
             </div>
           </div>
         </div>
+
+        <section className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="border border-[#E6E6E6] rounded-2xl p-6 bg-white">
+            <h3 className="text-lg font-semibold text-black mb-2">Офіційні товари</h3>
+            <p className="text-[#6D6D6D]">Працюємо напряму з постачальниками, гарантія якості.</p>
+          </div>
+          <div className="border border-[#E6E6E6] rounded-2xl p-6 bg-white">
+            <h3 className="text-lg font-semibold text-black mb-2">Швидка доставка</h3>
+            <p className="text-[#6D6D6D]">Відправка замовлень щодня. Середній термін 1–3 дні.</p>
+          </div>
+          <div className="border border-[#E6E6E6] rounded-2xl p-6 bg-white">
+            <h3 className="text-lg font-semibold text-black mb-2">Потрібна допомога?</h3>
+            <p className="text-[#6D6D6D]">Напишіть нам у Telegram або через форму контактів.</p>
+            <Link href={`${basePath}/contacts`} className="inline-block mt-3 text-[#9C0000] font-semibold hover:text-[#7D0000]">
+              Перейти до контактів
+            </Link>
+          </div>
+        </section>
       </div>
     </main>
   );

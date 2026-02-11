@@ -1,5 +1,6 @@
 import React from 'react';
 import { Noto_Sans } from 'next/font/google';
+import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import Providers from '../components/Providers';
 
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={notoSans.className}>
+        <NextTopLoader color="#9C0000" height={3} showSpinner={false} />
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -57,35 +57,44 @@ export async function GET(req: Request) {
   }
 
   try {
-    const res = await woo.get("products", { params: wcParams });
+  // Увеличим per_page, если ищем бестселлеры, чтобы точно их найти среди товаров
+  if (params.bestseller === 'true') {
+    wcParams.per_page = 100; 
+  }
 
-    // Дополнительная фильтрация на сервере для надежности
-    let filteredProducts = res.data;
+  const res = await woo.get("products", { params: wcParams });
+console.log("FIRST PRODUCT ACF:", res.data[0]?.acf);
+  let filteredProducts = res.data;
 
-    if (wcParams.category) {
-      const categoryId = Number(wcParams.category);
-      filteredProducts = filteredProducts.filter((product: any) => {
-        // Проверяем, есть ли категория в массиве categories товара
-        return (
-          product.categories &&
-          product.categories.some((cat: any) => cat.id === categoryId)
-        );
-      });
-    }
+  // 1) Фильтр по категории (уже есть)
+  if (wcParams.category) {
+    const categoryId = Number(wcParams.category);
+    filteredProducts = filteredProducts.filter((product: any) =>
+      product.categories?.some((cat: any) => cat.id === categoryId)
+    );
+  }
 
-    if (wcParams.tag) {
-      const tagId = Number(wcParams.tag);
-      filteredProducts = filteredProducts.filter((product: any) => {
-        // Проверяем, есть ли тег в массиве tags товара
-        return product.tags && product.tags.some((tag: any) => tag.id === tagId);
-      });
-    }
+  // 2) Фильтр по тегам (уже есть)
+  if (wcParams.tag) {
+    const tagId = Number(wcParams.tag);
+    filteredProducts = filteredProducts.filter((product: any) =>
+      product.tags?.some((tag: any) => tag.id === tagId)
+    );
+  }
 
-    return new Response(JSON.stringify(filteredProducts), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (err: any) {
+  // Фильтр по бестселлерам (ACF) — возвращаем все товары с меткой is_bestseller
+  if (params.bestseller === 'true') {
+    filteredProducts = filteredProducts.filter((product: any) => product.acf?.is_bestseller === true);
+  }
+
+  return new Response(JSON.stringify(filteredProducts), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+    },
+  });
+} catch (err: any) {
     console.error("Woo API Error:", err.message);
     return new Response(
       JSON.stringify({ error: "Failed to fetch", details: err.message }),
@@ -93,4 +102,3 @@ export async function GET(req: Request) {
     );
   }
 }
-

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 type CartItem = { id: number; name: string; qty: number; price?: string; image?: string };
 
@@ -12,7 +13,9 @@ interface CartStore {
   getTotalItems: () => number;
 }
 
-export const useCartStore = create<CartStore>((set, get) => ({
+export const useCartStore = create<CartStore>()(
+  persist(
+    (set, get) => ({
   items: [],
 
   add: (product: any, qty = 1) => {
@@ -71,4 +74,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
   getTotalItems: () => {
     return get().items.reduce((total, item) => total + item.qty, 0);
   },
-}));
+}),
+    { name: 'amaterasu-cart', partialize: (state) => ({ items: state.items }) }
+  )
+);

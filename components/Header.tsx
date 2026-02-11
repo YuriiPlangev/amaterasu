@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
+import Search from './ui/Search';
 
 export default function Header() {
   const t = useTranslations('header');
@@ -12,95 +13,160 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Проверяем статус авторизации
     fetch('/api/auth/check')
       .then(res => res.json())
       .then(data => setIsAuthenticated(data.authenticated))
       .catch(() => setIsAuthenticated(false));
   }, []);
 
+  useEffect(() => {
+    if (isMobileMenuOpen) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobileMenuOpen]);
+
   const switchLocale = (newLocale: string) => {
-    // Получаем текущий путь без locale
     const pathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
-    // Создаем новый путь с новым locale
     const newPathname = `/${newLocale}${pathWithoutLocale}`;
     router.push(newPathname);
     router.refresh();
   };
 
-  // Определяем путь для профиля в зависимости от статуса авторизации (c учетом locale)
   const basePath = `/${locale}`;
+  const isHomePage = pathname === basePath || pathname === `${basePath}/` || pathname === '/';
   const profileHref = isAuthenticated ? `${basePath}/account` : `${basePath}/auth/login`;
+
+  const navLinks = [
+    { href: `${basePath}/`, label: t('home') },
+    { href: `${basePath}/catalog`, label: t('catalog') },
+    { href: `${basePath}/delivery`, label: t('delivery') },
+    { href: `${basePath}/contacts`, label: t('contacts') },
+    { href: `${basePath}/news`, label: t('news') },
+  ];
+
   return (
-    <header className='bg-black py-6 w-full'>
-      <div className='max-w-[1920px] w-full mx-auto px-10 sm:px-6 lg:px-[144px] flex items-center justify-between'>
-      <Logo />
-      <nav className=''>
-        <ul className='flex gap-[clamp(16px,2.5vw,48px)] text-[17px] font-medium'>
-          <li>
-            <Link href={`${basePath}/catalog`}>{t('catalog')}</Link>
-          </li>
-          <li>
-            <a href='#'>{t('home')}</a>
-          </li>
-          <li>
-            <a href='#'>{t('delivery')}</a>
-          </li>
-          <li>
-            <a href='#'>{t('contacts')}</a>
-          </li>
-          <li>
-            <a href='#'>{t('news')}</a>
-          </li>
-        </ul>
-      </nav>
-      <nav className=''>
-        <ul className='flex justify-between gap-[30px] items-center'>
-          <li>
-            <a href='#'>
-              <Image src='/svg/search.svg' alt='search' width={24} height={24} />
-            </a>
-          </li>
-          <li>
-            <a href='#'>
-              <Image src='/svg/favorite.svg' alt='heart' width={24} height={24} />
-            </a>
-          </li>
-          <li>
-            <a href='#'>
-              <Image src='/svg/tg.svg' alt='tg' width={24} height={24} />
-            </a>
-          </li>
-          <li>
-            <Link href={`${basePath}/cart`}>
-              <Image src='/svg/cart.svg' alt='cart' width={24} height={24} />
-            </Link>
-          </li>
-          <li>
-            <Link href={profileHref}>
-              <Image src='/svg/profile.svg' alt='profile' width={24} height={24} />
-            </Link>
-          </li>
-          <li className='flex gap-2'>
-            <button
-              onClick={() => switchLocale('uk')}
-              className={`px-2 py-1 text-sm ${locale === 'uk' ? 'text-white font-bold' : 'text-gray-400'}`}
-            >
-              UA
+    <header className='bg-[#1C1C1C] w-full relative z-50'>
+      <div className='max-w-[1920px] w-full mx-auto site-padding-x'>
+        {/* Контент хедера */}
+        <div className='flex items-center justify-between gap-4 pt-3 md:pt-[clamp(10px,1.6vw,22px)] relative'>
+          <Logo />
+          <nav className='hidden md:flex flex-1 justify-center'>
+            <ul className='flex gap-[clamp(10px,1.8vw,32px)] text-[clamp(12px,1.05vw,17px)] font-medium whitespace-nowrap'>
+              {navLinks.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="hover:text-red-500 transition-colors">{link.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          
+          <nav className='flex items-center gap-3 md:gap-[clamp(12px,1.6vw,28px)] shrink-0'>
+            <button type='button' onClick={() => setIsSearchOpen((prev) => !prev)} className='hidden md:flex items-center'>
+              <Image src='/svg/search.svg' alt='search' width={24} height={24} className='w-[clamp(18px,1.4vw,24px)] h-[clamp(18px,1.4vw,24px)]' />
             </button>
-            <span className='text-gray-400'>|</span>
-            <button
-              onClick={() => switchLocale('en')}
-              className={`px-2 py-1 text-sm ${locale === 'en' ? 'text-white font-bold' : 'text-gray-400'}`}
-            >
-              EN
+            <Link href={`${basePath}/favorites`} className='flex items-center'><Image src='/svg/heart.svg' alt='heart' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)] md:h-[clamp(18px,1.4vw,24px)]' /></Link>
+            <Link href={`${basePath}/cart`} className='flex items-center'><Image src='/svg/cart.svg' alt='cart' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)]' /></Link>
+            <Link href={profileHref} className='flex items-center'><Image src='/svg/profile.svg' alt='profile' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)]' /></Link>
+            
+            <div className='hidden md:flex gap-2'>
+              <button onClick={() => switchLocale('uk')} className={`px-2 py-1 text-[clamp(12px,1vw,14px)] ${locale === 'uk' ? 'text-white font-bold' : 'text-gray-400'}`}>UA</button>
+              <span className='text-white'>|</span>
+              <button onClick={() => switchLocale('en')} className={`px-2 py-1 text-[clamp(12px,1vw,14px)] ${locale === 'en' ? 'text-white font-bold' : 'text-gray-400'}`}>EN</button>
+            </div>
+
+            <button type='button' onClick={() => setIsMobileMenuOpen((prev) => !prev)} className='md:hidden flex items-center justify-center w-10 h-10'>
+               {isMobileMenuOpen ? (
+                <svg className='w-6 h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path d='M6 18L18 6M6 6l12 12' /></svg>
+               ) : (
+                <svg className='w-6 h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path d='M4 6h16M4 12h16M4 18h16' /></svg>
+               )}
             </button>
-          </li>
-        </ul>
-      </nav>
+          </nav>
+        </div>
+
+        {/* Mobile search */}
+        <div className='md:hidden pb-3'>
+          <Search className='w-full' />
+        </div>
       </div>
+
+      {/* ОГОНЬ (как в футере): показываем только если это НЕ главная */}
+      {!isHomePage && (
+        <div className='flex overflow-hidden w-full absolute top-[100%] left-0 leading-[0] pointer-events-none'>
+          <Image 
+            src={'/svg/flamefooter.svg'} 
+            alt='' 
+            width={100} 
+            height={100} 
+            className='w-full h-auto rotate-180 scale-x-110' 
+          />
+          <Image 
+            src={'/svg/flamefooter.svg'} 
+            alt='' 
+            width={100} 
+            height={100} 
+            className='w-full h-auto -ml-3 rotate-180 scale-x-110' 
+          />
+        </div>
+      )}
+
+      {/* Mobile Menu Overlay & Sidebar */}
+      {isMobileMenuOpen && (
+        <>
+          <div
+            className='fixed inset-0 bg-black/50 z-40 md:hidden'
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-hidden='true'
+          />
+          <div className='fixed top-0 right-0 h-full w-[280px] max-w-[85vw] bg-[#1C1C1C] z-50 flex flex-col md:hidden'>
+            <div className='flex items-center justify-between px-6 pt-6 pb-4'>
+              <span className='text-white font-medium uppercase tracking-wide'>{t('menu')}</span>
+              <button
+                type='button'
+                onClick={() => setIsMobileMenuOpen(false)}
+                className='w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0'
+                aria-label='Закрити'
+              >
+                <svg className='w-5 h-5 text-[#1C1C1C]' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' /></svg>
+              </button>
+            </div>
+            <nav className='flex flex-col flex-1 px-6'>
+              {[
+                { href: `${basePath}/`, label: t('home'),},
+                { href: `${basePath}/catalog`, label: t('catalog') },
+                { href: `${basePath}/delivery`, label: t('delivery') },
+                { href: `${basePath}/contacts`, label: t('contacts'), },
+                { href: `${basePath}/news`, label: t('news'), },
+              ].map((link) => (
+                <div key={link.href} className='first:border-t border-b border-[#BCBCBC]'>
+                  <Link
+                    href={link.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className='flex items-center justify-between py-4 text-white font-medium text-base  tracking-wide '
+                  >
+                    {link.label}
+                  </Link>
+                </div>
+              ))}
+            </nav>
+            <div className='px-6 pb-8 pt-4'>
+              <a
+                href='https://instagram.com/amaterasu1shop'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='flex items-center gap-2 text-white hover:text-[#9C0000] transition-colors'
+              >
+                <Image src='/svg/instagram.svg' alt='Instagram' width={24} height={24} className='shrink-0' />
+                <span className='text-sm'>@amaterasu1shop</span>
+              </a>
+            </div>
+          </div>
+        </>
+      )}
     </header>
   );
 }

@@ -3,6 +3,7 @@ import Hero from '../components/sections/Hero';
 import Image from 'next/image';
 import BestSellers from '../components/sections/BestSellers';
 import PopularCategories from '../components/sections/PopularCategories';
+import News from '../components/sections/News';
 
 
 export default function HomePage() {
@@ -14,6 +15,7 @@ export default function HomePage() {
         </div>
         <BestSellers />
         <PopularCategories />
+        <News />
     </main>
   );
 }

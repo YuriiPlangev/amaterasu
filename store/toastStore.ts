@@ -1,0 +1,27 @@
+import { create } from 'zustand';
+
+export type ToastType = 'cart' | 'favorite_add' | 'favorite_remove';
+
+interface ToastState {
+  visible: boolean;
+  message: string;
+  type: ToastType;
+  show: (message: string, type?: ToastType) => void;
+  hide: () => void;
+}
+
+export const useToastStore = create<ToastState>((set, get) => ({
+  visible: false,
+  message: '',
+  type: 'cart',
+
+  show: (message: string, type: ToastType = 'cart') => {
+    set({ visible: true, message, type });
+    const timer = setTimeout(() => {
+      get().hide();
+      clearTimeout(timer);
+    }, 2500);
+  },
+
+  hide: () => set({ visible: false }),
+}));

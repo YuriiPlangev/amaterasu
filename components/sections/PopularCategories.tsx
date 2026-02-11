@@ -1,42 +1,35 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
+import PopularCategory from '../ui/PopularCategory'
+import { SquareSkeleton } from '../ui/Skeletons'
+import { useCategories } from '../../hooks/useCategories'
 
 const PopularCategories = () => {
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        // Замените YOUR_DOMAIN на ваш WordPress домен
-        const response = await fetch(
-          'https://YOUR_DOMAIN/wp-json/wp/v2/categories?parent=39&per_page=100'
-        )
-        const data = await response.json()
-        setCategories(data)
-      } catch (error) {
-        console.error('Error fetching categories:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchCategories()
-  }, [])
-
-  if (loading) return <div>Завантаження...</div>
+  const { data: categories = [], isLoading: loading } = useCategories()
+  const visibleCategories = categories.slice(0, 6)
+  const showPlaceholders = loading || visibleCategories.length === 0;
 
   return (
-    <section className='max-w-[1920px] w-full mx-auto px-10 sm:px-6 lg:px-[144px]'>
-      <h2 className='text-[55px] font-bold uppercase text-black py-14'>Популярні категорії</h2>
-      
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
-        {categories.map((category) => (
-          <div key={category.id} className='p-4 border rounded hover:shadow-lg transition'>
-            <h3 className='font-semibold text-lg'>{category.name}</h3>
+    <section className='w-full bg-white'>
+      <div className='max-w-[1920px] mx-auto site-padding-x'>
+        <h2 className='text-[clamp(22px,2.2vw,55px)] font-bold uppercase text-black py-6 md:py-[clamp(20px,2.2vw,56px)]'>Популярні категорії</h2>
+      </div>
+
+      <div className='w-full'>
+        <div className='max-w-[1920px] mx-auto site-padding-x'>
+          <div className='grid grid-cols-2 sm:grid-cols-3 grid-rows-2 gap-4 md:gap-6 lg:grid-cols-6 lg:grid-rows-1 pb-6'>
+            {showPlaceholders
+              ? [1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className={i <= 2 ? '' : i <= 4 ? 'hidden sm:block' : 'hidden lg:block'}>
+                    <SquareSkeleton />
+                  </div>
+                ))
+              : visibleCategories.map((category) => (
+                <PopularCategory key={category.id} category={category} />
+              ))}
           </div>
-        ))}
+        </div>
       </div>
     </section>
   )

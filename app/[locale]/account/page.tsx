@@ -9,8 +9,10 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   const token = cookieStore.get('token')?.value;
   const payload = token ? verifyToken(token) : null;
 
+  const resolvedParams = await Promise.resolve(params);
+  const locale = resolvedParams.locale || 'uk';
+
   if (!payload || typeof payload !== 'object') {
-    const resolvedParams = await Promise.resolve(params);
     redirect(`/${resolvedParams.locale}/auth/login`);
   }
 
@@ -19,17 +21,16 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   const userRoles = Array.isArray(payload.roles) ? payload.roles : [];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-8">
+    <div className="min-h-screen bg-white py-10 site-padding-x">
+      <div className="max-w-5xl mx-auto">
+        <div className="bg-white border border-[#E6E6E6] shadow-[0px_12px_28px_0px_#0000001A] rounded-2xl overflow-hidden">
+          <div className="px-6 py-7 bg-[#9C0000]">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Мій профіль</h1>
-                <p className="text-purple-100">Ласкаво просимо, {userLogin}!</p>
+                <h1 className="text-3xl font-bold text-white mb-1">Мій профіль</h1>
+                <p className="text-white/80">Ласкаво просимо, {userLogin}!</p>
               </div>
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-2xl font-bold text-purple-600">
+              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-xl font-bold text-[#9C0000]">
                 {userLogin.charAt(0).toUpperCase()}
               </div>
             </div>
@@ -38,31 +39,28 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
           {/* Content */}
           <div className="px-6 py-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              {/* User Info Card */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
+              <div className="bg-white border border-[#E6E6E6] rounded-2xl p-6">
+                <h2 className="text-lg font-semibold text-black mb-4 flex items-center">
+                  <span className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-[#FFF2F2] text-[#9C0000] mr-3">👤</span>
                   Інформація про користувача
                 </h2>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500">Ім'я користувача</p>
-                    <p className="text-lg font-medium text-gray-900">{userLogin}</p>
+                    <p className="text-sm text-[#9C9C9C]">Ім'я користувача</p>
+                    <p className="text-lg font-semibold text-black">{userLogin}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">ID користувача</p>
-                    <p className="text-lg font-medium text-gray-900">#{userId}</p>
+                    <p className="text-sm text-[#9C9C9C]">ID користувача</p>
+                    <p className="text-lg font-semibold text-black">#{userId}</p>
                   </div>
                   {userRoles.length > 0 && (
                     <div>
-                      <p className="text-sm text-gray-500">Ролі</p>
-                      <div className="flex flex-wrap gap-2 mt-1">
+                      <p className="text-sm text-[#9C9C9C]">Ролі</p>
+                      <div className="flex flex-wrap gap-2 mt-2">
                         {userRoles.map((role, index) => (
                           <span
                             key={index}
-                            className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium"
+                            className="px-3 py-1 bg-[#FFF2F2] text-[#9C0000] rounded-full text-sm font-semibold"
                           >
                             {role}
                           </span>
@@ -73,24 +71,21 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
                 </div>
               </div>
 
-              {/* Quick Actions Card */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+              <div className="bg-white border border-[#E6E6E6] rounded-2xl p-6">
+                <h2 className="text-lg font-semibold text-black mb-4 flex items-center">
+                  <span className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-[#FFF2F2] text-[#9C0000] mr-3">⚡</span>
                   Швидкі дії
                 </h2>
                 <div className="space-y-3">
                   <Link
-                    href="/cart"
-                    className="block w-full px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors text-center font-medium text-gray-700"
+                    href={`/${locale}/cart`}
+                    className="block w-full px-4 py-3 bg-white border border-[#D8D8D8] rounded-lg hover:border-[#9C0000] hover:bg-[#FFF7F7] transition-colors text-center font-semibold text-black"
                   >
                     Переглянути кошик
                   </Link>
                   <Link
-                    href="/shop"
-                    className="block w-full px-4 py-3 bg-white border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors text-center font-medium text-gray-700"
+                    href={`/${locale}/catalog`}
+                    className="block w-full px-4 py-3 bg-white border border-[#D8D8D8] rounded-lg hover:border-[#9C0000] hover:bg-[#FFF7F7] transition-colors text-center font-semibold text-black"
                   >
                     Перейти до магазину
                   </Link>
@@ -98,8 +93,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
               </div>
             </div>
 
-            {/* Logout Button */}
-            <div className="border-t border-gray-200 pt-6">
+            <div className="border-t border-[#E6E6E6] pt-6">
               <LogoutButton />
             </div>
           </div>

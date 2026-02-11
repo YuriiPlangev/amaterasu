@@ -10,13 +10,13 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "http",
-        hostname: "amaterasu.local",
+        hostname: "3373259.gk610197.web.hosting-test.net",
         port: "",
         pathname: "/wp-content/uploads/**",
       },
       {
         protocol: "https",
-        hostname: "amaterasu.local",
+        hostname: "3373259.gk610197.web.hosting-test.net",
         pathname: "/**",
       }
     ]

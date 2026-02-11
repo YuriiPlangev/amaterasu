@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Боковые отступы: 390px→16px, 1600px+→134px, линейная интерполяция между */
+  --site-gutter: clamp(16px, calc(16px + (100vw - 390px) * 0.0975), 134px);
+}
+
+.site-container {
+  max-width: 1920px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--site-gutter);
+  padding-right: var(--site-gutter);
+}
+
+/* Утилита для боковых отступов по всему сайту */
+.site-padding-x {
+  padding-left: var(--site-gutter);
+  padding-right: var(--site-gutter);
+}
+
 html,
 body {
   padding: 0;
@@ -23,4 +43,103 @@ a {
 }
 * {
   box-sizing: border-box;
+}
+/* Скрытие скроллбара */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Best Sellers swiper pagination (mobile) */
+.best-sellers-swiper .swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #1C1C1C;
+  background: transparent;
+  opacity: 1;
+}
+.best-sellers-swiper .swiper-pagination-bullet-active {
+  background: #1C1C1C;
+  border-color: #1C1C1C;
+}
+
+/* Hero: маска flamemask только на фоновое изображение (низ с огнём), не на текст */
+/* Общие стили маски (работают везде) */
+.flame-boundary {
+  -webkit-mask-image: linear-gradient(to bottom, black, black), url('/images/flamemask.png');
+  mask-image: linear-gradient(to bottom, black, black), url('/images/flamemask.png');
+  -webkit-mask-position: top center, bottom center;
+  mask-position: top center, bottom center;
+  -webkit-mask-repeat: no-repeat, repeat-x;
+  mask-repeat: no-repeat, repeat-x;
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+
+  /* Адаптивная высота огня: 
+     Минимум 52px (мобилки), 
+     Максимум 233px (дизайн),
+     Растет плавно в зависимости от ширины экрана (12vw)
+  */
+  --flame-height: clamp(52px, 12vw, 233px);
+  
+  -webkit-mask-size: 100% calc(100% - var(--flame-height) + 1px), 100% var(--flame-height);
+  mask-size: 100% calc(100% - var(--flame-height) + 1px), 100% var(--flame-height);
+}
+
+
+
+
+/* Специфические правки для мобильных устройств */
+@media (max-width: 767px) {
+  .flame-boundary {
+    /* Огонь на мобилках можно сделать чуть менее прозрачным или подправить позицию, если нужно */
+    --flame-height: 52px;
+  }
+}
+
+/* На больших экранах гарантируем, что отступ текста соответствует росту огня */
+@media (min-width: 1600px) {
+  .flame-boundary {
+    --flame-height: 233px;
+  }
+}
+.header-flame-mask {
+  -webkit-mask-image: linear-gradient(to bottom, black, black), url('/images/flamemask.png');
+  mask-image: linear-gradient(to bottom, black, black), url('/images/flamemask.png');
+  -webkit-mask-position: top center, bottom center;
+  mask-position: top center, bottom center;
+  -webkit-mask-repeat: no-repeat, repeat-x;
+  mask-repeat: no-repeat, repeat-x;
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+
+  /* УВЕЛИЧЕННАЯ ВЫСОТА: 
+     Было: clamp(30px, 4vw, 60px)
+     Стало: clamp(50px, 7vw, 100px) 
+  */
+  --header-flame-height: clamp(50px, 7vw, 100px);
+
+  -webkit-mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 100% var(--header-flame-height);
+  mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 100% var(--header-flame-height);
+
+  /* Отступ автоматически подстроится под новую высоту огня */
+  padding-bottom: var(--header-flame-height);
+}
+
+
+/* News swiper pagination */
+.news-swiper .swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #1C1C1C;
+  background: transparent;
+  opacity: 1;
+}
+.news-swiper .swiper-pagination-bullet-active {
+  background: #1C1C1C;
+  border-color: #1C1C1C;
 }

@@ -1,10 +1,13 @@
 {
   "header": {
+    "menu": "Menu",
     "catalog": "Catalog",
+    "account": "Profile",
     "home": "Home",
     "delivery": "Delivery and Payment",
     "contacts": "Contacts",
-    "news": "News"
+    "news": "News",
+    "favorites": "Favorites"
   },
   "hero": {
     "title": "See anime in a completely new way with amaterasu",
@@ -75,6 +78,18 @@
     "card": "Card Payment",
     "notes": "Order Notes (optional)",
     "orderError": "Error placing order. Please try again."
+  },
+  "favorites": {
+    "title": "Favorites",
+    "empty": "You have no favorite items yet",
+    "goToCatalog": "Go to Catalog",
+    "added": "Added to favorites",
+    "removed": "Removed from favorites"
+  },
+  "toast": {
+    "addedToCart": "Product added to cart",
+    "addedToFavorites": "Added to favorites",
+    "removedFromFavorites": "Removed from favorites"
   },
   "common": {
     "loading": "Loading...",
