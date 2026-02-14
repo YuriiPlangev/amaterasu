@@ -19,9 +19,9 @@ export default function Footer() {
               <Image src='/svg/tg.svg' alt='Telegram' width={24} height={24} className='shrink-0' />
               <p className='text-[#BCBCBC] text-sm md:text-base'>@amaterasu1shop</p>
             </a>
-            <a href="https://instagram.com/amaterasu1shop" target="_blank" rel="noopener noreferrer" className='flex gap-2 items-center'>
+            <a href="https://instagram.com/@amaterasu_anime_shop" target="_blank" rel="noopener noreferrer" className='flex gap-2 items-center'>
               <Image src='/svg/instagram.svg' alt='Instagram' width={24} height={24} className='shrink-0' />
-              <p className='text-[#BCBCBC] text-sm md:text-base'>@amaterasu1shop</p>
+              <p className='text-[#BCBCBC] text-sm md:text-base'>@amaterasu_anime_shop</p>
             </a>
           </div>
         </div>

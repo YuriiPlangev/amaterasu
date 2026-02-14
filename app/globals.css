@@ -70,8 +70,8 @@ a {
 /* Hero: маска flamemask только на фоновое изображение (низ с огнём), не на текст */
 /* Общие стили маски (работают везде) */
 .flame-boundary {
-  -webkit-mask-image: linear-gradient(to bottom, black, black), url('/images/flamemask.png');
-  mask-image: linear-gradient(to bottom, black, black), url('/images/flamemask.png');
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, black), url('/images/flamemask.png');
+  mask-image: linear-gradient(to bottom, black 60%, black), url('/images/flamemask.png');
   -webkit-mask-position: top center, bottom center;
   mask-position: top center, bottom center;
   -webkit-mask-repeat: no-repeat, repeat-x;
@@ -79,32 +79,19 @@ a {
   -webkit-mask-composite: source-over;
   mask-composite: add;
 
-  /* Адаптивная высота огня: 
-     Минимум 52px (мобилки), 
-     Максимум 233px (дизайн),
-     Растет плавно в зависимости от ширины экрана (12vw)
+  /* Чуть уменьшил максимальную высоту огня (с 233px до 180px), 
+     так как на широких экранах 233px слишком сильно "съедают" место.
   */
-  --flame-height: clamp(52px, 12vw, 233px);
+  --flame-height: clamp(50px, 8vw, 180px);
   
   -webkit-mask-size: 100% calc(100% - var(--flame-height) + 1px), 100% var(--flame-height);
   mask-size: 100% calc(100% - var(--flame-height) + 1px), 100% var(--flame-height);
 }
 
-
-
-
-/* Специфические правки для мобильных устройств */
-@media (max-width: 767px) {
+/* Медиа-запрос для очень широких экранов, чтобы огонь не становился гигантским */
+@media (min-width: 1920px) {
   .flame-boundary {
-    /* Огонь на мобилках можно сделать чуть менее прозрачным или подправить позицию, если нужно */
-    --flame-height: 52px;
-  }
-}
-
-/* На больших экранах гарантируем, что отступ текста соответствует росту огня */
-@media (min-width: 1600px) {
-  .flame-boundary {
-    --flame-height: 233px;
+     --flame-height: 180px; /* Фиксируем на максимуме */
   }
 }
 .header-flame-mask {

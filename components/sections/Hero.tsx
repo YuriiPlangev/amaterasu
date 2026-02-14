@@ -8,27 +8,17 @@ const Hero = () => {
   const locale = useLocale();
   
   return (
-    // На мобилке flex-col, на десктопе — block, чтобы absolute элементы работали корректно
-    <section className="flame-boundary  bg-[#1C1C1C] w-full relative min-h-screen md:min-h-[600px] md:h-[75vh] md:max-h-[850px] overflow-hidden flex flex-col md:block">
+    <section className="flame-boundary bg-[#1C1C1C] w-full relative min-h-screen md:min-h-[600px] md:h-[75vh] md:max-h-[850px] overflow-hidden flex flex-col md:block">
       
-      {/* ДЕКСТОП: Картинка (только 768px+) */}
-      <div className="hidden md:block absolute right-0 bottom-0 w-[50%] min-[952px]:w-[70%] h-full z-0">
-        <img 
-          src="/images/itachi.png" 
-          alt="Itachi Uchiha" 
-          className="w-full h-full object-contain object-right-bottom select-none pointer-events-none" 
-        />
-        <div className="absolute inset-0" />
-      </div>
-
-      {/* КОНТЕНТ */}
+      {/* КОНТЕНТ (Ограничитель ширины 1920px) */}
       <div className="relative z-10 max-w-[1920px] w-full mx-auto site-padding-x flex flex-col flex-1 md:h-full">
-        {/* На десктопе используем grid, на мобилке — обычный поток */}
-        <div className="md:grid md:grid-cols-2 md:h-full">
+        
+        {/* СЕТКА */}
+        <div className="md:grid md:grid-cols-2 md:h-full relative">
           
-          {/* ТЕКСТОВАЯ ЧАСТЬ */}
-          <div className="md:pt-[100px] z-20">
-            <div className="max-w-[550px] w-full mx-auto md:mx-0">
+          {/* 1. ТЕКСТОВАЯ ЧАСТЬ */}
+          <div className=" z-20 flex flex-col justify-center h-full">
+            <div className="w-full mx-auto md:mx-0">
               <h1 className="text-[clamp(28px,3vw,65px)] font-bold pb-4 uppercase text-white leading-[1.1] drop-shadow-2xl">
                 {t('title')}
               </h1>
@@ -43,18 +33,31 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* МОБИЛЬНЫЙ ИТАЧИ: Прижимается к низу только на < 768px */}
-          <div className="md:hidden mt-auto -mx-[var(--site-gutter)] w-[calc(100%+2*var(--site-gutter))] leading-[0] z-0">
-            <img 
-              src="/images/itachi.png" 
-              alt="Itachi Uchiha" 
-              className="w-full h-auto object-contain object-bottom select-none pointer-events-none" 
-            />
+          {/* 2. ДЕСКТОП КАРТИНКА (Правая колонка) */}
+          <div className="hidden md:block relative w-full h-full z-10">
+             <img 
+               src="/images/itachi.png" 
+               alt="Itachi Uchiha" 
+               /* h-full — строго на всю высоту родителя.
+                  w-auto — ширина подстроится под высоту без искажений.
+                  max-w-none — отменяет стандартное ограничение по ширине колонки.
+                  left-1/2 -translate-x-1/2 — идеальная центровка внутри ПРАВОЙ колонки.
+               */
+               className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-none object-contain object-bottom select-none pointer-events-none" 
+             />
           </div>
 
-          {/* Пустой блок для сетки десктопа */}
-          <div className="hidden md:block " />
         </div>
+        
+        {/* МОБИЛЬНЫЙ ИТАЧИ */}
+        <div className="md:hidden mt-auto -mx-[var(--site-gutter)] w-[calc(100%+2*var(--site-gutter))] leading-[0] z-0">
+          <img 
+            src="/images/itachi.png" 
+            alt="Itachi Uchiha" 
+            className="w-full h-auto object-contain object-bottom select-none pointer-events-none" 
+          />
+        </div>
+
       </div>
     </section>
   )
