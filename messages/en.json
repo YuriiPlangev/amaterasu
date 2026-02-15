@@ -77,7 +77,16 @@
     "cashOnDelivery": "Cash on Delivery",
     "card": "Card Payment",
     "notes": "Order Notes (optional)",
-    "orderError": "Error placing order. Please try again."
+    "orderError": "Error placing order. Please try again.",
+    "deliveryMethod": "Delivery method",
+    "novaPoshta": "Nova Poshta",
+    "ukrposhta": "Ukrposhta",
+    "selectCity": "Select city",
+    "searchCity": "Search city...",
+    "selectWarehouse": "Select branch",
+    "branchNumber": "Branch number / postal index",
+    "branchNumberPlaceholder": "e.g. branch #1 or 01001",
+    "error": "Error"
   },
   "favorites": {
     "title": "Favorites",

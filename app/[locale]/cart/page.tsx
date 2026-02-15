@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -34,16 +34,157 @@ export default function CartPage() {
     paymentMethod: 'cash_on_delivery',
     notes: '',
     shippingSameAsBilling: true,
+    deliveryMethod: 'nova_poshta' as 'nova_poshta' | 'ukrposhta',
+    novaPoshtaCityRef: '',
+    novaPoshtaCityName: '',
+    novaPoshtaWarehouseRef: '',
+    novaPoshtaWarehouseDesc: '',
+    ukrposhtaCity: '',
+    ukrposhtaBranch: '',
   });
+
+  const [npCities, setNpCities] = useState<{ ref: string; name: string; area?: string }[]>([]);
+  const [npWarehouses, setNpWarehouses] = useState<{ ref: string; description: string; number: string }[]>([]);
+  const [ukrposhtaCities, setUkrposhtaCities] = useState<string[]>([]);
+  const [npCitySearch, setNpCitySearch] = useState('');
+  const [ukrposhtaCitySearch, setUkrposhtaCitySearch] = useState('');
+  const [npCityDropdownOpen, setNpCityDropdownOpen] = useState(false);
+  const [npWarehouseDropdownOpen, setNpWarehouseDropdownOpen] = useState(false);
+  const [ukrposhtaCityDropdownOpen, setUkrposhtaCityDropdownOpen] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [loadingWarehouses, setLoadingWarehouses] = useState(false);
+  const citySearchRef = useRef<NodeJS.Timeout | null>(null);
+  const npDropdownRef = useRef<HTMLDivElement>(null);
+  const npWarehouseRef = useRef<HTMLDivElement>(null);
+  const ukrposhtaDropdownRef = useRef<HTMLDivElement>(null);
+
+  const fetchNpCities = useCallback(async (search: string) => {
+    setLoadingCities(true);
+    try {
+      const res = await fetch('/api/delivery/nova-poshta/cities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ search: search || undefined }),
+      });
+      const data = await res.json();
+      if (data.success) setNpCities(data.data);
+      else setNpCities([]);
+    } catch {
+      setNpCities([]);
+    } finally {
+      setLoadingCities(false);
+    }
+  }, []);
+
+  const fetchNpWarehouses = useCallback(async (cityRef: string) => {
+    if (!cityRef) return;
+    setLoadingWarehouses(true);
+    try {
+      const res = await fetch('/api/delivery/nova-poshta/warehouses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cityRef }),
+      });
+      const data = await res.json();
+      if (data.success) setNpWarehouses(data.data);
+      else setNpWarehouses([]);
+    } catch {
+      setNpWarehouses([]);
+    } finally {
+      setLoadingWarehouses(false);
+    }
+  }, []);
+
+  const fetchUkrposhtaCities = useCallback(async (search: string) => {
+    try {
+      const q = search ? `?search=${encodeURIComponent(search)}` : '';
+      const res = await fetch(`/api/delivery/ukrposhta/cities${q}`);
+      const data = await res.json();
+      if (data.success) setUkrposhtaCities(data.data);
+      else setUkrposhtaCities([]);
+    } catch {
+      setUkrposhtaCities([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (formData.deliveryMethod === 'nova_poshta') {
+      if (citySearchRef.current) clearTimeout(citySearchRef.current);
+      citySearchRef.current = setTimeout(() => {
+        fetchNpCities(npCitySearch);
+      }, 300);
+    }
+  }, [npCitySearch, formData.deliveryMethod, fetchNpCities]);
+
+  useEffect(() => {
+    if (formData.deliveryMethod === 'nova_poshta' && formData.novaPoshtaCityRef) {
+      fetchNpWarehouses(formData.novaPoshtaCityRef);
+    } else {
+      setNpWarehouses([]);
+    }
+  }, [formData.deliveryMethod, formData.novaPoshtaCityRef, fetchNpWarehouses]);
+
+  useEffect(() => {
+    if (formData.deliveryMethod === 'ukrposhta') {
+      fetchUkrposhtaCities(ukrposhtaCitySearch);
+    }
+  }, [formData.deliveryMethod, ukrposhtaCitySearch, fetchUkrposhtaCities]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const clickedOutsideNp = !npDropdownRef.current?.contains(target);
+      const clickedOutsideNpWarehouse = !npWarehouseRef.current?.contains(target);
+      const clickedOutsideUkrposhta = !ukrposhtaDropdownRef.current?.contains(target);
+      if (clickedOutsideNp) setNpCityDropdownOpen(false);
+      if (clickedOutsideNpWarehouse) setNpWarehouseDropdownOpen(false);
+      if (clickedOutsideUkrposhta) setUkrposhtaCityDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const getAddressFromDelivery = () => {
+    if (formData.deliveryMethod === 'nova_poshta') {
+      return formData.novaPoshtaWarehouseDesc || '';
+    }
+    if (formData.deliveryMethod === 'ukrposhta') {
+      return formData.ukrposhtaBranch
+        ? `Відділення: ${formData.ukrposhtaBranch}, ${formData.ukrposhtaCity}`
+        : '';
+    }
+    return formData.address;
+  };
+
+  const getCityFromDelivery = () => {
+    if (formData.deliveryMethod === 'nova_poshta') return formData.novaPoshtaCityName;
+    if (formData.deliveryMethod === 'ukrposhta') return formData.ukrposhtaCity;
+    return formData.city;
+  };
+
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.deliveryMethod === 'nova_poshta') {
+      if (!formData.novaPoshtaCityRef || !formData.novaPoshtaWarehouseRef) {
+        alert('Оберіть місто та відділення Нової Пошти');
+        return;
+      }
+    }
+    if (formData.deliveryMethod === 'ukrposhta') {
+      if (!formData.ukrposhtaCity || !formData.ukrposhtaBranch) {
+        alert('Оберіть місто та вкажіть номер відділення Укрпошти');
+        return;
+      }
+    }
     setIsSubmitting(true);
+
+    const address = getAddressFromDelivery();
+    const city = getCityFromDelivery();
 
     try {
       const response = await fetch('/api/orders', {
@@ -58,18 +199,23 @@ export default function CartPage() {
             lastName: formData.lastName,
             email: formData.email,
             phone: formData.phone,
-            address: formData.address,
-            city: formData.city,
-            postcode: formData.postcode,
+            address,
+            city,
+            postcode: formData.postcode || '',
             country: formData.country,
             notes: formData.notes,
+            deliveryMethod: formData.deliveryMethod,
+            novaPoshtaCity: formData.novaPoshtaCityName,
+            novaPoshtaWarehouse: formData.novaPoshtaWarehouseDesc,
+            ukrposhtaCity: formData.ukrposhtaCity,
+            ukrposhtaBranch: formData.ukrposhtaBranch,
           },
           shipping: formData.shippingSameAsBilling ? undefined : {
             firstName: formData.firstName,
             lastName: formData.lastName,
-            address: formData.address,
-            city: formData.city,
-            postcode: formData.postcode,
+            address,
+            city,
+            postcode: formData.postcode || '',
             country: formData.country,
           },
           paymentMethod: formData.paymentMethod,
@@ -252,7 +398,7 @@ export default function CartPage() {
                 </div>
               </div>
               <div className="bg-[#FFF7F7] border border-[#F5B7B7] rounded-xl p-4 text-sm text-black mb-6">
-                <p className="font-semibold mb-2">Доставка та оплата</p>
+                <p className="font-semibold mb-2 text-black">Доставка та оплата</p>
                 <ul className="space-y-1 text-[#5A5A5A]">
                   <li>• Нова Пошта: від 45 грн</li>
                   <li>• Укрпошта: від 45 грн</li>
@@ -309,37 +455,191 @@ export default function CartPage() {
                     required
                     className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
                   />
-                  
-                  <input
-                    type="text"
-                    name="address"
-                    placeholder={`${t('address')} *`}
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
-                  />
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      name="city"
-                      placeholder={`${t('city')} *`}
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      required
-                      className="px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
-                    />
-                    <input
-                      type="text"
-                      name="postcode"
-                      placeholder={`${t('postcode')} *`}
-                      value={formData.postcode}
-                      onChange={handleInputChange}
-                      required
-                      className="px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
-                    />
+
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">{t('deliveryMethod')}</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="deliveryMethod"
+                          value="nova_poshta"
+                          checked={formData.deliveryMethod === 'nova_poshta'}
+                          onChange={() => setFormData((p) => ({ ...p, deliveryMethod: 'nova_poshta' }))}
+                          className="w-4 h-4 text-[#9C0000] border-gray-300 focus:ring-[#9C0000]"
+                        />
+                        <span>{t('novaPoshta')}</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="deliveryMethod"
+                          value="ukrposhta"
+                          checked={formData.deliveryMethod === 'ukrposhta'}
+                          onChange={() => setFormData((p) => ({ ...p, deliveryMethod: 'ukrposhta' }))}
+                          className="w-4 h-4 text-[#9C0000] border-gray-300 focus:ring-[#9C0000]"
+                        />
+                        <span>{t('ukrposhta')}</span>
+                      </label>
+                    </div>
                   </div>
+
+                  {formData.deliveryMethod === 'nova_poshta' && (
+                    <div className="space-y-4" ref={npDropdownRef}>
+                      <div className="relative">
+                        <label className="block text-sm font-medium text-black mb-1">{t('selectCity')}</label>
+                        <input
+                          type="text"
+                          value={formData.novaPoshtaCityRef ? formData.novaPoshtaCityName : npCitySearch}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setNpCitySearch(v);
+                            if (formData.novaPoshtaCityRef && v !== formData.novaPoshtaCityName) {
+                              setFormData((p) => ({
+                                ...p,
+                                novaPoshtaCityRef: '',
+                                novaPoshtaCityName: '',
+                                novaPoshtaWarehouseRef: '',
+                                novaPoshtaWarehouseDesc: '',
+                              }));
+                            }
+                            setNpCityDropdownOpen(true);
+                          }}
+                          onFocus={() => setNpCityDropdownOpen(true)}
+                          placeholder={t('searchCity')}
+                          className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
+                        />
+                        {npCityDropdownOpen && (
+                          <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-auto bg-white border border-[#D8D8D8] rounded-md shadow-lg z-50">
+                            {loadingCities ? (
+                              <div className="px-4 py-3 text-gray-500">{t('processing')}</div>
+                            ) : npCities.length === 0 ? (
+                              <div className="px-4 py-3 text-gray-500">
+                                {npCitySearch.length >= 2 ? 'Нічого не знайдено' : 'Введіть мінімум 2 символи'}
+                              </div>
+                            ) : (
+                              npCities.map((c) => (
+                                <button
+                                  key={c.ref}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData((p) => ({
+                                      ...p,
+                                      novaPoshtaCityRef: c.ref,
+                                      novaPoshtaCityName: c.name,
+                                      novaPoshtaWarehouseRef: '',
+                                      novaPoshtaWarehouseDesc: '',
+                                    }));
+                                    setNpCitySearch('');
+                                    setNpCityDropdownOpen(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 hover:bg-[#FFF7F7]"
+                                >
+                                  {c.name}
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {formData.novaPoshtaCityRef && (
+                        <div className="relative" ref={npWarehouseRef}>
+                          <label className="block text-sm font-medium text-black mb-1">{t('selectWarehouse')}</label>
+                          <input
+                            type="text"
+                            value={formData.novaPoshtaWarehouseDesc}
+                            readOnly
+                            onFocus={() => setNpWarehouseDropdownOpen(true)}
+                            placeholder={loadingWarehouses ? 'Завантаження...' : t('selectWarehouse')}
+                            className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000] bg-white cursor-pointer"
+                          />
+                          {npWarehouseDropdownOpen && (
+                            <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-auto bg-white border border-[#D8D8D8] rounded-md shadow-lg z-50">
+                              {loadingWarehouses ? (
+                                <div className="px-4 py-3 text-gray-500">Завантаження...</div>
+                              ) : (
+                                npWarehouses.map((w) => (
+                                  <button
+                                    key={w.ref}
+                                    type="button"
+                                    onClick={() => {
+                                      setFormData((p) => ({
+                                        ...p,
+                                        novaPoshtaWarehouseRef: w.ref,
+                                        novaPoshtaWarehouseDesc: w.description,
+                                      }));
+                                      setNpWarehouseDropdownOpen(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2 hover:bg-[#FFF7F7] text-sm"
+                                  >
+                                    {w.description}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {formData.deliveryMethod === 'ukrposhta' && (
+                    <div className="space-y-4" ref={ukrposhtaDropdownRef}>
+                      <div className="relative">
+                        <label className="block text-sm font-medium text-black mb-1">{t('selectCity')}</label>
+                        <input
+                          type="text"
+                          value={formData.ukrposhtaCity ? formData.ukrposhtaCity : ukrposhtaCitySearch}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setUkrposhtaCitySearch(v);
+                            if (formData.ukrposhtaCity && v !== formData.ukrposhtaCity) {
+                              setFormData((p) => ({ ...p, ukrposhtaCity: '' }));
+                            }
+                            setUkrposhtaCityDropdownOpen(true);
+                          }}
+                          onFocus={() => setUkrposhtaCityDropdownOpen(true)}
+                          placeholder={t('searchCity')}
+                          className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
+                        />
+                        {ukrposhtaCityDropdownOpen && (
+                          <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-auto bg-white border border-[#D8D8D8] rounded-md shadow-lg z-50">
+                            {ukrposhtaCities.length === 0 ? (
+                              <div className="px-4 py-3 text-gray-500">
+                                {ukrposhtaCitySearch.length >= 2 ? 'Нічого не знайдено' : 'Введіть мінімум 2 символи'}
+                              </div>
+                            ) : (
+                              ukrposhtaCities.map((c) => (
+                                <button
+                                  key={c}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData((p) => ({ ...p, ukrposhtaCity: c }));
+                                    setUkrposhtaCitySearch('');
+                                    setUkrposhtaCityDropdownOpen(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 hover:bg-[#FFF7F7]"
+                                >
+                                  {c}
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-black mb-1">{t('branchNumber')}</label>
+                        <input
+                          type="text"
+                          name="ukrposhtaBranch"
+                          value={formData.ukrposhtaBranch}
+                          onChange={handleInputChange}
+                          placeholder={t('branchNumberPlaceholder')}
+                          className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
+                        />
+                      </div>
+                    </div>
+                  )}
                   
                   <select
                     name="paymentMethod"
