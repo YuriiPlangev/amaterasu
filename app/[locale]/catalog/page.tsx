@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useProducts } from '../../../hooks/useProducts';
 import ProductCard from '../../../components/ProductCard';
 import CatalogSearch from '../../../components/ui/CatalogSearch';
 import Image from 'next/image';
 import CatalogFilters, { initialFilterState, type CatalogFilterState } from '../../../components/sections/CatalogFilters';
 import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 
 const FunnelIcon = () => (
@@ -33,11 +35,22 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 ];
 
 export default function CatalogPage() {
+  const searchParams = useSearchParams();
   const [filterState, setFilterState] = useState<CatalogFilterState>(initialFilterState);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchApplied, setSearchApplied] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date');
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [categoryNames, setCategoryNames] = useState<Record<number, string>>({});
+  const logoSliderPrevRef = useRef<HTMLButtonElement>(null);
+  const logoSliderNextRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const q = searchParams.get('search') ?? '';
+    setSearchInput(q);
+    setSearchApplied(q);
+  }, [searchParams]);
 
   useEffect(() => {
     fetch('/api/catalog/filters')
@@ -58,18 +71,28 @@ export default function CatalogPage() {
     filterState.categoryIds.length > 0 ||
     filterState.titles.length > 0 ||
     filterState.characters.length > 0 ||
-    filterState.genres.length > 0;
+    filterState.genres.length > 0 ||
+    searchApplied.trim().length > 0;
 
   const activeFilterTags: { key: string; label: string }[] = [
+    ...(searchApplied.trim() ? [{ key: 'search', label: `Пошук: ${searchApplied.trim()}` }] : []),
     ...filterState.categoryIds.map((id) => ({ key: `cat-${id}`, label: categoryNames[id] || `Категорія #${id}` })),
     ...filterState.titles.map((t) => ({ key: `title-${t}`, label: t })),
     ...filterState.characters.map((c) => ({ key: `char-${c}`, label: c })),
     ...filterState.genres.map((g) => ({ key: `genre-${g}`, label: g })),
   ];
 
-  const clearFilters = () => setFilterState(initialFilterState);
+  const clearFilters = () => {
+    setFilterState(initialFilterState);
+    setSearchInput('');
+    setSearchApplied('');
+  };
 
   const removeFilterTag = (key: string) => {
+    if (key === 'search') {
+      setSearchApplied('');
+      return;
+    }
     if (key.startsWith('cat-')) {
       const id = Number(key.replace('cat-', ''));
       setFilterState((s) => ({ ...s, categoryIds: s.categoryIds.filter((x) => x !== id) }));
@@ -108,6 +131,9 @@ export default function CatalogPage() {
     per_page: '24',
     sort: sortBy,
   };
+  if (searchApplied.trim()) {
+    productParams.search = searchApplied.trim();
+  }
   if (filterState.categoryIds.length > 0) {
     productParams.categories = filterState.categoryIds.join(',');
   }
@@ -157,17 +183,48 @@ export default function CatalogPage() {
         </div>
       ) : (
         <>
-      {/* Top: small horizontal avatars / categories (visual placeholder) */}
-      <div className="mb-6 flex flex-col gap-6">
-        <div className='flex items-center p-1 border border-[#9C0000] rounded-[25px] w-fit'>
-          <div className='rounded-[20px] bg-[#9C0000] px-12 py-2.5 w-fit'>
-            <p>Тайтли</p>
+      {/* Top: Тайтли + кнопки скролу справа зверху, потім слайдер */}
+      <div className="mb-6 flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center p-1 border border-[#9C0000] rounded-[25px] w-fit">
+            <div className="rounded-[20px] bg-[#9C0000] px-12 py-2.5 w-fit">
+              <p>Тайтли</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              ref={logoSliderPrevRef}
+              type="button"
+              className="w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
+              aria-label="Прокрутити вліво"
+            >
+              <Image src="/svg/arrow-left.svg" alt="" width={24} height={24} />
+            </button>
+            <button
+              ref={logoSliderNextRef}
+              type="button"
+              className="w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
+              aria-label="Прокрутити вправо"
+            >
+              <Image src="/svg/arrow-right.svg" alt="" width={24} height={24} />
+            </button>
           </div>
         </div>
-        <div className="flex-1 min-w-0 overflow-hidden ml-4">
+        <div className="relative overflow-visible min-w-0">
           <Swiper
             spaceBetween={24}
             slidesPerView="auto"
+            navigation={{
+              nextEl: logoSliderNextRef.current,
+              prevEl: logoSliderPrevRef.current,
+            }}
+            onBeforeInit={(swiper) => {
+              if (typeof swiper.params.navigation !== 'boolean' && swiper.params.navigation) {
+                (swiper.params.navigation as any).prevEl = logoSliderPrevRef.current;
+                (swiper.params.navigation as any).nextEl = logoSliderNextRef.current;
+              }
+            }}
+            modules={[Navigation]}
             className="logo-slider"
             breakpoints={{
               0: { slidesPerView: 2, spaceBetween: 16 },
@@ -210,9 +267,14 @@ export default function CatalogPage() {
         {/* Content */}
         <section>
           <header className="mb-6 flex flex-col md:flex-row gap-3 md:gap-4 w-full">
-            {/* Search */}
+            {/* Search: пошук тільки після натискання «Шукати» */}
             <div className="w-full">
-              <CatalogSearch placeholder="Введіть запит..." />
+              <CatalogSearch
+                placeholder="Введіть запит..."
+                value={searchInput}
+                onSearch={setSearchInput}
+                onSearchSubmit={() => setSearchApplied(searchInput.trim())}
+              />
             </div>
 
             {/* Mobile: Filters + Sort row */}

@@ -4,6 +4,16 @@ function normalizeAttrKey(val: string): string {
   return String(val || "").toLowerCase().replace(/^pa_/, "").trim();
 }
 
+/** Проверяет, есть ли подстрока в названии или описании товара (без учёта регистра, HTML убран) */
+function productMatchesSearch(product: any, searchTerm: string): boolean {
+  const term = searchTerm.toLowerCase().trim();
+  if (!term) return true;
+  const name = String(product.name || "").toLowerCase();
+  const shortDesc = String(product.short_description || "").replace(/<[^>]*>/g, " ").toLowerCase();
+  const longDesc = String(product.description || "").replace(/<[^>]*>/g, " ").toLowerCase();
+  return name.includes(term) || shortDesc.includes(term) || longDesc.includes(term);
+}
+
 /** Проверяет, подходит ли товар по атрибуту (title, character, genre) */
 function productMatchesAttribute(
   product: any,
@@ -36,6 +46,9 @@ export async function GET(req: Request) {
 
   const wcParams: any = { per_page: params.per_page ? Number(params.per_page) : 50 };
   if (params.page) wcParams.page = Number(params.page);
+  if (params.search && String(params.search).trim()) {
+    wcParams.search = String(params.search).trim();
+  }
 
   // Фильтр по одной категории — передаём в WC
   const categoryIds = params.categories
@@ -96,7 +109,8 @@ export async function GET(req: Request) {
     params.attribute_character ||
     params.attribute_genre ||
     params.price_min ||
-    params.price_max;
+    params.price_max ||
+    (params.search && String(params.search).trim());
   if (hasComplexFilters) {
     wcParams.per_page = 500;
     wcParams.page = 1;
@@ -105,6 +119,14 @@ export async function GET(req: Request) {
   try {
     const res = await woo.get("products", { params: wcParams });
     let filteredProducts = res.data || [];
+
+    // Поиск по названию и описанию (гарантированная фильтрация на нашей стороне)
+    const searchTerm = params.search ? String(params.search).trim() : "";
+    if (searchTerm) {
+      filteredProducts = filteredProducts.filter((p: any) =>
+        productMatchesSearch(p, searchTerm)
+      );
+    }
 
     // Категории: несколько ID — фильтруем вручную
     if (categoryIds.length > 0) {

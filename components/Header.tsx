@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
-import Search from './ui/Search';
+import HeaderSearch from './HeaderSearch';
 
 export default function Header() {
   const t = useTranslations('header');
@@ -65,9 +65,20 @@ export default function Header() {
           </nav>
           
           <nav className='flex items-center gap-3 md:gap-[clamp(12px,1.6vw,28px)] shrink-0'>
-            <button type='button' onClick={() => setIsSearchOpen((prev) => !prev)} className='hidden md:flex items-center'>
-              <Image src='/svg/search.svg' alt='search' width={24} height={24} className='w-[clamp(18px,1.4vw,24px)] h-[clamp(18px,1.4vw,24px)]' />
-            </button>
+            <div className='flex items-center gap-2'>
+              {isSearchOpen ? (
+                <HeaderSearch
+                  isOpen={true}
+                  onClose={() => setIsSearchOpen(false)}
+                  placeholder='Пошук (мін. 3 символи)...'
+                  className='hidden md:block'
+                />
+              ) : (
+                <button type='button' onClick={() => setIsSearchOpen(true)} className='flex items-center' aria-label='Пошук'>
+                  <Image src='/svg/search.svg' alt='search' width={24} height={24} className='w-[clamp(18px,1.4vw,24px)] h-[clamp(18px,1.4vw,24px)]' />
+                </button>
+              )}
+            </div>
             <Link href={`${basePath}/favorites`} className='flex items-center'><Image src='/svg/heart.svg' alt='heart' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)] md:h-[clamp(18px,1.4vw,24px)]' /></Link>
             <Link href={`${basePath}/cart`} className='flex items-center'><Image src='/svg/cart.svg' alt='cart' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)]' /></Link>
             <Link href={profileHref} className='flex items-center'><Image src='/svg/profile.svg' alt='profile' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)]' /></Link>
@@ -88,10 +99,17 @@ export default function Header() {
           </nav>
         </div>
 
-        {/* Mobile search */}
-        <div className='md:hidden pb-3'>
-          <Search className='w-full' />
-        </div>
+        {/* Mobile: search panel when open */}
+        {isSearchOpen && (
+          <div className='md:hidden pb-3'>
+            <HeaderSearch
+              isOpen={true}
+              onClose={() => setIsSearchOpen(false)}
+              placeholder='Пошук (мін. 3 символи)...'
+              className='w-full'
+            />
+          </div>
+        )}
       </div>
 
       {/* ОГОНЬ (как в футере): показываем только если это НЕ главная */}
