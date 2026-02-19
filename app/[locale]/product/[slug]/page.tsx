@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { woo } from '../../../../lib/woo';
 import RelatedProducts from '../../../../components/RelatedProducts';
 import ProductGallery from '../../../../components/ProductGallery';
+import ProductActions from '../../../../components/ProductActions';
 
 // Отключаем кэширование для динамических страниц
 export const dynamic = 'force-dynamic';
@@ -86,7 +87,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
     return (
       <main className="max-w-[1920px] w-full mx-auto site-padding-x py-6 md:py-8 pt-20 md:pt-24 mt-12">
-        <nav className="text-sm text-[#9C9C9C] mb-4 md:mb-6">
+        <nav className="text-sm text-[#9C9C9C] mb-4 md:mb-6 flex items-center">
           <Link href={`/${locale}`} className="hover:text-[#1C1C1C]">Головна</Link>
           <span className="mx-1.5">›</span>
           {productTag && (
@@ -98,7 +99,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <span className="text-[#1C1C1C] truncate max-w-[200px] sm:max-w-none inline-block">{product?.name}</span>
         </nav>
 
-        <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-6 lg:gap-8 items-start">
+        <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-6 lg:gap-8 items-stretch">
           <ProductGallery
             product={product}
             name={product?.name}
@@ -121,15 +122,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               </span>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button className="flex-1 bg-[#9C0000] text-white font-bold py-4 px-6 rounded-xl hover:bg-[#7D0000] transition flex items-center justify-center gap-2 text-sm uppercase">
-                <Image src="/svg/shopping-bag.svg" alt="" width={20} height={20} className="brightness-0 invert" />
-                Купити
-              </button>
-              <button className="flex-1 border-2 border-[#9C0000] text-[#9C0000] font-bold py-4 px-6 rounded-xl hover:bg-[#9C0000] hover:text-white transition text-sm uppercase">
-                В кошик
-              </button>
-            </div>
+            <ProductActions product={product} />
 
             <div className="border border-[#E6E6E6] rounded-xl p-4 md:p-5">
               <h2 className="text-base font-bold text-[#1C1C1C] mb-3">Характеристики</h2>
@@ -153,10 +146,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <div className="border border-[#E6E6E6] rounded-xl p-4 md:p-5">
               <h2 className="text-base font-bold text-[#1C1C1C] mb-4">Доставка</h2>
               <div className="space-y-4">
-                <div className="flex items-start justify-between gap-4 pb-4 border-b border-dashed border-[#E5E7EB]">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <span className="w-10 h-10 rounded-lg bg-[#9C0000]/10 flex items-center justify-center shrink-0 text-[#9C0000]">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+                <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#BCBCBC33]">
+                  <div className="flex items-start items-center gap-3 min-w-0">
+                    <span className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-[#9C0000]">
+                      <Image src="/svg/novapost.svg" alt="Nova Poshta" width={36} height={36} />
                     </span>
                     <div>
                       <p className="font-semibold text-[#1C1C1C]">Нова Пошта</p>
@@ -165,10 +158,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   </div>
                   <span className="text-[#9C0000] font-semibold shrink-0">45–70 грн.</span>
                 </div>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <span className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0 text-amber-600">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                <div className="flex items-center items-start justify-between gap-4">
+                  <div className="flex items-start items-center gap-3 min-w-0">
+                    <span className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-amber-600">
+                      <Image src="/svg/ukrpost.svg" alt="Ukrpost" width={36} height={36} />
                     </span>
                     <div>
                       <p className="font-semibold text-[#1C1C1C]">Укрпошта</p>
@@ -182,7 +175,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </aside>
         </section>
 
-        <section className="mt-12 md:mt-16">
+        <section className="mt-12 md:mt-16 space-y-12 md:space-y-16">
           {(firstTagId || firstCategoryId) && (
             <div>
               <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold mb-6 text-[#1C1C1C]">Схожі товари</h2>
@@ -197,7 +190,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           )}
           {firstCategoryId && (
             <div>
-              <h2 className="text-2xl font-bold mb-4 text-black">Схожі товари по категоріям</h2>
+              <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold mb-6 text-[#1C1C1C]">Схожі товари по категоріям</h2>
               <RelatedProducts
                 tagId={firstTagId}
                 categoryId={firstCategoryId}

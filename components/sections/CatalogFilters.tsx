@@ -1,57 +1,59 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
-import Image from 'next/image'
+import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 
-const SECTIONS = ['Ціна', 'Тип товару', 'Товари на замовлення', 'Тайтли', 'Персонаж', 'Жанр']
-
-const sampleData: Record<string, Array<{ label: string; count: number }>> = {
-  'Тип товару': [
-    { label: 'Манга', count: 1078 },
-    { label: 'Фігурки', count: 980 },
-    { label: 'Брелки', count: 467 },
-    { label: 'Стікери', count: 1003 },
-  ],
-  'Товари на замовлення': [
-    { label: 'Значки', count: 15 },
-    { label: 'Брелоки', count: 10 },
-    { label: 'Чашки', count: 8 },
-    { label: 'Друк', count: 4 },
-  ],
-  'Тайтли': [
-    { label: 'Клинок рассекающий демонов', count: 1078 },
-    { label: 'Ван Пис', count: 980 },
-    { label: 'Наруто', count: 467 },
-    { label: 'Берсерк', count: 1003 },
-  ],
-  'Персонаж': [
-    { label: 'Сатору Годзю', count: 1078 },
-    { label: 'Наруто', count: 980 },
-    { label: 'Ітачі', count: 467 },
-    { label: 'Монкі де Луфі', count: 1003 },
-  ],
-  'Жанр': [
-    { label: 'Хентай', count: 1078 },
-    { label: 'Сеннэн', count: 980 },
-    { label: 'Романтика', count: 467 },
-    { label: 'Спорт', count: 1003 },
-  ],
+export interface CatalogFilterState {
+  priceFrom: string;
+  priceTo: string;
+  categoryIds: number[];
+  titles: string[];
+  characters: string[];
+  genres: string[];
 }
 
-const FilterSection: React.FC<{ title: string }> = ({ title }) => {
-  const [open, setOpen] = useState(true)
-  const [from, setFrom] = useState<string>('')
-  const [to, setTo] = useState<string>('')
-  const [query, setQuery] = useState<string>('')
+const initialFilterState: CatalogFilterState = {
+  priceFrom: '',
+  priceTo: '',
+  categoryIds: [],
+  titles: [],
+  characters: [],
+  genres: [],
+};
 
-  const items = sampleData[title] || []
+interface FilterOptions {
+  categories: Array<{ id: number; name: string; slug: string }>;
+  customProductionCategories: Array<{ id: number; name: string; slug: string }>;
+  titles: string[];
+  characters: string[];
+  genres: string[];
+}
+
+interface FilterSectionProps {
+  title: string;
+  items: Array<{ id?: number; label: string }>;
+  selected: (string | number)[];
+  onToggle: (value: string | number) => void;
+  isLoading?: boolean;
+}
+
+const FilterSection: React.FC<FilterSectionProps> = ({
+  title,
+  items,
+  selected,
+  onToggle,
+  isLoading,
+}) => {
+  const [open, setOpen] = useState(true);
+  const [query, setQuery] = useState('');
   const filtered = query
-    ? items.filter((i) => i.label.toLowerCase().includes(query.toLowerCase()))
-    : items
+    ? items.filter((i) =>
+        i.label.toLowerCase().includes(query.toLowerCase())
+      )
+    : items;
 
   return (
     <div className="rounded-2xl border border-[#E5E5E5] bg-white overflow-hidden">
-
       <button
         type="button"
         onClick={() => setOpen((s) => !s)}
@@ -67,89 +69,231 @@ const FilterSection: React.FC<{ title: string }> = ({ title }) => {
           className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
-
       {open && (
         <div className="px-4 pb-4">
-          {/* Price filter UI matching the screenshot: two compact inputs with currency symbol, no buttons */}
-          {title === 'Ціна' ? (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <label className="flex flex-col">
-                  <span className="sr-only">Ціна від</span>
-                  <div className="relative rounded-lg border border-[#E5E5E5] bg-white">
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      value={from}
-                      onChange={(e) => setFrom(e.target.value)}
-                      placeholder="От"
-                      className="w-full bg-transparent outline-none text-sm text-[#111827] placeholder-gray-300 px-3 py-2 pr-8"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#111827]">₴</span>
-                  </div>
-                </label>
-
-                <label className="flex flex-col">
-                  <span className="sr-only">Ціна до</span>
-                  <div className="relative rounded-lg border border-[#E5E5E5] bg-white">
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      value={to}
-                      onChange={(e) => setTo(e.target.value)}
-                      placeholder="До"
-                      className="w-full bg-transparent outline-none text-sm text-[#111827] placeholder-gray-300 px-3 py-2 pr-8"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#111827]">₴</span>
-                  </div>
-                </label>
-              </div>
+          <div className="space-y-2">
+            <div className="pt-1">
+              <input
+                type="search"
+                placeholder="Пошук..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full rounded-md border border-[#E5E5E5] px-3 py-2 text-sm outline-none"
+              />
             </div>
-          ) : (
-            // Other sections: search + checklist
-            <div className="space-y-2">
-              <div className="pt-1">
-                <input
-                  type="search"
-                  placeholder="Пошук..."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="w-full rounded-md border border-[#E5E5E5] px-3 py-2 text-sm outline-none"
-                />
-              </div>
-
-              <div className="mt-2 max-h-40 overflow-y-auto pr-2">
-                {filtered.map((item) => (
-                  <label key={item.label} className="flex items-center justify-between py-2 cursor-pointer">
-                    <div className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" className="peer sr-only" />
-                      <span className="w-4 h-4 rounded border border-[#D6D6D6] bg-white block peer-checked:bg-[#9C0000] peer-checked:border-[#9C0000]" />
+            <div className="mt-2 max-h-40 overflow-y-auto pr-2">
+              {isLoading ? (
+                <div className="text-sm text-gray-400 py-2">Завантаження...</div>
+              ) : (
+                filtered.map((item) => {
+                  const value = item.id ?? item.label;
+                  const checked = selected.includes(value);
+                  return (
+                    <label
+                      key={item.id ?? item.label}
+                      className="flex items-center gap-3 py-2 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => onToggle(value)}
+                        className="sr-only peer"
+                      />
+                      <span
+                        className={`w-4 h-4 rounded border shrink-0 flex items-center justify-center ${
+                          checked
+                            ? 'bg-[#9C0000] border-[#9C0000]'
+                            : 'border-[#D6D6D6] bg-white'
+                        }`}
+                      >
+                        {checked && (
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                            <path
+                              d="M1 4L4 7L9 1"
+                              stroke="white"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </span>
                       <span className="text-sm text-[#111827]">{item.label}</span>
-                    </div>
-                    <span className="text-xs text-gray-400">{item.count}</span>
-                  </label>
-                ))}
-
-                {filtered.length === 0 && <div className="text-sm text-gray-400 py-2">Нічого не знайдено</div>}
-              </div>
+                    </label>
+                  );
+                })
+              )}
+              {!isLoading && filtered.length === 0 && (
+                <div className="text-sm text-gray-400 py-2">Нічого не знайдено</div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>
-  )
+  );
+};
+
+interface CatalogFiltersProps {
+  variant?: 'sidebar' | 'drawer';
+  value: CatalogFilterState;
+  onChange: (state: CatalogFilterState) => void;
 }
 
-const CatalogFilters: React.FC<{ variant?: 'sidebar' | 'drawer' }> = ({ variant = 'sidebar' }) => {
+const CatalogFilters: React.FC<CatalogFiltersProps> = ({
+  variant = 'sidebar',
+  value,
+  onChange,
+}) => {
+  const [data, setData] = useState<FilterOptions | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    fetch('/api/catalog/filters')
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled) setData(d);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const update = (patch: Partial<CatalogFilterState>) => {
+    onChange({ ...value, ...patch });
+  };
+
+  const toggleCategory = (id: number) => {
+    const next = value.categoryIds.includes(id)
+      ? value.categoryIds.filter((x) => x !== id)
+      : [...value.categoryIds, id];
+    update({ categoryIds: next });
+  };
+
+  const toggleTitle = (v: string) => {
+    const next = value.titles.includes(v)
+      ? value.titles.filter((x) => x !== v)
+      : [...value.titles, v];
+    update({ titles: next });
+  };
+
+  const toggleCharacter = (v: string) => {
+    const next = value.characters.includes(v)
+      ? value.characters.filter((x) => x !== v)
+      : [...value.characters, v];
+    update({ characters: next });
+  };
+
+  const toggleGenre = (v: string) => {
+    const next = value.genres.includes(v)
+      ? value.genres.filter((x) => x !== v)
+      : [...value.genres, v];
+    update({ genres: next });
+  };
+
+  const categories = (data?.categories ?? []).map((c) => ({ id: c.id, label: c.name }));
+  const customProductionCategories = (data?.customProductionCategories ?? []).map((c) => ({ id: c.id, label: c.name }));
+  const titles = (data?.titles ?? []).map((v) => ({ label: v }));
+  const characters = (data?.characters ?? []).map((v) => ({ label: v }));
+  const genres = (data?.genres ?? []).map((v) => ({ label: v }));
+
   return (
-    <div className={`space-y-4 ${variant === 'drawer' ? '[&>div]:border-dashed [&>div]:bg-[#F9FAFB] [&>div]:border-[#93C5FD]' : ''}`}>
-      {SECTIONS.map((s) => (
-        <FilterSection key={s} title={s} />
-      ))}
-    </div>
-  )
-}
+    <div
+      className={`space-y-4 ${
+        variant === 'drawer'
+          ? '[&>div]:border-dashed [&>div]:bg-[#F9FAFB] [&>div]:border-[#93C5FD]'
+          : ''
+      }`}
+    >
+      {/* Ціна */}
+      <div className="rounded-2xl border border-[#E5E5E5] bg-white overflow-hidden">
+        <div className="px-4 py-3">
+          <span className="font-semibold text-sm">Ціна</span>
+        </div>
+        <div className="px-4 pb-4">
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col">
+              <span className="sr-only">Ціна від</span>
+              <div className="relative rounded-lg border border-[#E5E5E5] bg-white">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={value.priceFrom}
+                  onChange={(e) => update({ priceFrom: e.target.value })}
+                  placeholder="Від"
+                  className="w-full bg-transparent outline-none text-sm text-[#111827] placeholder-gray-300 px-3 py-2 pr-8"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#111827]">₴</span>
+              </div>
+            </label>
+            <label className="flex flex-col">
+              <span className="sr-only">Ціна до</span>
+              <div className="relative rounded-lg border border-[#E5E5E5] bg-white">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={value.priceTo}
+                  onChange={(e) => update({ priceTo: e.target.value })}
+                  placeholder="До"
+                  className="w-full bg-transparent outline-none text-sm text-[#111827] placeholder-gray-300 px-3 py-2 pr-8"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#111827]">₴</span>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
 
-export default CatalogFilters
+      {/* Тип товару = categories */}
+      <FilterSection
+        title="Тип товару"
+        items={categories}
+        selected={value.categoryIds}
+        onToggle={(v) => toggleCategory(Number(v))}
+        isLoading={isLoading}
+      />
+
+      {/* Товари на замовлення = список категорий с ACF is_custom_production */}
+      {customProductionCategories.length > 0 && (
+        <FilterSection
+          title="Товари на замовлення"
+          items={customProductionCategories}
+          selected={value.categoryIds}
+          onToggle={(v) => toggleCategory(Number(v))}
+          isLoading={isLoading}
+        />
+      )}
+
+      {/* Тайтли, Персонаж, Жанр */}
+      <FilterSection
+        title="Тайтли"
+        items={titles}
+        selected={value.titles}
+        onToggle={(v) => toggleTitle(String(v))}
+        isLoading={isLoading}
+      />
+      <FilterSection
+        title="Персонаж"
+        items={characters}
+        selected={value.characters}
+        onToggle={(v) => toggleCharacter(String(v))}
+        isLoading={isLoading}
+      />
+      <FilterSection
+        title="Жанр"
+        items={genres}
+        selected={value.genres}
+        onToggle={(v) => toggleGenre(String(v))}
+        isLoading={isLoading}
+      />
+    </div>
+  );
+};
+
+export default CatalogFilters;
+export { initialFilterState };

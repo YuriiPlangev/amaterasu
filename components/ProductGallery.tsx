@@ -29,7 +29,7 @@ export default function ProductGallery({ product, name, tag, images, fallbackSrc
   const active = gallery[activeIndex]?.src || fallbackSrc;
 
   return (
-    <div className="relative border-2 border-[#D8D8D8] rounded-2xl bg-white p-4 md:p-6 flex flex-col min-h-0">
+    <div className="relative border-2 border-[#D8D8D8] rounded-2xl bg-white p-4 md:p-6 flex flex-col h-full min-h-0">
       {tag && (
         <span className="absolute top-4 left-4 bg-[#9C0000] text-white font-semibold rounded-[6px] px-3 py-1 text-sm z-10">
           {tag}
@@ -50,13 +50,13 @@ export default function ProductGallery({ product, name, tag, images, fallbackSrc
         </button>
       )}
 
-      <div className="flex-1 flex items-center justify-center min-h-[280px] md:min-h-[400px]">
+      <div className="flex-1 flex items-center justify-center min-h-0">
         <Image
           src={active}
           alt={name}
           width={620}
           height={620}
-          className="w-full max-w-[520px] h-auto max-h-[50vh] md:max-h-[calc(100vh-280px)] object-contain"
+          className="w-auto max-w-full h-full max-h-full object-contain"
         />
       </div>
 

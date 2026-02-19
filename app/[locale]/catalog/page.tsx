@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useProducts } from '../../../hooks/useProducts';
 import ProductCard from '../../../components/ProductCard';
 import CatalogSearch from '../../../components/ui/CatalogSearch';
 import Image from 'next/image';
-import CatalogFilters from '../../../components/sections/CatalogFilters';
+import CatalogFilters, { initialFilterState, type CatalogFilterState } from '../../../components/sections/CatalogFilters';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 
@@ -24,44 +24,100 @@ const TrashIcon = () => (
   </svg>
 );
 
+export type SortOption = 'date' | 'price_asc' | 'price_desc';
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'date', label: 'по актуальності' },
+  { value: 'price_asc', label: 'ціна: від дешевих' },
+  { value: 'price_desc', label: 'ціна: від дорогих' },
+];
+
 export default function CatalogPage() {
-  const [categorySlug, setCategorySlug] = useState<string>('');
-  const [tagSlug, setTagSlug] = useState<string>('');
+  const [filterState, setFilterState] = useState<CatalogFilterState>(initialFilterState);
+  const [sortBy, setSortBy] = useState<SortOption>('date');
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [categoryNames, setCategoryNames] = useState<Record<number, string>>({});
 
+  useEffect(() => {
+    fetch('/api/catalog/filters')
+      .then((r) => r.json())
+      .then((d) => {
+        const map: Record<number, string> = {};
+        for (const c of d?.categories ?? []) {
+          if (c?.id != null) map[c.id] = c.name || '';
+        }
+        setCategoryNames(map);
+      })
+      .catch(() => {});
+  }, []);
 
-  const hasActiveFilters = Boolean(categorySlug || tagSlug);
-  const activeFilterTags = [
-    categorySlug && { slug: categorySlug, label: categorySlug },
-    tagSlug && { slug: tagSlug, label: tagSlug },
-  ].filter(Boolean) as { slug: string; label: string }[];
+  const hasActiveFilters =
+    filterState.priceFrom !== '' ||
+    filterState.priceTo !== '' ||
+    filterState.categoryIds.length > 0 ||
+    filterState.titles.length > 0 ||
+    filterState.characters.length > 0 ||
+    filterState.genres.length > 0;
 
-  const clearFilters = () => {
-    setCategorySlug('');
-    setTagSlug('');
-  };
-
-  const removeFilterTag = (slug: string) => {
-    if (categorySlug === slug) setCategorySlug('');
-    if (tagSlug === slug) setTagSlug('');
-  };
-
-  const logoSlides = [
-    { src: '/images/naruto.png', alt: 'Naruto' },
-    { src: '/images/onepiece.png', alt: 'One Piece' },
-    { src: '/images/bleach.png', alt: 'Bleach' },
-    { src: '/images/attack.png', alt: 'Attack on Titan' },
-    { src: '/images/berserk.png', alt: 'Berserk' },
-    { src: '/images/demonSlayer.png', alt: 'Demon Slayer' },
-    { src: '/images/jujutsu.png', alt: 'Jujutsu Kaisen' },
+  const activeFilterTags: { key: string; label: string }[] = [
+    ...filterState.categoryIds.map((id) => ({ key: `cat-${id}`, label: categoryNames[id] || `Категорія #${id}` })),
+    ...filterState.titles.map((t) => ({ key: `title-${t}`, label: t })),
+    ...filterState.characters.map((c) => ({ key: `char-${c}`, label: c })),
+    ...filterState.genres.map((g) => ({ key: `genre-${g}`, label: g })),
   ];
 
-  const { data: products, isLoading, error } = useProducts({
-    category_slug: categorySlug || undefined,
-    tag_slug: tagSlug || undefined,
-    per_page: 24,
-  });
+  const clearFilters = () => setFilterState(initialFilterState);
+
+  const removeFilterTag = (key: string) => {
+    if (key.startsWith('cat-')) {
+      const id = Number(key.replace('cat-', ''));
+      setFilterState((s) => ({ ...s, categoryIds: s.categoryIds.filter((x) => x !== id) }));
+    } else if (key.startsWith('title-')) {
+      const v = key.replace('title-', '');
+      setFilterState((s) => ({ ...s, titles: s.titles.filter((x) => x !== v) }));
+    } else if (key.startsWith('char-')) {
+      const v = key.replace('char-', '');
+      setFilterState((s) => ({ ...s, characters: s.characters.filter((x) => x !== v) }));
+    } else if (key.startsWith('genre-')) {
+      const v = key.replace('genre-', '');
+      setFilterState((s) => ({ ...s, genres: s.genres.filter((x) => x !== v) }));
+    }
+  };
+
+  // titleFilter — значение из фильтра «Тайтли» (должно совпадать с атрибутом в WooCommerce)
+  const logoSlides: { src: string; alt: string; titleFilter: string }[] = [
+    { src: '/images/naruto.png', alt: 'Naruto', titleFilter: 'Наруто' },
+    { src: '/images/onepiece.png', alt: 'One Piece', titleFilter: 'Ван Пис' },
+    { src: '/images/bleach.png', alt: 'Bleach', titleFilter: 'Бліч' },
+    { src: '/images/attack.png', alt: 'Attack on Titan', titleFilter: 'Атака титанів' },
+    { src: '/images/berserk.png', alt: 'Berserk', titleFilter: 'Берсерк' },
+    { src: '/images/demonSlayer.png', alt: 'Demon Slayer', titleFilter: 'Клинок, що знищує демонів' },
+    { src: '/images/jujutsu.png', alt: 'Jujutsu Kaisen', titleFilter: 'Магічна битва' },
+  ];
+
+  const setTitleFilter = (titleValue: string) => {
+    setFilterState((s) => {
+      const has = s.titles.includes(titleValue);
+      if (has) return { ...s, titles: s.titles.filter((t) => t !== titleValue) };
+      return { ...s, titles: [...s.titles, titleValue] };
+    });
+  };
+
+  const productParams: Record<string, string | undefined> = {
+    per_page: '24',
+    sort: sortBy,
+  };
+  if (filterState.categoryIds.length > 0) {
+    productParams.categories = filterState.categoryIds.join(',');
+  }
+  if (filterState.priceFrom) productParams.price_min = filterState.priceFrom;
+  if (filterState.priceTo) productParams.price_max = filterState.priceTo;
+  if (filterState.titles.length) productParams.attribute_title = filterState.titles.join(',');
+  if (filterState.characters.length) productParams.attribute_character = filterState.characters.join(',');
+  if (filterState.genres.length) productParams.attribute_genre = filterState.genres.join(',');
+
+  const { data: products, isLoading, error } = useProducts(productParams);
 
   return (
     <main className="max-w-[1920px] w-full mx-auto site-padding-x py-10 mt-20">
@@ -92,7 +148,11 @@ export default function CatalogPage() {
             </button>
           </div>
           <div className="flex-1 overflow-y-auto px-4 py-4">
-            <CatalogFilters variant="drawer" />
+            <CatalogFilters
+              variant="drawer"
+              value={filterState}
+              onChange={setFilterState}
+            />
           </div>
         </div>
       ) : (
@@ -117,9 +177,18 @@ export default function CatalogPage() {
           >
             {logoSlides.map((logo, i) => (
               <SwiperSlide key={i} className="!w-auto">
-                <div className="h-14 sm:h-16 md:h-20 w-[140px] sm:w-[160px] md:w-[200px] relative shrink-0">
-                  <Image src={logo.src} alt={logo.alt} fill className="object-contain object-center" />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setTitleFilter(logo.titleFilter)}
+                  className={`h-14 sm:h-16 md:h-20 w-[140px] sm:w-[160px] md:w-[200px] relative shrink-0 block transition-opacity hover:opacity-90 ${
+                    filterState.titles.includes(logo.titleFilter)
+                      ? 'ring-2 ring-[#9C0000] rounded-lg'
+                      : ''
+                  }`}
+                  aria-label={`Фільтр: ${logo.alt}`}
+                >
+                  <Image src={logo.src} alt={logo.alt} fill className="object-contain object-center pointer-events-none" />
+                </button>
               </SwiperSlide>
             ))}
           </Swiper>
@@ -132,7 +201,10 @@ export default function CatalogPage() {
       <div className="grid grid-cols-1 md:grid-cols-[clamp(260px,24vw,420px)_minmax(0,1fr)] gap-8">
         {/* Sidebar: desktop only */}
         <aside className="hidden md:block">
-          <CatalogFilters />
+          <CatalogFilters
+            value={filterState}
+            onChange={setFilterState}
+          />
         </aside>
 
         {/* Content */}
@@ -156,14 +228,15 @@ export default function CatalogPage() {
               <div className="relative flex items-center gap-2 shrink-0">
                 <label className="text-sm hidden md:block text-[#111827]">Сортувати:</label>
                 <select
-                  className="border border-[#D8D8D8] rounded-md px-3 py-2 bg-white appearance-none pr-8 text-sm"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
                   onMouseDown={() => setIsSortOpen((v) => !v)}
                   onBlur={() => setIsSortOpen(false)}
-                  onChange={() => setIsSortOpen(false)}
+                  className="border border-[#D8D8D8] rounded-md px-3 py-2 bg-white appearance-none pr-8 text-sm"
                 >
-                  <option>по актуальності</option>
-                  <option>ціна: від дешевих</option>
-                  <option>ціна: від дорогих</option>
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
                 <Image
                   src="/svg/arrow-down.svg"
@@ -175,19 +248,45 @@ export default function CatalogPage() {
               </div>
             </div>
 
+            {/* Desktop: Clear + filter tags */}
+            {hasActiveFilters && (
+              <div className="hidden md:flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="flex items-center gap-1.5 text-[#6B7280] text-sm font-medium w-fit"
+                >
+                  <TrashIcon />
+                  Очистити
+                </button>
+                {activeFilterTags.map(({ key, label }) => (
+                  <span
+                    key={key}
+                    className="inline-flex items-center gap-1.5 bg-[#E5E7EB] text-[#374151] rounded-lg px-3 py-1.5 text-sm"
+                  >
+                    {label}
+                    <button type="button" onClick={() => removeFilterTag(key)} aria-label="Видалити" className="hover:text-[#9C0000]">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             {/* Desktop: Sort only */}
             <div className="hidden md:flex items-center gap-3 shrink-0">
               <label className="">Сортувати:</label>
               <div className="relative">
                 <select
-                  className="border border-[#D8D8D8] rounded-md px-3 py-2 bg-white appearance-none pr-10"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
                   onMouseDown={() => setIsSortOpen((v) => !v)}
                   onBlur={() => setIsSortOpen(false)}
-                  onChange={() => setIsSortOpen(false)}
+                  className="border border-[#D8D8D8] rounded-md px-3 py-2 bg-white appearance-none pr-10"
                 >
-                  <option>по актуальності</option>
-                  <option>ціна: від дешевих</option>
-                  <option>ціна: від дорогих</option>
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
                 <Image
                   src="/svg/arrow-down.svg"
@@ -210,13 +309,13 @@ export default function CatalogPage() {
                   <TrashIcon />
                   Очистити
                 </button>
-                {activeFilterTags.map(({ slug, label }) => (
+                {activeFilterTags.map(({ key, label }) => (
                   <span
-                    key={slug}
+                    key={key}
                     className="inline-flex items-center gap-1.5 bg-[#E5E7EB] text-[#374151] rounded-lg px-3 py-1.5 text-sm"
                   >
                     {label}
-                    <button type="button" onClick={() => removeFilterTag(slug)} aria-label="Видалити" className="hover:text-[#9C0000]">
+                    <button type="button" onClick={() => removeFilterTag(key)} aria-label="Видалити" className="hover:text-[#9C0000]">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
                     </button>
                   </span>
