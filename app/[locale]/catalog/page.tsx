@@ -43,7 +43,6 @@ export default function CatalogPage() {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [categoryNames, setCategoryNames] = useState<Record<number, string>>({});
-  const [categoryNamesFromUrl, setCategoryNamesFromUrl] = useState<Record<number, string>>({});
   const logoSliderPrevRef = useRef<HTMLButtonElement>(null);
   const logoSliderNextRef = useRef<HTMLButtonElement>(null);
 
@@ -55,7 +54,6 @@ export default function CatalogPage() {
 
   useEffect(() => {
     const categoryParam = searchParams.get('category');
-    const categoryNameParam = searchParams.get('category_name');
     if (categoryParam) {
       const id = Number(categoryParam);
       if (!isNaN(id)) {
@@ -63,16 +61,9 @@ export default function CatalogPage() {
           ...s,
           categoryIds: s.categoryIds.includes(id) ? s.categoryIds : [id],
         }));
-        if (categoryNameParam) {
-          try {
-            setCategoryNamesFromUrl((prev) => ({ ...prev, [id]: decodeURIComponent(categoryNameParam) }));
-          } catch {
-            // ignore invalid encoding
-          }
-        }
       }
     }
-  }, [searchParams]);
+  }, [searchParams.get('category')]);
 
   useEffect(() => {
     fetch('/api/catalog/filters')
@@ -98,10 +89,7 @@ export default function CatalogPage() {
 
   const activeFilterTags: { key: string; label: string }[] = [
     ...(searchApplied.trim() ? [{ key: 'search', label: `Пошук: ${searchApplied.trim()}` }] : []),
-    ...filterState.categoryIds.map((id) => ({
-      key: `cat-${id}`,
-      label: categoryNamesFromUrl[id] || categoryNames[id] || `Категорія #${id}`,
-    })),
+    ...filterState.categoryIds.map((id) => ({ key: `cat-${id}`, label: categoryNames[id] || `Категорія #${id}` })),
     ...filterState.titles.map((t) => ({ key: `title-${t}`, label: t })),
     ...filterState.characters.map((c) => ({ key: `char-${c}`, label: c })),
     ...filterState.genres.map((g) => ({ key: `genre-${g}`, label: g })),
