@@ -95,7 +95,16 @@ export default function DeliveryPage() {
             </h2>
             <p className="text-[#374151] text-[15px] leading-relaxed">
               Повернення товару можливе протягом 14 днів за умови збереження
-              товарного вигляду та пакування. Деталі уточнюйте у службі підтримки.
+              товарного вигляду та пакування. Деталі уточнюйте у службі підтримки в{' '}
+              <a
+                href="https://t.me/amaterasu1shop"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9C0000] font-semibold hover:underline"
+              >
+                Telegram (@amaterasu1shop)
+              </a>
+              .
             </p>
           </article>
         </div>

@@ -96,7 +96,7 @@ export default function HeaderSearch({
 
   return (
     <div ref={wrapRef} className={`relative ${className}`}>
-      <div className="rounded-lg border border-[#BCBCBC] px-3 py-2 bg-[#111111] flex items-center gap-3 min-w-[240px] md:min-w-[320px]">
+      <div className="rounded-lg border border-[#BCBCBC] px-3 py-2 bg-[#111111] flex items-center gap-3 min-w-[180px] md:min-w-[240px]">
         <input
           ref={inputRef}
           type="text"

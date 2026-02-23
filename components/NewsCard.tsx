@@ -31,7 +31,7 @@ export default function NewsCard({ post }: NewsCardProps) {
   const formattedDate = `${day}.${month}.${year}`;
 
   return (
-    <article className='rounded-2xl relative group h-full flex flex-col'>
+    <article className='rounded-2xl relative group h-full flex flex-col transition-shadow duration-300 hover:shadow-lg'>
       {/* Badge (плашка) */}
       {post.badge && (
         <div className="absolute top-0 left-0 py-[clamp(6px,1.2vw,12px)] px-[clamp(8px,2vw,20px)] z-10 bg-[#9C0000] text-white rounded-tl-2xl rounded-br-2xl text-[clamp(14px,1.4vw,22px)] font-semibold">
@@ -39,9 +39,9 @@ export default function NewsCard({ post }: NewsCardProps) {
         </div>
       )}
 
-      <div className="overflow-hidden">
+      <div className="news-card-image-zoom overflow-hidden rounded-t-2xl">
         <Image
-          src={post.image || '/images/placeholder.jpg'} // Если картинки нет, покажет заглушку
+          src={post.image || '/images/placeholder.jpg'}
           alt={post.title}
           width={400}
           height={250}

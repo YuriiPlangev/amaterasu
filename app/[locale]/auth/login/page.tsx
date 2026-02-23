@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const t = useTranslations('auth.login');
+  const locale = useLocale();
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +44,7 @@ export default function LoginPage() {
       }
 
       // Успешно — редирект на страницу аккаунта
-      window.location.href = "/account";
+      window.location.href = `/${locale}/account`;
     } catch (error) {
       console.error("Login error:", error);
       setError(t('generalError'));

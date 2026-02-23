@@ -130,3 +130,73 @@ a {
   background: #1C1C1C;
   border-color: #1C1C1C;
 }
+
+/* Hero entrance: текст за замовчуванням прихований, щоб не було спалаху */
+.hero-entrance {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* Після визначення режиму: показуємо без анімації (повторний захід) */
+.hero-entrance.hero-visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+/* Плавна поява знизу + лёгкий scale при першому заході */
+@keyframes hero-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.hero-entrance.hero-reveal-title {
+  animation: hero-reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.hero-entrance.hero-reveal-desc {
+  animation: hero-reveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.18s forwards;
+}
+.hero-entrance.hero-reveal-cta {
+  animation: hero-reveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+}
+
+/* Сердечко в картці товару — пульсація при наведенні */
+@keyframes heart-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.heart-hover-pulse:hover {
+  animation: heart-pulse 0.8s ease-in-out infinite;
+}
+
+/* Плавна підсвітка посилань у футері */
+.footer-link-hover:hover p {
+  color: #fff;
+}
+.footer-link-hover:hover {
+  opacity: 1;
+}
+
+/* Картка категорії — лёгкий підйом і тінь */
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Картка новини — збільшення зображення при наведенні */
+.news-card-image-zoom img {
+  transition: transform 0.4s ease;
+}
+.news-card-image-zoom:hover img {
+  transform: scale(1.05);
+}
+
+/* Кнопки — лёгкий scale при кліку */
+.btn-press:active {
+  transform: scale(0.98);
+}

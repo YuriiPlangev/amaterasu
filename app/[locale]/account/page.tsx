@@ -4,8 +4,11 @@ import { verifyToken } from '../../../lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import LogoutButton from './LogoutButton';
+import ProfileForm from '../../../components/account/ProfileForm';
+import OrderHistory from '../../../components/account/OrderHistory';
+
 export default async function AccountPage({ params }: { params: Promise<{ locale: string }> | { locale: string } }) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
   const payload = token ? verifyToken(token) : null;
 
@@ -13,7 +16,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   const locale = resolvedParams.locale || 'uk';
 
   if (!payload || typeof payload !== 'object') {
-    redirect(`/${resolvedParams.locale}/auth/login`);
+    redirect(`/${locale}/auth/login`);
   }
 
   const userId = String(payload.sub ?? '');
@@ -21,7 +24,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   const userRoles = Array.isArray(payload.roles) ? payload.roles : [];
 
   return (
-    <div className="min-h-screen bg-white py-10 site-padding-x">
+    <div className="min-h-screen bg-white py-10 site-padding-x mt-16">
       <div className="max-w-5xl mx-auto">
         <div className="bg-white border border-[#E6E6E6] shadow-[0px_12px_28px_0px_#0000001A] rounded-2xl overflow-hidden">
           <div className="px-6 py-7 bg-[#9C0000]">
@@ -36,42 +39,11 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
             </div>
           </div>
 
-          {/* Content */}
           <div className="px-6 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white border border-[#E6E6E6] rounded-2xl p-6">
-                <h2 className="text-lg font-semibold text-black mb-4 flex items-center">
-                  <span className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-[#FFF2F2] text-[#9C0000] mr-3">👤</span>
-                  Інформація про користувача
-                </h2>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-[#9C9C9C]">Ім'я користувача</p>
-                    <p className="text-lg font-semibold text-black">{userLogin}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-[#9C9C9C]">ID користувача</p>
-                    <p className="text-lg font-semibold text-black">#{userId}</p>
-                  </div>
-                  {userRoles.length > 0 && (
-                    <div>
-                      <p className="text-sm text-[#9C9C9C]">Ролі</p>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {userRoles.map((role, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1 bg-[#FFF2F2] text-[#9C0000] rounded-full text-sm font-semibold"
-                          >
-                            {role}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-white border border-[#E6E6E6] rounded-2xl p-6">
+            {/* Контактні дані + Швидкі дії */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <ProfileForm initialLogin={userLogin} />
+              <div className="bg-white border border-[#E6E6E6] rounded-2xl p-6 md:p-8">
                 <h2 className="text-lg font-semibold text-black mb-4 flex items-center">
                   <span className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-[#FFF2F2] text-[#9C0000] mr-3">⚡</span>
                   Швидкі дії
@@ -79,19 +51,36 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
                 <div className="space-y-3">
                   <Link
                     href={`/${locale}/cart`}
-                    className="block w-full px-4 py-3 bg-white border border-[#D8D8D8] rounded-lg hover:border-[#9C0000] hover:bg-[#FFF7F7] transition-colors text-center font-semibold text-black"
+                    className="flex items-center justify-between w-full px-4 py-3 bg-white border border-[#D8D8D8] rounded-lg hover:border-[#9C0000] hover:bg-[#FFF7F7] transition-colors font-semibold text-black"
                   >
-                    Переглянути кошик
+                    Кошик
+                    <span className="text-[#9C0000]">→</span>
+                  </Link>
+                  <Link
+                    href={`/${locale}/favorites`}
+                    className="flex items-center justify-between w-full px-4 py-3 bg-white border border-[#D8D8D8] rounded-lg hover:border-[#9C0000] hover:bg-[#FFF7F7] transition-colors font-semibold text-black"
+                  >
+                    Обране
+                    <span className="text-[#9C0000]">→</span>
                   </Link>
                   <Link
                     href={`/${locale}/catalog`}
-                    className="block w-full px-4 py-3 bg-white border border-[#D8D8D8] rounded-lg hover:border-[#9C0000] hover:bg-[#FFF7F7] transition-colors text-center font-semibold text-black"
+                    className="flex items-center justify-between w-full px-4 py-3 bg-white border border-[#D8D8D8] rounded-lg hover:border-[#9C0000] hover:bg-[#FFF7F7] transition-colors font-semibold text-black"
                   >
-                    Перейти до магазину
+                    Каталог
+                    <span className="text-[#9C0000]">→</span>
                   </Link>
                 </div>
               </div>
             </div>
+
+            {/* Історія замовлень */}
+            <div className="mb-8">
+              <OrderHistory />
+            </div>
+
+
+    
 
             <div className="border-t border-[#E6E6E6] pt-6">
               <LogoutButton />

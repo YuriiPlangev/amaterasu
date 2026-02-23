@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken } from "../../../../lib/auth";
 
+const PROFILE_COOKIE = "profile";
+
 export async function GET() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 
   if (!token) {
@@ -16,11 +18,22 @@ export async function GET() {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 
-  // Возвращаем данные из токена
+  const login = (payload.login as string) || "Unknown";
+  let profile: { displayName?: string; email?: string; phone?: string } = {};
+  try {
+    const profileCookie = cookieStore.get(PROFILE_COOKIE)?.value;
+    if (profileCookie) profile = JSON.parse(decodeURIComponent(profileCookie));
+  } catch {
+    // ignore
+  }
+
   return NextResponse.json({
     id: payload.sub,
-    login: payload.login || "Unknown",
-    roles: payload.roles || [],
+    login,
+    roles: (payload.roles as string[]) || [],
+    displayName: profile.displayName ?? login,
+    email: profile.email ?? "",
+    phone: profile.phone ?? "",
   });
 }
 

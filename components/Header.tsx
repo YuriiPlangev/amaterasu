@@ -58,7 +58,7 @@ export default function Header() {
             <ul className='flex gap-[clamp(10px,1.8vw,32px)] text-[clamp(12px,1.05vw,17px)] font-medium whitespace-nowrap'>
               {navLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="hover:text-red-500 transition-colors">{link.label}</Link>
+                  <Link href={link.href} className="text-white hover:text-[#9C0000] transition-colors duration-200 underline-offset-4 hover:underline">{link.label}</Link>
                 </li>
               ))}
             </ul>
@@ -173,13 +173,13 @@ export default function Header() {
             </nav>
             <div className='px-6 pb-8 pt-4'>
               <a
-                href='https://instagram.com/amaterasu1shop'
+                href='https://instagram.com/amaterasu_anime_shop'
                 target='_blank'
                 rel='noopener noreferrer'
                 className='flex items-center gap-2 text-white hover:text-[#9C0000] transition-colors'
               >
                 <Image src='/svg/instagram.svg' alt='Instagram' width={24} height={24} className='shrink-0' />
-                <span className='text-sm'>@amaterasu1shop</span>
+                <span className='text-sm'>@amaterasu_anime_shop</span>
               </a>
             </div>
           </div>

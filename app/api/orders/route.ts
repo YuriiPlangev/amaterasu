@@ -1,13 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import axios from "axios";
+import { verifyToken } from "../../../lib/auth";
+import { woo } from "../../../lib/woo";
 
+export const dynamic = "force-dynamic";
+
+/** GET /api/orders — список замовлень поточного користувача */
+export async function GET() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+
+  if (!token) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const payload = verifyToken(token);
+  if (!payload || typeof payload !== "object") {
+    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  }
+
+  const customerId = String(payload.sub ?? "");
+
+  try {
+    const res = await woo.get("orders", {
+      params: { customer: customerId, per_page: 50, orderby: "date", order: "desc" },
+    });
+    const orders = Array.isArray(res.data) ? res.data : [];
+    return NextResponse.json({ orders });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to fetch orders";
+    console.error("Orders fetch error:", err);
+    return NextResponse.json(
+      { error: message, orders: [] },
+      { status: 500 }
+    );
+  }
+}
+
+/** POST /api/orders — створення замовлення (checkout) */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { items, billing, shipping, paymentMethod } = body;
 
-    // Формируем данные для кастомного WordPress endpoint
-    // который использует стандартные функции WooCommerce и вызывает хуки
     const orderData = {
       items: items.map((item: any) => ({
         id: item.id,
@@ -36,9 +72,6 @@ export async function POST(req: NextRequest) {
       paymentMethod: paymentMethod || "cash_on_delivery",
     };
 
-
-
-    // Используем кастомный WordPress endpoint, который вызывает woocommerce_checkout_order_processed
     const wpUrl = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
     if (!wpUrl) {
       throw new Error("WP_URL не настроен в переменных окружения");
@@ -47,16 +80,7 @@ export async function POST(req: NextRequest) {
     const response = await axios.post(
       `${wpUrl}/wp-json/amaterasu/v1/checkout`,
       orderData,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // Если нужна авторизация, можно добавить:
-        // auth: {
-        //   username: process.env.WC_KEY!,
-        //   password: process.env.WC_SECRET!,
-        // },
-      }
+      { headers: { "Content-Type": "application/json" } }
     );
 
     return NextResponse.json(
@@ -82,4 +106,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

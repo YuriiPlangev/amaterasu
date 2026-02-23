@@ -77,7 +77,7 @@ export default function ProductCard({ product }: { product: any }) {
           onClick={handleBuyClick}
           onMouseEnter={() => setIsCartHovered(true)}
           onMouseLeave={() => setIsCartHovered(false)}
-          className='bg-[#9C0000] flex justify-center items-center gap-2 text-white px-3 py-2 rounded-md flex-1 hover:bg-white hover:text-[#9C0000] hover:border-[#9C0000] hover:border transition-all duration-300 font-bold text-[14px]'
+          className='btn-press bg-[#9C0000] flex justify-center items-center gap-2 text-white px-3 py-2 rounded-md flex-1 hover:bg-white hover:text-[#9C0000] hover:border-[#9C0000] hover:border transition-all duration-300 font-bold text-[14px]'
         >
           Придбати
 
@@ -98,14 +98,14 @@ export default function ProductCard({ product }: { product: any }) {
           }}
           onMouseEnter={() => setIsHeartHovered(true)}
           onMouseLeave={() => setIsHeartHovered(false)}
-          className='transition-all duration-300'
+          className="heart-hover-pulse transition-transform duration-200"
         >
           <Image 
             src={isFavorite ? '/svg/heart-filled.svg' : '/svg/heart.svg'} 
             alt='favorite' 
             width={32} 
             height={32} 
-            className='transition-all duration-300'
+            className="transition-transform duration-200"
           /> 
         </button>
       </div>

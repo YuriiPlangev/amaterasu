@@ -44,7 +44,7 @@ export default function ProductGallery({ product, name, tag, images, fallbackSrc
             toggleFavorite(product);
             showToast(wasFavorite ? t('removedFromFavorites') : t('addedToFavorites'), wasFavorite ? 'favorite_remove' : 'favorite_add');
           }}
-          className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full border border-[#E6E6E6] hover:border-[#9C0000] z-10"
+          className="heart-hover-pulse absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full border border-[#E6E6E6] hover:border-[#9C0000] z-10 transition-colors duration-200"
         >
           <Image src={isFavorite ? '/svg/heart-filled.svg' : '/svg/heart.svg'} alt="favorite" width={20} height={20} />
         </button>

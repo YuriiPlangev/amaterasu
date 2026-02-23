@@ -1,13 +1,15 @@
-'use client'
+'use client';
 
-import React from 'react'
-import PopularCategory from '../ui/PopularCategory'
-import { SquareSkeleton } from '../ui/Skeletons'
-import { useCategories } from '../../hooks/useCategories'
+import React from 'react';
+import { useLocale } from 'next-intl';
+import PopularCategory from '../ui/PopularCategory';
+import { SquareSkeleton } from '../ui/Skeletons';
+import { useCategories } from '../../hooks/useCategories';
 
 const PopularCategories = () => {
-  const { data: categories = [], isLoading: loading } = useCategories()
-  const visibleCategories = categories.slice(0, 6)
+  const locale = useLocale();
+  const { data: categories = [], isLoading: loading } = useCategories();
+  const visibleCategories = categories.slice(0, 6);
   const showPlaceholders = loading || visibleCategories.length === 0;
 
   return (
@@ -26,13 +28,13 @@ const PopularCategories = () => {
                   </div>
                 ))
               : visibleCategories.map((category: { id: number; [key: string]: unknown }) => (
-                <PopularCategory key={category.id} category={category} />
+                <PopularCategory key={category.id} category={category} locale={locale} />
               ))}
           </div>
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
 export default PopularCategories
