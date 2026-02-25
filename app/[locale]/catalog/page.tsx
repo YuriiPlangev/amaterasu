@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useProducts } from '../../../hooks/useProducts';
 import ProductCard from '../../../components/ProductCard';
 import CatalogSearch from '../../../components/ui/CatalogSearch';
 import Image from 'next/image';
 import CatalogFilters, { initialFilterState, type CatalogFilterState } from '../../../components/sections/CatalogFilters';
-import { Swiper, SwiperSlide } from 'swiper/react';
+import { Swiper, SwiperSlide,  } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 
@@ -28,13 +29,13 @@ const TrashIcon = () => (
 
 export type SortOption = 'date' | 'price_asc' | 'price_desc';
 
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'date', label: 'по актуальності' },
-  { value: 'price_asc', label: 'ціна: від дешевих' },
-  { value: 'price_desc', label: 'ціна: від дорогих' },
-];
-
 export default function CatalogPage() {
+  const t = useTranslations('catalog');
+  const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+    { value: 'date', label: t('sortDate') },
+    { value: 'price_asc', label: t('sortPriceAsc') },
+    { value: 'price_desc', label: t('sortPriceDesc') },
+  ];
   const searchParams = useSearchParams();
   const [filterState, setFilterState] = useState<CatalogFilterState>(initialFilterState);
   const [searchInput, setSearchInput] = useState('');
@@ -43,8 +44,6 @@ export default function CatalogPage() {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [categoryNames, setCategoryNames] = useState<Record<number, string>>({});
-  const logoSliderPrevRef = useRef<HTMLButtonElement>(null);
-  const logoSliderNextRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const q = searchParams.get('search') ?? '';
@@ -88,8 +87,8 @@ export default function CatalogPage() {
     searchApplied.trim().length > 0;
 
   const activeFilterTags: { key: string; label: string }[] = [
-    ...(searchApplied.trim() ? [{ key: 'search', label: `Пошук: ${searchApplied.trim()}` }] : []),
-    ...filterState.categoryIds.map((id) => ({ key: `cat-${id}`, label: categoryNames[id] || `Категорія #${id}` })),
+    ...(searchApplied.trim() ? [{ key: 'search', label: `${t('searchTag')} ${searchApplied.trim()}` }] : []),
+    ...filterState.categoryIds.map((id) => ({ key: `cat-${id}`, label: categoryNames[id] || `${t('categoryTag')}${id}` })),
     ...filterState.titles.map((t) => ({ key: `title-${t}`, label: t })),
     ...filterState.characters.map((c) => ({ key: `char-${c}`, label: c })),
     ...filterState.genres.map((g) => ({ key: `genre-${g}`, label: g })),
@@ -159,7 +158,7 @@ export default function CatalogPage() {
   const { data: products, isLoading, error } = useProducts(productParams);
 
   return (
-    <main className="max-w-[1920px] w-full mx-auto site-padding-x py-10 mt-20">
+    <div className="max-w-[1920px] w-full mx-auto site-padding-x py-10 mt-20">
       {/* Mobile: при открытых фильтрах — только фильтры, header и footer видны, контент скрыт */}
       {isMobileFiltersOpen ? (
         <div className="md:hidden flex flex-col min-h-[60vh]">
@@ -169,13 +168,13 @@ export default function CatalogPage() {
               type="button"
               onClick={() => setIsMobileFiltersOpen(false)}
               className="w-10 h-10 rounded-2xl bg-black flex items-center justify-center shrink-0"
-              aria-label="Назад"
+              aria-label={t('back')}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
             </button>
-            <p className='text-[#1C1C1C] text-bold text-[20px]'>Фільтри</p>
+            <p className='text-[#1C1C1C] text-bold text-[20px]'>{t('filters')}</p>
             </div>
   
             <button
@@ -183,7 +182,7 @@ export default function CatalogPage() {
               onClick={() => setIsMobileFiltersOpen(false)}
               className="bg-[#9C0000] text-white px-6 py-2.5 rounded-lg font-semibold text-sm"
             >
-              Застосувати
+              {t('apply')}
             </button>
           </div>
           <div className="flex-1 overflow-y-auto px-4 py-4">
@@ -201,52 +200,46 @@ export default function CatalogPage() {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center p-1 border border-[#9C0000] rounded-[25px] w-fit">
             <div className="rounded-[20px] bg-[#9C0000] px-12 py-2.5 w-fit">
-              <p>Тайтли</p>
+              <p>{t('titles')}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
-              ref={logoSliderPrevRef}
               type="button"
-              className="w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
-              aria-label="Прокрутити вліво"
+              className="logo-slider-prev w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
+              aria-label={t('scrollLeft')}
             >
               <Image src="/svg/arrow-left.svg" alt="" width={24} height={24} />
             </button>
             <button
-              ref={logoSliderNextRef}
               type="button"
-              className="w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
-              aria-label="Прокрутити вправо"
+              className="logo-slider-next w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
+              aria-label={t('scrollRight')}
             >
               <Image src="/svg/arrow-right.svg" alt="" width={24} height={24} />
             </button>
           </div>
         </div>
-        <div className="relative overflow-visible min-w-0">
+        <div className="relative overflow-visible min-w-0 w-full">
           <Swiper
-            spaceBetween={24}
-            slidesPerView="auto"
-            navigation={{
-              nextEl: logoSliderNextRef.current,
-              prevEl: logoSliderPrevRef.current,
+            slidesPerView={2}
+            spaceBetween={12}
+            breakpoints={{
+              1600: { slidesPerView: 5, spaceBetween: 30 },
+              1200: { slidesPerView: 4, spaceBetween: 18 },
+              768: { slidesPerView: 2, spaceBetween: 12 },
+              0: { slidesPerView: 2, spaceBetween: 12 },
             }}
-            onBeforeInit={(swiper) => {
-              if (typeof swiper.params.navigation !== 'boolean' && swiper.params.navigation) {
-                (swiper.params.navigation as any).prevEl = logoSliderPrevRef.current;
-                (swiper.params.navigation as any).nextEl = logoSliderNextRef.current;
-              }
+            loop={true}
+            navigation={{
+              nextEl: '.logo-slider-next',
+              prevEl: '.logo-slider-prev',
             }}
             modules={[Navigation]}
             className="logo-slider"
-            breakpoints={{
-              0: { slidesPerView: 2, spaceBetween: 16 },
-              640: { slidesPerView: 3, spaceBetween: 20 },
-              1024: { slidesPerView: 4, spaceBetween: 32 },
-            }}
           >
             {logoSlides.map((logo, i) => (
-              <SwiperSlide key={i} className="!w-auto">
+              <SwiperSlide key={i} className="flex justify-center items-center">
                 <button
                   type="button"
                   onClick={() => setTitleFilter(logo.titleFilter)}
@@ -255,7 +248,7 @@ export default function CatalogPage() {
                       ? 'ring-2 ring-[#9C0000] rounded-lg'
                       : ''
                   }`}
-                  aria-label={`Фільтр: ${logo.alt}`}
+                  aria-label={`${t('filterLabel')} ${logo.alt}`}
                 >
                   <Image src={logo.src} alt={logo.alt} fill className="object-contain object-center pointer-events-none" />
                 </button>
@@ -266,7 +259,7 @@ export default function CatalogPage() {
       </div>
       
 
-      <h2 className='text-[#000000] mb-5 mt-7 text-[32px] text-medium hidden md:block'>Фільтри</h2>
+      <h2 className='text-[#000000] mb-5 mt-7 text-[32px] text-medium hidden md:block'>{t('filters')}</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-[clamp(260px,24vw,420px)_minmax(0,1fr)] gap-8">
         {/* Sidebar: desktop only */}
@@ -283,7 +276,7 @@ export default function CatalogPage() {
             {/* Search: пошук тільки після натискання «Шукати» */}
             <div className="w-full">
               <CatalogSearch
-                placeholder="Введіть запит..."
+                placeholder={t('searchPlaceholder')}
                 value={searchInput}
                 onSearch={setSearchInput}
                 onSearchSubmit={() => setSearchApplied(searchInput.trim())}
@@ -298,10 +291,10 @@ export default function CatalogPage() {
                 className="flex items-center gap-2 bg-[#9C0000] text-white rounded-lg px-4 py-2.5 text-sm font-bold w-fit"
               >
                 <FunnelIcon />
-                Фільтри
+                {t('filters')}
               </button>
               <div className="relative flex items-center gap-2 shrink-0">
-                <label className="text-sm hidden md:block text-[#111827]">Сортувати:</label>
+                <label className="text-sm hidden md:block text-[#111827]">{t('sortBy')}</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
@@ -332,7 +325,7 @@ export default function CatalogPage() {
                   className="flex items-center gap-1.5 text-[#6B7280] text-sm font-medium w-fit"
                 >
                   <TrashIcon />
-                  Очистити
+                  {t('clear')}
                 </button>
                 {activeFilterTags.map(({ key, label }) => (
                   <span
@@ -340,7 +333,7 @@ export default function CatalogPage() {
                     className="inline-flex items-center gap-1.5 bg-[#E5E7EB] text-[#374151] rounded-lg px-3 py-1.5 text-sm"
                   >
                     {label}
-                    <button type="button" onClick={() => removeFilterTag(key)} aria-label="Видалити" className="hover:text-[#9C0000]">
+                    <button type="button" onClick={() => removeFilterTag(key)} aria-label={t('removeFilter')} className="hover:text-[#9C0000]">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
                     </button>
                   </span>
@@ -350,7 +343,7 @@ export default function CatalogPage() {
 
             {/* Desktop: Sort only */}
             <div className="hidden md:flex items-center gap-3 shrink-0">
-              <label className="">Сортувати:</label>
+              <label className="">{t('sortBy')}</label>
               <div className="relative">
                 <select
                   value={sortBy}
@@ -382,7 +375,7 @@ export default function CatalogPage() {
                   className="flex items-center gap-1.5 text-[#6B7280] text-sm font-medium w-fit"
                 >
                   <TrashIcon />
-                  Очистити
+                  {t('clear')}
                 </button>
                 {activeFilterTags.map(({ key, label }) => (
                   <span
@@ -390,7 +383,7 @@ export default function CatalogPage() {
                     className="inline-flex items-center gap-1.5 bg-[#E5E7EB] text-[#374151] rounded-lg px-3 py-1.5 text-sm"
                   >
                     {label}
-                    <button type="button" onClick={() => removeFilterTag(key)} aria-label="Видалити" className="hover:text-[#9C0000]">
+                    <button type="button" onClick={() => removeFilterTag(key)} aria-label={t('removeFilter')} className="hover:text-[#9C0000]">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
                     </button>
                   </span>
@@ -401,11 +394,11 @@ export default function CatalogPage() {
             </header>
 
           {isLoading && (
-            <div className="py-10 text-center text-gray-600">Завантаження товарів...</div>
+            <div className="py-10 text-center text-gray-600">{t('loadingProducts')}</div>
           )}
 
           {error && (
-            <div className="py-10 text-center text-red-600">Не вдалося завантажити товари. Спробуйте пізніше.</div>
+            <div className="py-10 text-center text-red-600">{t('loadError')}</div>
           )}
 
           {!isLoading && !error && (
@@ -419,7 +412,7 @@ export default function CatalogPage() {
                   ))}
                 </section>
               ) : (
-                <div className="py-10 text-center text-gray-600">Товари не знайдено. Спробуйте змінити фільтри.</div>
+                <div className="py-10 text-center text-gray-600">{t('noProducts')}</div>
               )}
             </>
           )}
@@ -427,7 +420,7 @@ export default function CatalogPage() {
       </div>
         </>
       )}
-    </main>
+    </div>
   );
 }
 

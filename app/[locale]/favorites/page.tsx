@@ -25,7 +25,7 @@ export default function FavoritesPage() {
   }));
 
   return (
-    <main className="max-w-[1920px] w-full mx-auto site-padding-x py-10 mt-20">
+    <div className="max-w-[1920px] w-full mx-auto site-padding-x py-10 mt-20">
       <h1 className="text-[clamp(24px,3vw,40px)] font-bold text-[#1C1C1C] mb-6 md:mb-8">
         {t('title')}
       </h1>
@@ -47,6 +47,6 @@ export default function FavoritesPage() {
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
 }

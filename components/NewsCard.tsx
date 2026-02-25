@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
 
 interface NewsCardProps {
@@ -19,7 +19,8 @@ interface NewsCardProps {
 
 export default function NewsCard({ post }: NewsCardProps) {
   const locale = useLocale();
-  
+  const t = useTranslations('news');
+
   if (!post || !post.date) {
     return null;
   }
@@ -58,7 +59,7 @@ export default function NewsCard({ post }: NewsCardProps) {
         
         <div className="flex items-center justify-between mt-auto">
           <Link href={`/${locale}/news/${post.slug}`}>
-            <button className="font-semibold text-[#9C0000] underline underline-offset-4">Читати далі →</button>
+            <button className="font-semibold text-[#9C0000] underline underline-offset-4">{t('readMore')}</button>
           </Link>
           <span className="text-sm text-gray-400">{formattedDate}</span>
         </div>

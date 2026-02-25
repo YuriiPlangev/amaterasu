@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 export interface CatalogFilterState {
   priceFrom: string;
@@ -35,6 +36,9 @@ interface FilterSectionProps {
   selected: (string | number)[];
   onToggle: (value: string | number) => void;
   isLoading?: boolean;
+  placeholder?: string;
+  loadingText?: string;
+  nothingFoundText?: string;
 }
 
 const FilterSection: React.FC<FilterSectionProps> = ({
@@ -43,6 +47,9 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   selected,
   onToggle,
   isLoading,
+  placeholder,
+  loadingText,
+  nothingFoundText,
 }) => {
   const [open, setOpen] = useState(true);
   const [query, setQuery] = useState('');
@@ -75,7 +82,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
             <div className="pt-1">
               <input
                 type="search"
-                placeholder="Пошук..."
+                placeholder={placeholder ?? ''}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full rounded-md border border-[#E5E5E5] px-3 py-2 text-sm outline-none"
@@ -83,7 +90,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
             </div>
             <div className="mt-2 max-h-40 overflow-y-auto pr-2">
               {isLoading ? (
-                <div className="text-sm text-gray-400 py-2">Завантаження...</div>
+                <div className="text-sm text-gray-400 py-2">{loadingText ?? ''}</div>
               ) : (
                 filtered.map((item) => {
                   const value = item.id ?? item.label;
@@ -124,7 +131,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                 })
               )}
               {!isLoading && filtered.length === 0 && (
-                <div className="text-sm text-gray-400 py-2">Нічого не знайдено</div>
+                <div className="text-sm text-gray-400 py-2">{nothingFoundText ?? ''}</div>
               )}
             </div>
           </div>
@@ -145,6 +152,7 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
   value,
   onChange,
 }) => {
+  const t = useTranslations('catalogFilters');
   const [data, setData] = useState<FilterOptions | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -211,12 +219,12 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
       {/* Ціна */}
       <div className="rounded-2xl border border-[#E5E5E5] bg-white overflow-hidden">
         <div className="px-4 py-3">
-          <span className="font-semibold text-sm">Ціна</span>
+          <span className="font-semibold text-sm">{t('price')}</span>
         </div>
         <div className="px-4 pb-4">
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col">
-              <span className="sr-only">Ціна від</span>
+              <span className="sr-only">{t('priceFrom')}</span>
               <div className="relative rounded-lg border border-[#E5E5E5] bg-white">
                 <input
                   type="number"
@@ -231,7 +239,7 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
               </div>
             </label>
             <label className="flex flex-col">
-              <span className="sr-only">Ціна до</span>
+              <span className="sr-only">{t('priceTo')}</span>
               <div className="relative rounded-lg border border-[#E5E5E5] bg-white">
                 <input
                   type="number"
@@ -251,45 +259,60 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
 
       {/* Тип товару = categories */}
       <FilterSection
-        title="Тип товару"
+        title={t('productType')}
         items={categories}
         selected={value.categoryIds}
         onToggle={(v) => toggleCategory(Number(v))}
         isLoading={isLoading}
+        placeholder={t('searchPlaceholder')}
+        loadingText={t('loading')}
+        nothingFoundText={t('nothingFound')}
       />
 
       {/* Товари на замовлення = список категорий с ACF is_custom_production */}
       {customProductionCategories.length > 0 && (
         <FilterSection
-          title="Товари на замовлення"
+          title={t('customOrder')}
           items={customProductionCategories}
           selected={value.categoryIds}
           onToggle={(v) => toggleCategory(Number(v))}
           isLoading={isLoading}
+          placeholder={t('searchPlaceholder')}
+          loadingText={t('loading')}
+          nothingFoundText={t('nothingFound')}
         />
       )}
 
       {/* Тайтли, Персонаж, Жанр */}
       <FilterSection
-        title="Тайтли"
+        title={t('titles')}
         items={titles}
         selected={value.titles}
         onToggle={(v) => toggleTitle(String(v))}
         isLoading={isLoading}
+        placeholder={t('searchPlaceholder')}
+        loadingText={t('loading')}
+        nothingFoundText={t('nothingFound')}
       />
       <FilterSection
-        title="Персонаж"
+        title={t('character')}
         items={characters}
         selected={value.characters}
         onToggle={(v) => toggleCharacter(String(v))}
         isLoading={isLoading}
+        placeholder={t('searchPlaceholder')}
+        loadingText={t('loading')}
+        nothingFoundText={t('nothingFound')}
       />
       <FilterSection
-        title="Жанр"
+        title={t('genre')}
         items={genres}
         selected={value.genres}
         onToggle={(v) => toggleGenre(String(v))}
         isLoading={isLoading}
+        placeholder={t('searchPlaceholder')}
+        loadingText={t('loading')}
+        nothingFoundText={t('nothingFound')}
       />
     </div>
   );

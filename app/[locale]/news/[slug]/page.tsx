@@ -4,17 +4,19 @@ import React from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { useNewsPost } from '../../../../hooks/useNews';
 
 export default function NewsSlugPage() {
+  const t = useTranslations('newsSlug');
   const params = useParams();
   const slug = params?.slug as string;
   const { data: post, isLoading: loading, error } = useNewsPost(slug || null);
-  const errorMessage = error instanceof Error ? error.message : error ? 'Невідома помилка' : null;
+  const errorMessage = error instanceof Error ? error.message : error ? t('unknownError') : null;
 
   if (loading) {
     return (
-      <main className="max-w-[1920px] w-full mx-auto site-padding-x py-12 mt-16 md:py-16">
+      <div className="max-w-[1920px] w-full mx-auto site-padding-x py-12 mt-16 md:py-16">
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-200 rounded w-1/3" />
           <div className="h-64 bg-gray-200 rounded-2xl" />
@@ -22,23 +24,23 @@ export default function NewsSlugPage() {
           <div className="h-4 bg-gray-200 rounded w-5/6" />
           <div className="h-4 bg-gray-200 rounded w-4/6" />
         </div>
-      </main>
+      </div>
     );
   }
 
   if (errorMessage || !post) {
     return (
-      <main className="max-w-[1920px] w-full mx-auto site-padding-x py-12 md:py-16 mt-12">
+      <div className="max-w-[1920px] w-full mx-auto site-padding-x py-12 md:py-16 mt-12">
         <div className="text-center py-16">
-          <p className="text-[#9C0000] font-semibold mb-4">{errorMessage || 'Новину не знайдено'}</p>
+          <p className="text-[#9C0000] font-semibold mb-4">{errorMessage || t('postNotFound')}</p>
           <Link
-            href={params?.locale ? `/${params.locale}/news` : '/news'}
+            href={`/${(params?.locale as string) || 'uk'}/news`}
             className="inline-block text-[#9C0000] font-semibold underline underline-offset-4 hover:opacity-80"
           >
-            ← Повернутися до новин
+            ← {t('backToNews')}
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -49,20 +51,20 @@ export default function NewsSlugPage() {
     year: 'numeric',
   });
 
-  const locale = params?.locale as string;
-  const basePath = locale ? `/${locale}` : '';
+  const locale = (params?.locale as string) || 'uk';
+  const basePath = `/${locale}`;
   const hasExcerpt = post.excerpt && String(post.excerpt).replace(/<[^>]*>/g, '').trim().length > 0;
   const hasContent = post.content && String(post.content).replace(/<[^>]*>/g, '').trim().length > 0;
 
   return (
-    <main className="max-w-[1920px] w-full mx-auto site-padding-x py-10 md:py-16 pt-24 md:pt-28 pb-16">
+    <div className="max-w-[1920px] w-full mx-auto site-padding-x py-10 md:py-16 pt-24 md:pt-28 pb-16">
       <div className="max-w-[840px] mx-auto">
         <Link
           href={`${basePath}/news`}
           className="inline-flex items-center gap-2 text-[#6B7280] text-sm font-medium mb-8 hover:text-[#9C0000] transition-colors"
         >
           <Image src="/svg/arrow-left.svg" alt="" width={18} height={18} />
-          Назад до новин
+          {t('backToNews')}
         </Link>
 
         <article className="rounded-2xl border border-[#E5E7EB] bg-white shadow-sm overflow-hidden">
@@ -107,11 +109,11 @@ export default function NewsSlugPage() {
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
             ) : hasExcerpt ? null : (
-              <p className="text-[#1C1C1C] italic">Текст новини поки що відсутній.</p>
+              <p className="text-[#1C1C1C] italic">{t('noContent')}</p>
             )}
           </div>
         </article>
       </div>
-    </main>
+    </div>
   );
 }

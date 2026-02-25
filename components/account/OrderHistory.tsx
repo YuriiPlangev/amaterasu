@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 type OrderItem = {
   id: number;
@@ -13,21 +13,11 @@ type OrderItem = {
   line_items?: Array<{ name: string; quantity: number }>;
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Очікує',
-  processing: 'Обробляється',
-  'on-hold': 'На утриманні',
-  completed: 'Виконано',
-  cancelled: 'Скасовано',
-  refunded: 'Повернено',
-  failed: 'Помилка',
-};
-
-function formatDate(iso: string | undefined): string {
+function formatDate(iso: string | undefined, locale: string): string {
   if (!iso) return '—';
   try {
     const d = new Date(iso);
-    return d.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return d.toLocaleDateString(locale === 'uk' ? 'uk-UA' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
   } catch {
     return '—';
   }
@@ -35,9 +25,20 @@ function formatDate(iso: string | undefined): string {
 
 export default function OrderHistory() {
   const locale = useLocale();
+  const t = useTranslations('orderHistory');
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const STATUS_LABELS: Record<string, string> = {
+    pending: t('statusPending'),
+    processing: t('statusProcessing'),
+    'on-hold': t('statusOnHold'),
+    completed: t('statusCompleted'),
+    cancelled: t('statusCancelled'),
+    refunded: t('statusRefunded'),
+    failed: t('statusFailed'),
+  };
 
   useEffect(() => {
     fetch('/api/orders', { credentials: 'include' })
@@ -48,7 +49,7 @@ export default function OrderHistory() {
       })
       .catch(() => {
         setOrders([]);
-        setError('Не вдалося завантажити замовлення');
+        setError('loadError');
       })
       .finally(() => setLoading(false));
   }, []);
@@ -57,7 +58,7 @@ export default function OrderHistory() {
     <div className="bg-white border border-[#E6E6E6] rounded-2xl p-6 md:p-8">
       <h2 className="text-lg font-semibold text-black mb-4 flex items-center">
         <span className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-[#FFF2F2] text-[#9C0000] mr-3 text-sm">📦</span>
-        Історія замовлень
+        {t('title')}
       </h2>
 
       {loading ? (
@@ -67,15 +68,15 @@ export default function OrderHistory() {
           ))}
         </div>
       ) : error ? (
-        <p className="text-[#6B7280] text-sm">{error}</p>
+        <p className="text-[#6B7280] text-sm">{error === 'loadError' ? t('loadError') : error}</p>
       ) : orders.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-[#6B7280] mb-4">У вас ще немає замовлень.</p>
+          <p className="text-[#6B7280] mb-4">{t('noOrders')}</p>
           <Link
             href={`/${locale}/catalog`}
             className="inline-block px-6 py-3 bg-[#9C0000] text-white rounded-lg font-semibold hover:bg-[#7D0000] transition-colors"
           >
-            Перейти до каталогу
+            {t('goToCatalog')}
           </Link>
         </div>
       ) : (
@@ -90,7 +91,7 @@ export default function OrderHistory() {
                   № {(order as any).number ?? order.id}
                 </span>
                 <span className="text-[#6B7280] text-sm ml-2">
-                  {formatDate(order.date_created)}
+                  {formatDate(order.date_created, locale)}
                 </span>
               </div>
               <div className="flex items-center gap-3">

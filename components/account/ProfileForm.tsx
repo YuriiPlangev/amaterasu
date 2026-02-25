@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 type UserProfile = {
   id: string;
@@ -12,6 +13,7 @@ type UserProfile = {
 };
 
 export default function ProfileForm({ initialLogin }: { initialLogin: string }) {
+  const t = useTranslations('profileForm');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -49,13 +51,13 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Помилка збереження');
-      setMessage({ type: 'success', text: 'Контактні дані збережено' });
+      if (!res.ok) throw new Error(data.error || t('error'));
+      setMessage({ type: 'success', text: t('saved') });
       if (data.profile) {
         setProfile((p) => (p ? { ...p, ...data.profile } : p));
       }
     } catch (err) {
-      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Помилка збереження' });
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : t('error') });
     } finally {
       setSaving(false);
     }
@@ -78,15 +80,16 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
     <div className="bg-white border border-[#E6E6E6] rounded-2xl p-6 md:p-8">
       <h2 className="text-lg font-semibold text-black mb-4 flex items-center">
         <span className="inline-flex w-9 h-9 items-center justify-center rounded-full bg-[#FFF2F2] text-[#9C0000] mr-3 text-sm">✏️</span>
-        Контактні дані
+        {t('contactData')}
       </h2>
       <p className="text-sm text-[#6B7280] mb-4">
-        Ім&apos;я, email та телефон використовуються для зв&apos;язку та оформлення замовлень.
+        {t('contactDataDesc')}
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1">Ім&apos;я (відображається)</label>
+          <label htmlFor="profile-display-name" className="block text-sm font-medium text-[#374151] mb-1">{t('displayName')}</label>
           <input
+            id="profile-display-name"
             type="text"
             value={form.displayName}
             onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))}
@@ -95,8 +98,9 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1">Email</label>
+          <label htmlFor="profile-email" className="block text-sm font-medium text-[#374151] mb-1">{t('email')}</label>
           <input
+            id="profile-email"
             type="email"
             value={form.email}
             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
@@ -105,8 +109,9 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1">Телефон</label>
+          <label htmlFor="profile-phone" className="block text-sm font-medium text-[#374151] mb-1">{t('phone')}</label>
           <input
+            id="profile-phone"
             type="tel"
             value={form.phone}
             onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
@@ -124,7 +129,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
           disabled={saving}
           className="w-full md:w-auto px-6 py-3 bg-[#9C0000] text-white rounded-lg hover:bg-[#7D0000] transition-colors font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {saving ? 'Збереження…' : 'Зберегти зміни'}
+          {saving ? t('saving') : t('save')}
         </button>
       </form>
     </div>

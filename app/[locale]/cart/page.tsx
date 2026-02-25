@@ -8,6 +8,7 @@ import { useCartStore } from '../../../store/cartStore';
 
 export default function CartPage() {
   const t = useTranslations('cart');
+  const tCommon = useTranslations('common');
   const locale = useLocale();
   const basePath = `/${locale}`;
   const router = useRouter();
@@ -244,7 +245,7 @@ export default function CartPage() {
 
   if (orderSuccess) {
     return (
-      <main className="min-h-screen bg-white py-12">
+      <div className="min-h-screen bg-white py-12 mt-12">
         <div className="max-w-[1920px] w-full mx-auto site-padding-x">
           <div className="max-w-2xl mx-auto bg-white border border-[#D8D8D8] rounded-lg p-8 text-center">
             <div className="mb-6">
@@ -271,13 +272,13 @@ export default function CartPage() {
             </Link>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <main className="min-h-screen bg-white py-12 mt-12">
+      <div className="min-h-screen bg-white py-12 mt-12">
         <div className="max-w-[1920px] w-full mx-auto site-padding-x">
           <h1 className="text-[55px] font-bold uppercase text-black mb-8">{t('title')}</h1>
           <div className="flex flex-col items-center justify-center py-20">
@@ -290,12 +291,12 @@ export default function CartPage() {
             </Link>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-white py-12 mt-14">
+    <div className="min-h-screen bg-white py-12 mt-16">
       <div className="max-w-[1920px] w-full mx-auto site-padding-x">
         <nav className="text-sm text-[#9C9C9C] mb-4">
           <Link href={basePath} className="hover:text-black">Головна</Link>
@@ -512,10 +513,10 @@ export default function CartPage() {
                         {npCityDropdownOpen && (
                           <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-auto bg-white border border-[#D8D8D8] rounded-md shadow-lg z-50">
                             {loadingCities ? (
-                              <div className="px-4 py-3 text-gray-500">{t('processing')}</div>
+                              <div className="px-4 py-3 text-gray-500">{tCommon('loading')}</div>
                             ) : npCities.length === 0 ? (
                               <div className="px-4 py-3 text-gray-500">
-                                {npCitySearch.length >= 2 ? 'Нічого не знайдено' : 'Введіть мінімум 2 символи'}
+                                {npCitySearch.length >= 2 ? t('nothingFoundCity') : t('minCharsCity')}
                               </div>
                             ) : (
                               npCities.map((c) => (
@@ -550,13 +551,13 @@ export default function CartPage() {
                             value={formData.novaPoshtaWarehouseDesc}
                             readOnly
                             onFocus={() => setNpWarehouseDropdownOpen(true)}
-                            placeholder={loadingWarehouses ? 'Завантаження...' : t('selectWarehouse')}
+                            placeholder={loadingWarehouses ? tCommon('loading') : t('selectWarehouse')}
                             className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000] bg-white cursor-pointer"
                           />
                           {npWarehouseDropdownOpen && (
                             <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-auto bg-white border border-[#D8D8D8] rounded-md shadow-lg z-50">
                               {loadingWarehouses ? (
-                                <div className="px-4 py-3 text-gray-500">Завантаження...</div>
+                                <div className="px-4 py-3 text-gray-500">{tCommon('loading')}</div>
                               ) : (
                                 npWarehouses.map((w) => (
                                   <button
@@ -606,7 +607,7 @@ export default function CartPage() {
                           <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-auto bg-white border border-[#D8D8D8] rounded-md shadow-lg z-50">
                             {ukrposhtaCities.length === 0 ? (
                               <div className="px-4 py-3 text-gray-500">
-                                {ukrposhtaCitySearch.length >= 2 ? 'Нічого не знайдено' : 'Введіть мінімум 2 символи'}
+                                {ukrposhtaCitySearch.length >= 2 ? t('nothingFoundCity') : t('minCharsCity')}
                               </div>
                             ) : (
                               ukrposhtaCities.map((c) => (
@@ -700,7 +701,7 @@ export default function CartPage() {
           </div>
         </section>
       </div>
-    </main>
+    </div>
   );
 }
 

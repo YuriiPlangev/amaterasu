@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import ProductCard from './ProductCard';
 import { useProducts } from '../hooks/useProducts';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -22,6 +23,9 @@ export default function RelatedProducts({
   limit = 4,
   showTitle = true,
 }: RelatedProductsProps) {
+  const t = useTranslations('productPage');
+  const tCommon = useTranslations('common');
+  const tA11y = useTranslations('a11y');
   const params: any = {};
   if (tagId) params.tag = tagId;
   if (categoryId) params.category = categoryId;
@@ -54,8 +58,8 @@ export default function RelatedProducts({
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6">
-        {showTitle && <h2 className="text-2xl font-bold text-[#1C1C1C]">Схожі товари</h2>}
-        <div className="text-[#6B7280]">Завантаження...</div>
+        {showTitle && <h2 className="text-2xl font-bold text-[#1C1C1C]">{t('similarProducts')}</h2>}
+        <div className="text-[#6B7280]">{tCommon('loading')}</div>
       </div>
     );
   }
@@ -67,18 +71,18 @@ export default function RelatedProducts({
   return (
     <div className="flex flex-col gap-6 relative overflow-visible">
       {showTitle && (
-        <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold text-[#1C1C1C]">Схожі товари</h2>
+        <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold text-[#1C1C1C]">{t('similarProducts')}</h2>
       )}
       <div className="relative overflow-visible -mx-2 md:mx-0">
         <button
           className="related-products-prev absolute left-2 md:-left-[60px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md"
-          aria-label="Прокрутити вліво"
+          aria-label={tA11y('scrollLeft')}
         >
           <Image src="/svg/arrow-left.svg" alt="" width={24} height={24} />
         </button>
         <button
           className="related-products-next absolute right-2 md:-right-[60px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md"
-          aria-label="Прокрутити вправо"
+          aria-label={tA11y('scrollRight')}
         >
           <Image src="/svg/arrow-right.svg" alt="" width={24} height={24} />
         </button>

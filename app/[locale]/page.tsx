@@ -9,14 +9,13 @@ import Faq from '../../components/sections/Faq';
 
 export default function HomePage() {
   return (
-    <main>
-     <Hero />
-     
-        <BestSellers />
-        <PopularCategories />
-        <News />
-        <Faq />
-    </main>
+    <div>
+      <Hero />
+      <BestSellers />
+      <PopularCategories />
+      <News />
+      <Faq />
+    </div>
   );
 }
 

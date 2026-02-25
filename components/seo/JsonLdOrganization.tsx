@@ -1,0 +1,22 @@
+import { getBaseUrl, SITE_NAME } from '../../lib/seo';
+
+export default function JsonLdOrganization() {
+  const base = getBaseUrl();
+  const json = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE_NAME,
+    url: base,
+    description: 'Інтернет-магазин аніме атрибутики. Плакати, наклейки, мерч.',
+    sameAs: [
+      'https://t.me/amaterasu1shop',
+      'https://instagram.com/amaterasu_anime_shop',
+    ],
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(json) }}
+    />
+  );
+}

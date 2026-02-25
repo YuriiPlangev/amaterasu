@@ -86,7 +86,9 @@
     "selectWarehouse": "Select branch",
     "branchNumber": "Branch number / postal index",
     "branchNumberPlaceholder": "e.g. branch #1 or 01001",
-    "error": "Error"
+    "error": "Error",
+    "minCharsCity": "Enter at least 2 characters",
+    "nothingFoundCity": "Nothing found"
   },
   "favorites": {
     "title": "Favorites",
@@ -103,6 +105,165 @@
   "common": {
     "loading": "Loading...",
     "error": "Error"
+  },
+  "a11y": {
+    "skipToContent": "Skip to main content",
+    "mainNav": "Main navigation",
+    "userNav": "Actions and profile",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "languageUk": "Ukrainian",
+    "languageEn": "English",
+    "languageGroup": "Language",
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "This page does not exist or has been moved.",
+    "backHome": "Back to home",
+    "toCatalog": "Go to catalog"
+  },
+  "search": {
+    "placeholder": "Search products...",
+    "placeholderMinChars": "Search (min. 3 characters)...",
+    "ariaSearch": "Search",
+    "close": "Close",
+    "loading": "Loading...",
+    "noResults": "Nothing found",
+    "allResults": "All search results →"
+  },
+  "catalog": {
+    "filters": "Filters",
+    "sortBy": "Sort by:",
+    "sortDate": "by relevance",
+    "sortPriceAsc": "price: low to high",
+    "sortPriceDesc": "price: high to low",
+    "searchTag": "Search:",
+    "categoryTag": "Category #",
+    "apply": "Apply",
+    "back": "Back",
+    "clear": "Clear",
+    "removeFilter": "Remove",
+    "searchPlaceholder": "Enter query...",
+    "searchButton": "Search",
+    "ariaSearch": "Search",
+    "loadingProducts": "Loading products...",
+    "loadError": "Failed to load products. Try again later.",
+    "noProducts": "No products found. Try changing filters.",
+    "titles": "Titles",
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right",
+    "filterLabel": "Filter:"
+  },
+  "catalogFilters": {
+    "price": "Price",
+    "priceFrom": "Price from",
+    "priceTo": "Price to",
+    "productType": "Product type",
+    "customOrder": "Custom order",
+    "titles": "Titles",
+    "character": "Character",
+    "genre": "Genre",
+    "searchPlaceholder": "Search...",
+    "loading": "Loading...",
+    "nothingFound": "Nothing found"
+  },
+  "productCard": {
+    "inStock": "In stock",
+    "outOfStock": "Out of stock",
+    "buy": "Buy",
+    "toCart": "To cart"
+  },
+  "delivery": {
+    "title": "Delivery and Payment",
+    "subtitle": "Fast, convenient, and reliable — we deliver across Ukraine",
+    "delivery": "Delivery",
+    "payment": "Payment",
+    "return": "Returns",
+    "delivery1": "Nova Poshta delivery across Ukraine — 1–3 business days.",
+    "delivery2": "Pickup (by appointment) — free.",
+    "delivery3": "International delivery — individual rates.",
+    "payment1": "Online card payment (Visa/Mastercard).",
+    "payment2": "Cash on delivery at Nova Poshta.",
+    "payment3": "Invoice for businesses.",
+    "returnText": "Returns within 14 days if the product and packaging are intact. Contact support for details in",
+    "returnLink": "Telegram (@amaterasu1shop)",
+    "questions": "Have questions?",
+    "questionsText": "Message us on Telegram — we reply within an hour during business hours."
+  },
+  "contacts": {
+    "title": "Contacts",
+    "subtitle": "Get in touch — we're happy to help",
+    "support": "Support",
+    "supportHours": "We're available 10:00–19:00 (Mon–Sat)",
+    "phone": "Phone:",
+    "email": "Email:",
+    "telegram": "Telegram:",
+    "instagram": "Instagram:",
+    "address": "Address",
+    "addressNote": "(by appointment)",
+    "addressCity": "Bilhorod-Dnistrovskyi",
+    "socials": "Socials",
+    "writeTelegram": "Message on Telegram",
+    "fastReply": "Quick reply",
+    "fastReplyText": "Telegram is the fastest way to get a response. We usually reply within 15 minutes.",
+    "goToChat": "Open chat"
+  },
+  "news": {
+    "title": "News",
+    "subtitle": "Latest news, promotions, and store updates.",
+    "noPosts": "No news found",
+    "readMore": "Read more →"
+  },
+  "newsSlug": {
+    "backToNews": "Back to news",
+    "postNotFound": "Post not found",
+    "unknownError": "Unknown error",
+    "noContent": "No content yet."
+  },
+  "account": {
+    "profileTitle": "My profile",
+    "welcome": "Welcome,",
+    "quickActions": "Quick actions",
+    "cart": "Cart",
+    "favorites": "Favorites",
+    "catalog": "Catalog",
+    "orderHistory": "Order history",
+    "logout": "Log out"
+  },
+  "profileForm": {
+    "contactData": "Contact details",
+    "contactDataDesc": "Name, email, and phone are used for contact and checkout.",
+    "displayName": "Display name",
+    "email": "Email",
+    "phone": "Phone",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Contact details saved",
+    "error": "Save failed"
+  },
+  "orderHistory": {
+    "title": "Order history",
+    "loadError": "Failed to load orders",
+    "noOrders": "You have no orders yet.",
+    "goToCatalog": "Go to catalog",
+    "statusPending": "Pending",
+    "statusProcessing": "Processing",
+    "statusOnHold": "On hold",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "statusRefunded": "Refunded",
+    "statusFailed": "Failed"
+  },
+  "productPage": {
+    "characteristics": "Characteristics",
+    "delivery": "Delivery",
+    "material": "Material",
+    "condition": "Condition",
+    "deliveryNovaDesc": "Delivery across Ukraine, cash on delivery",
+    "deliveryUkrDesc": "Delivery across Ukraine",
+    "similarProducts": "Similar products"
   }
 }
 

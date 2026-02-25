@@ -112,7 +112,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-[#6D6D6D]">
               {t('noAccount')}{" "}
-              <Link href="/auth/register" className="text-[#9C0000] hover:text-[#7D0000] font-semibold">
+              <Link href={`/${locale}/auth/register`} className="text-[#9C0000] hover:text-[#7D0000] font-semibold">
                 {t('register')}
               </Link>
             </p>

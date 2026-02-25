@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 const PhoneIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -24,49 +25,49 @@ const MapIcon = () => (
 );
 
 export default function ContactsPage() {
+  const t = useTranslations('contacts');
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <div className="max-w-[1920px] w-full mx-auto site-padding-x py-12 md:py-16 mt-12">
         <h1 className="text-[clamp(28px,3vw,44px)] font-bold uppercase text-[#1C1C1C] mb-2">
-          Контакти
+          {t('title')}
         </h1>
         <p className="text-[#6B7280] text-base mb-10">
-          Звʼяжіться з нами — ми завжди раді допомогти
+          {t('subtitle')}
         </p>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 min-w-0">
-          {/* Підтримка */}
           <article className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-[#E5E7EB] hover:shadow-md transition-shadow min-w-0 overflow-hidden">
             <div className="w-12 h-12 rounded-xl bg-[#9C0000]/10 flex items-center justify-center text-[#9C0000] mb-4">
               <PhoneIcon />
             </div>
             <h2 className="text-[clamp(18px,1.5vw,22px)] font-bold text-[#1C1C1C] mb-3">
-              Підтримка
+              {t('support')}
             </h2>
             <p className="text-[#6B7280] text-sm mb-4">
-              Пишіть нам з 10:00 до 19:00 (Пн–Сб)
+              {t('supportHours')}
             </p>
             <ul className="space-y-3 text-[#374151] text-[15px]">
               <li className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
-                <span className="text-[#9C0000] font-semibold shrink-0">Телефон:</span>
+                <span className="text-[#9C0000] font-semibold shrink-0">{t('phone')}</span>
                 <a href="tel:+380685499690" className="hover:text-[#9C0000] transition-colors break-all">
                   +38 (068) 549‑96‑90
                 </a>
               </li>
               <li className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
-                <span className="text-[#9C0000] font-semibold shrink-0">Email:</span>
+                <span className="text-[#9C0000] font-semibold shrink-0">{t('email')}</span>
                 <a href="mailto:amaterasuanimeshop@gmail.com" className="hover:text-[#9C0000] transition-colors break-all">
                   amaterasuanimeshop@gmail.com
                 </a>
               </li>
               <li className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
-                <span className="text-[#9C0000] font-semibold shrink-0">Telegram:</span>
+                <span className="text-[#9C0000] font-semibold shrink-0">{t('telegram')}</span>
                 <a href="https://t.me/amaterasu1shop" target="_blank" rel="noopener noreferrer" className="hover:text-[#9C0000] transition-colors break-all">
                   @amaterasu1shop
                 </a>
               </li>
               <li className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
-                <span className="text-[#9C0000] font-semibold shrink-0">Instagram:</span>
+                <span className="text-[#9C0000] font-semibold shrink-0">{t('instagram')}</span>
                 <a href="https://instagram.com/amaterasu_anime_shop" target="_blank" rel="noopener noreferrer" className="hover:text-[#9C0000] transition-colors break-all">
                   @amaterasu_anime_shop
                 </a>
@@ -74,29 +75,27 @@ export default function ContactsPage() {
             </ul>
           </article>
 
-          {/* Адреса */}
           <article className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-[#E5E7EB] hover:shadow-md transition-shadow min-w-0 overflow-hidden">
             <div className="w-12 h-12 rounded-xl bg-[#9C0000]/10 flex items-center justify-center text-[#9C0000] mb-4">
               <MapIcon />
             </div>
             <h2 className="text-[clamp(18px,1.5vw,22px)] font-bold text-[#1C1C1C] mb-3">
-              Адреса
+              {t('address')}
             </h2>
             <p className="text-[#374151] text-[15px]">
-              м. Білгород-Дністровський
+              {t('addressCity')}
             </p>
             <p className="text-[#6B7280] text-sm mt-1">
-              (за попереднім записом)
+              {t('addressNote')}
             </p>
           </article>
 
-          {/* Соцмережі */}
           <article className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-[#E5E7EB] hover:shadow-md transition-shadow md:col-span-2 lg:col-span-1 min-w-0 overflow-hidden">
             <div className="w-12 h-12 rounded-xl bg-[#9C0000]/10 flex items-center justify-center text-[#9C0000] mb-4">
               <EmailIcon />
             </div>
             <h2 className="text-[clamp(18px,1.5vw,22px)] font-bold text-[#1C1C1C] mb-3">
-              Соцмережі
+              {t('socials')}
             </h2>
             <p className="text-[#374151] text-[15px] mb-4 break-all">
             <a href="https://instagram.com/amaterasu_anime_shop" target="_blank" rel="noopener noreferrer" className="hover:text-[#9C0000] transition-colors">
@@ -110,15 +109,15 @@ export default function ContactsPage() {
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1C1C1C] text-white rounded-xl font-semibold text-sm hover:bg-[#9C0000] transition-colors"
             >
               <Image src="/svg/tg.svg" alt="" width={20} height={20} />
-              Написати в Telegram
+              {t('writeTelegram')}
             </a>
           </article>
         </div>
 
         <div className="mt-10 p-6 rounded-2xl bg-gradient-to-br from-[#1C1C1C] to-[#333] text-white">
-          <p className="font-semibold text-lg mb-1">Швидка відповідь</p>
+          <p className="font-semibold text-lg mb-1">{t('fastReply')}</p>
           <p className="text-white/80 text-sm mb-4">
-            Telegram — найшвидший спосіб отримати відповідь. Зазвичай відповідаємо протягом 15 хвилин.
+            {t('fastReplyText')}
           </p>
           <Link
             href="https://t.me/amaterasu1shop"
@@ -127,10 +126,10 @@ export default function ContactsPage() {
             className="inline-flex items-center gap-2 text-[#9C0000] font-semibold hover:underline"
           >
             <Image src="/svg/tg.svg" alt="" width={20} height={20} className="brightness-0 invert" />
-            Перейти до чату
+            {t('goToChat')}
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

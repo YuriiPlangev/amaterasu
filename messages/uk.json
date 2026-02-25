@@ -86,7 +86,9 @@
     "selectWarehouse": "Оберіть відділення",
     "branchNumber": "Номер відділення / індекс",
     "branchNumberPlaceholder": "Наприклад: відділення №1 або 01001",
-    "error": "Помилка"
+    "error": "Помилка",
+    "minCharsCity": "Введіть мінімум 2 символи",
+    "nothingFoundCity": "Нічого не знайдено"
   },
   "favorites": {
     "title": "Обране",
@@ -103,6 +105,165 @@
   "common": {
     "loading": "Завантаження...",
     "error": "Помилка"
+  },
+  "a11y": {
+    "skipToContent": "Перейти до основного контенту",
+    "mainNav": "Головна навігація",
+    "userNav": "Дії та профіль",
+    "openMenu": "Відкрити меню",
+    "closeMenu": "Закрити меню",
+    "languageUk": "Українська",
+    "languageEn": "English",
+    "languageGroup": "Мова",
+    "scrollLeft": "Прокрутити вліво",
+    "scrollRight": "Прокрутити вправо"
+  },
+  "notFound": {
+    "title": "Сторінку не знайдено",
+    "description": "Такої сторінки не існує або вона була переміщена.",
+    "backHome": "На головну",
+    "toCatalog": "Перейти до каталогу"
+  },
+  "search": {
+    "placeholder": "Пошук товарів...",
+    "placeholderMinChars": "Пошук (мін. 3 символи)...",
+    "ariaSearch": "Пошук",
+    "close": "Закрити",
+    "loading": "Завантаження...",
+    "noResults": "Нічого не знайдено",
+    "allResults": "Всі результати пошуку →"
+  },
+  "catalog": {
+    "filters": "Фільтри",
+    "sortBy": "Сортувати:",
+    "sortDate": "по актуальності",
+    "sortPriceAsc": "ціна: від дешевих",
+    "sortPriceDesc": "ціна: від дорогих",
+    "searchTag": "Пошук:",
+    "categoryTag": "Категорія #",
+    "apply": "Застосувати",
+    "back": "Назад",
+    "clear": "Очистити",
+    "removeFilter": "Видалити",
+    "searchPlaceholder": "Введіть запит...",
+    "searchButton": "Шукати",
+    "ariaSearch": "Пошук",
+    "loadingProducts": "Завантаження товарів...",
+    "loadError": "Не вдалося завантажити товари. Спробуйте пізніше.",
+    "noProducts": "Товари не знайдено. Спробуйте змінити фільтри.",
+    "titles": "Тайтли",
+    "scrollLeft": "Прокрутити вліво",
+    "scrollRight": "Прокрутити вправо",
+    "filterLabel": "Фільтр:"
+  },
+  "catalogFilters": {
+    "price": "Ціна",
+    "priceFrom": "Ціна від",
+    "priceTo": "Ціна до",
+    "productType": "Тип товару",
+    "customOrder": "Товари на замовлення",
+    "titles": "Тайтли",
+    "character": "Персонаж",
+    "genre": "Жанр",
+    "searchPlaceholder": "Пошук...",
+    "loading": "Завантаження...",
+    "nothingFound": "Нічого не знайдено"
+  },
+  "productCard": {
+    "inStock": "В наявності",
+    "outOfStock": "Немає в наявності",
+    "buy": "Придбати",
+    "toCart": "До кошику"
+  },
+  "delivery": {
+    "title": "Доставка і оплата",
+    "subtitle": "Швидко, зручно та надійно — доставляємо ваші замовлення по всій Україні",
+    "delivery": "Доставка",
+    "payment": "Оплата",
+    "return": "Повернення",
+    "delivery1": "Відправка Новою Поштою по Україні — 1–3 робочі дні.",
+    "delivery2": "Самовивіз (за попереднім узгодженням) — безкоштовно.",
+    "delivery3": "Міжнародна доставка — за індивідуальними тарифами.",
+    "payment1": "Оплата карткою онлайн (Visa/Mastercard).",
+    "payment2": "Післяплата у відділенні Нової Пошти.",
+    "payment3": "Безготівковий розрахунок для юридичних осіб.",
+    "returnText": "Повернення товару можливе протягом 14 днів за умови збереження товарного вигляду та пакування. Деталі уточнюйте у службі підтримки в",
+    "returnLink": "Telegram (@amaterasu1shop)",
+    "questions": "Маєте запитання?",
+    "questionsText": "Напишіть нам у Telegram — ми відповімо протягом години в робочий час."
+  },
+  "contacts": {
+    "title": "Контакти",
+    "subtitle": "Звʼяжіться з нами — ми завжди раді допомогти",
+    "support": "Підтримка",
+    "supportHours": "Пишіть нам з 10:00 до 19:00 (Пн–Сб)",
+    "phone": "Телефон:",
+    "email": "Email:",
+    "telegram": "Telegram:",
+    "instagram": "Instagram:",
+    "address": "Адреса",
+    "addressNote": "(за попереднім записом)",
+    "addressCity": "м. Білгород-Дністровський",
+    "socials": "Соцмережі",
+    "writeTelegram": "Написати в Telegram",
+    "fastReply": "Швидка відповідь",
+    "fastReplyText": "Telegram — найшвидший спосіб отримати відповідь. Зазвичай відповідаємо протягом 15 хвилин.",
+    "goToChat": "Перейти до чату"
+  },
+  "news": {
+    "title": "Новини",
+    "subtitle": "Останні новини, акції та оновлення магазину.",
+    "noPosts": "Новостей не знайдено",
+    "readMore": "Читати далі →"
+  },
+  "newsSlug": {
+    "backToNews": "Назад до новин",
+    "postNotFound": "Новину не знайдено",
+    "unknownError": "Невідома помилка",
+    "noContent": "Текст новини поки що відсутній."
+  },
+  "account": {
+    "profileTitle": "Мій профіль",
+    "welcome": "Ласкаво просимо,",
+    "quickActions": "Швидкі дії",
+    "cart": "Кошик",
+    "favorites": "Обране",
+    "catalog": "Каталог",
+    "orderHistory": "Історія замовлень",
+    "logout": "Вийти з акаунту"
+  },
+  "profileForm": {
+    "contactData": "Контактні дані",
+    "contactDataDesc": "Ім'я, email та телефон використовуються для зв'язку та оформлення замовлень.",
+    "displayName": "Ім'я (відображається)",
+    "email": "Email",
+    "phone": "Телефон",
+    "save": "Зберегти зміни",
+    "saving": "Збереження…",
+    "saved": "Контактні дані збережено",
+    "error": "Помилка збереження"
+  },
+  "orderHistory": {
+    "title": "Історія замовлень",
+    "loadError": "Не вдалося завантажити замовлення",
+    "noOrders": "У вас ще немає замовлень.",
+    "goToCatalog": "Перейти до каталогу",
+    "statusPending": "Очікує",
+    "statusProcessing": "Обробляється",
+    "statusOnHold": "На утриманні",
+    "statusCompleted": "Виконано",
+    "statusCancelled": "Скасовано",
+    "statusRefunded": "Повернено",
+    "statusFailed": "Помилка"
+  },
+  "productPage": {
+    "characteristics": "Характеристики",
+    "delivery": "Доставка",
+    "material": "Матеріал",
+    "condition": "Стан",
+    "deliveryNovaDesc": "Доставка по всій Україні, оплата при отриманні",
+    "deliveryUkrDesc": "Доставка по Україні",
+    "similarProducts": "Схожі товари"
   }
 }
 

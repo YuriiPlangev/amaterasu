@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 const MIN_CHARS = 3;
 const DEBOUNCE_MS = 300;
@@ -20,9 +20,11 @@ export default function HeaderSearch({
   isOpen,
   onClose,
   className = '',
-  placeholder = 'Пошук товарів...',
+  placeholder,
 }: HeaderSearchProps) {
   const locale = useLocale();
+  const t = useTranslations('search');
+  const placeholderText = placeholder ?? t('placeholder');
   const basePath = `/${locale}`;
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Array<{ id: number; name: string; slug: string; price: string }>>([]);
@@ -95,18 +97,18 @@ export default function HeaderSearch({
   const showDropdown = query.trim().length >= MIN_CHARS && touched;
 
   return (
-    <div ref={wrapRef} className={`relative ${className}`}>
+    <div ref={wrapRef} className={`relative header-search-animate ${className}`}>
       <div className="rounded-lg border border-[#BCBCBC] px-3 py-2 bg-[#111111] flex items-center gap-3 min-w-[180px] md:min-w-[240px]">
         <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}
-          aria-label="Пошук"
+          placeholder={placeholderText}
+          aria-label={t('ariaSearch')}
           className="bg-transparent outline-none flex-1 text-white placeholder-[#BCBCBC] text-sm md:text-base"
         />
-        <button type="button" aria-label="Закрити" onClick={onClose} className="shrink-0 text-[#BCBCBC] hover:text-white">
+        <button type="button" aria-label={t('close')} onClick={onClose} className="shrink-0 text-[#BCBCBC] hover:text-white">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
@@ -116,9 +118,9 @@ export default function HeaderSearch({
       {showDropdown && (
         <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-[#333] bg-[#1C1C1C] shadow-xl max-h-[70vh] overflow-y-auto z-[100]">
           {isLoading ? (
-            <div className="px-4 py-6 text-center text-[#BCBCBC] text-sm">Завантаження...</div>
+            <div className="px-4 py-6 text-center text-[#BCBCBC] text-sm">{t('loading')}</div>
           ) : results.length === 0 ? (
-            <div className="px-4 py-6 text-center text-[#BCBCBC] text-sm">Нічого не знайдено</div>
+            <div className="px-4 py-6 text-center text-[#BCBCBC] text-sm">{t('noResults')}</div>
           ) : (
             <>
               <ul className="py-2">
@@ -141,7 +143,7 @@ export default function HeaderSearch({
                   onClick={onClose}
                   className="text-[#9C0000] text-sm font-medium hover:underline"
                 >
-                  Всі результати пошуку →
+                  {t('allResults')}
                 </Link>
               </div>
             </>

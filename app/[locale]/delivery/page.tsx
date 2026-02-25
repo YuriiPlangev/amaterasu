@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 const DeliveryIcon = () => (
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -26,83 +27,80 @@ const ReturnIcon = () => (
 );
 
 export default function DeliveryPage() {
+  const t = useTranslations('delivery');
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       <div className="max-w-[1920px] w-full mx-auto site-padding-x py-12 md:py-16 mt-12">
         <h1 className="text-[clamp(28px,3vw,44px)] font-bold uppercase text-[#1C1C1C] mb-2">
-          Доставка і оплата
+          {t('title')}
         </h1>
         <p className="text-[#6B7280] text-base mb-10">
-          Швидко, зручно та надійно — доставляємо ваші замовлення по всій Україні
+          {t('subtitle')}
         </p>
 
         <div className="grid gap-6 md:grid-cols-3">
-          {/* Доставка */}
           <article className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-[#E5E7EB] hover:shadow-md transition-shadow">
             <div className="w-14 h-14 rounded-xl bg-[#9C0000]/10 flex items-center justify-center text-[#9C0000] mb-5">
               <DeliveryIcon />
             </div>
             <h2 className="text-[clamp(18px,1.5vw,22px)] font-bold text-[#1C1C1C] mb-3">
-              Доставка
+              {t('delivery')}
             </h2>
             <ul className="space-y-3 text-[#374151] text-[15px] leading-relaxed">
               <li className="flex gap-2">
                 <span className="text-[#9C0000] font-bold">•</span>
-                Відправка Новою Поштою по Україні — 1–3 робочі дні.
+                {t('delivery1')}
               </li>
               <li className="flex gap-2">
                 <span className="text-[#9C0000] font-bold">•</span>
-                Самовивіз (за попереднім узгодженням) — безкоштовно.
+                {t('delivery2')}
               </li>
               <li className="flex gap-2">
                 <span className="text-[#9C0000] font-bold">•</span>
-                Міжнародна доставка — за індивідуальними тарифами.
+                {t('delivery3')}
               </li>
             </ul>
           </article>
 
-          {/* Оплата */}
           <article className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-[#E5E7EB] hover:shadow-md transition-shadow">
             <div className="w-14 h-14 rounded-xl bg-[#9C0000]/10 flex items-center justify-center text-[#9C0000] mb-5">
               <PaymentIcon />
             </div>
             <h2 className="text-[clamp(18px,1.5vw,22px)] font-bold text-[#1C1C1C] mb-3">
-              Оплата
+              {t('payment')}
             </h2>
             <ul className="space-y-3 text-[#374151] text-[15px] leading-relaxed">
               <li className="flex gap-2">
                 <span className="text-[#9C0000] font-bold">•</span>
-                Оплата карткою онлайн (Visa/Mastercard).
+                {t('payment1')}
               </li>
               <li className="flex gap-2">
                 <span className="text-[#9C0000] font-bold">•</span>
-                Післяплата у відділенні Нової Пошти.
+                {t('payment2')}
               </li>
               <li className="flex gap-2">
                 <span className="text-[#9C0000] font-bold">•</span>
-                Безготівковий розрахунок для юридичних осіб.
+                {t('payment3')}
               </li>
             </ul>
           </article>
 
-          {/* Повернення */}
           <article className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-[#E5E7EB] hover:shadow-md transition-shadow">
             <div className="w-14 h-14 rounded-xl bg-[#9C0000]/10 flex items-center justify-center text-[#9C0000] mb-5">
               <ReturnIcon />
             </div>
             <h2 className="text-[clamp(18px,1.5vw,22px)] font-bold text-[#1C1C1C] mb-3">
-              Повернення
+              {t('return')}
             </h2>
             <p className="text-[#374151] text-[15px] leading-relaxed">
-              Повернення товару можливе протягом 14 днів за умови збереження
-              товарного вигляду та пакування. Деталі уточнюйте у службі підтримки в{' '}
+              {t('returnText')}{' '}
               <a
                 href="https://t.me/amaterasu1shop"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#9C0000] font-semibold hover:underline"
               >
-                Telegram (@amaterasu1shop)
+                {t('returnLink')}
               </a>
               .
             </p>
@@ -110,9 +108,9 @@ export default function DeliveryPage() {
         </div>
 
         <div className="mt-10 p-6 rounded-2xl bg-[#1C1C1C] text-white">
-          <p className="font-semibold text-lg mb-1">Маєте запитання?</p>
+          <p className="font-semibold text-lg mb-1">{t('questions')}</p>
           <p className="text-white/80 text-sm">
-            Напишіть нам у Telegram — ми відповімо протягом години в робочий час.
+            {t('questionsText')}
           </p>
           <a
             href="https://t.me/amaterasu1shop"
@@ -125,6 +123,6 @@ export default function DeliveryPage() {
           </a>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

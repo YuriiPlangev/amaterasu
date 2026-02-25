@@ -5,13 +5,34 @@ export const dynamic = 'force-dynamic';
 import './globals.css';
 import Providers from '../components/Providers';
 
-export const metadata = {
-  title: 'Amaterasu',
-  description: 'Anime Shop',
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://amaterasu-shop.com'),
+  title: {
+    default: 'Amaterasu | Anime Shop',
+    template: '%s | Amaterasu',
+  },
+  description: 'Інтернет-магазин аніме атрибутики. Плакати, наклейки, мерч з улюблених аніме та індивідуальний дизайн. Доставка по Україні.',
+  keywords: ['аніме', 'anime', 'магазин аніме', 'аніме мерч', 'плакати аніме', 'наклейки аніме', 'доставка Україна'],
+  authors: [{ name: 'Amaterasu' }],
+  openGraph: {
+    type: 'website',
+    siteName: 'Amaterasu',
+    locale: 'uk_UA',
+    alternateLocale: 'en_GB',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
   icons: {
     icon: '/svg/favicon.svg',
     shortcut: '/svg/favicon.svg',
     apple: '/svg/favicon.svg',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

@@ -44,6 +44,21 @@ a {
 * {
   box-sizing: border-box;
 }
+
+/* a11y: видимий фокус для клавіатури */
+:focus-visible {
+  outline: 2px solid #9C0000;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #9C0000;
+  outline-offset: 2px;
+}
 /* Скрытие скроллбара */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -174,6 +189,25 @@ a {
   animation: heart-pulse 0.8s ease-in-out infinite;
 }
 
+/* Іконка кошика в хедері — підсвітка, коли в кошику є товари */
+@keyframes cart-icon-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(156, 0, 0, 0.85)); }
+}
+.cart-icon-has-items img {
+  animation: cart-icon-pulse 1.2s ease-in-out infinite;
+}
+.cart-icon-has-items::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: #9C0000;
+}
+
 /* Плавна підсвітка посилань у футері */
 .footer-link-hover:hover p {
   color: #fff;
@@ -199,4 +233,19 @@ a {
 /* Кнопки — лёгкий scale при кліку */
 .btn-press:active {
   transform: scale(0.98);
+}
+
+/* Поява пошуку в хедері */
+@keyframes header-search-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.header-search-animate {
+  animation: header-search-enter 0.25s ease-out forwards;
 }

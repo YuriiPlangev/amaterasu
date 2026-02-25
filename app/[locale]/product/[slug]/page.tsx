@@ -1,14 +1,61 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { woo } from '../../../../lib/woo';
+import { absoluteUrl } from '../../../../lib/seo';
 import RelatedProducts from '../../../../components/RelatedProducts';
 import ProductGallery from '../../../../components/ProductGallery';
 import ProductActions from '../../../../components/ProductActions';
+import JsonLdProduct from '../../../../components/seo/JsonLdProduct';
+import JsonLdBreadcrumb from '../../../../components/seo/JsonLdBreadcrumb';
 
-// Отключаем кэширование для динамических страниц
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+async function getProductBySlug(slug: string) {
+  try {
+    const decoded = decodeURIComponent(slug);
+    const res = await woo.get('products', { params: { slug: decoded } });
+    const normalize = (s: string) => decodeURIComponent(s).toLowerCase();
+    const want = normalize(decoded);
+    return res.data?.find((p: any) => normalize(p.slug || '') === want) || null;
+  } catch {
+    return null;
+  }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string; locale: string }> | { slug: string; locale: string };
+}): Promise<Metadata> {
+  const { slug, locale } = await Promise.resolve(params);
+  const product = await getProductBySlug(slug);
+  if (!product) return { title: 'Товар не знайдено' };
+  const name = product.name || 'Product';
+  const desc =
+    (product.short_description && product.short_description.replace(/<[^>]*>/g, '').trim()) ||
+    (product.description && product.description.replace(/<[^>]*>/g, '').trim().slice(0, 160)) ||
+    '';
+  const image = product.images?.[0]?.src;
+  const path = `/${locale}/product/${slug}`;
+  return {
+    title: name,
+    description: desc.slice(0, 160),
+    openGraph: {
+      title: name,
+      description: desc.slice(0, 160),
+      url: absoluteUrl(path),
+      images: image ? [{ url: image, alt: name }] : undefined,
+      locale: locale === 'uk' ? 'uk_UA' : 'en_GB',
+    },
+    alternates: {
+      canonical: absoluteUrl(path),
+    },
+  };
+}
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string; locale: string }> | { slug: string; locale: string } }) {
   try {
@@ -42,7 +89,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     };
     
     const normalizedRequestSlug = normalizeSlug(productSlug);
-    
+    const tCard = await getTranslations('productCard');
+    const tPage = await getTranslations('productPage');
+
     const product = res.data?.find((p: any) => {
       const normalizedProductSlug = normalizeSlug(p.slug || '');
       return normalizedProductSlug === normalizedRequestSlug;
@@ -52,12 +101,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     
     if (!product) {
       return (
-        <main className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Товар не знайдено</h1>
             <p>Товар з таким slug не існує</p>
           </div>
-        </main>
+        </div>
       );
     }
 
@@ -85,8 +134,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         value: Array.isArray(attr.options) ? attr.options.join(', ') : attr.option || ''
       }));
 
+    const breadcrumbItems = [
+      { name: locale === 'uk' ? 'Головна' : 'Home', path: '' },
+      { name: productTag || (locale === 'uk' ? 'Каталог' : 'Catalog'), path: '/catalog' },
+      { name: product.name, path: `/product/${product.slug}` },
+    ];
+
     return (
-      <main className="max-w-[1920px] w-full mx-auto site-padding-x py-6 md:py-8 pt-20 md:pt-24 mt-12">
+      <div className="max-w-[1920px] w-full mx-auto site-padding-x py-6 md:py-8 pt-20 md:pt-24 mt-12">
+        <JsonLdProduct product={product} locale={locale} />
+        <JsonLdBreadcrumb items={breadcrumbItems} locale={locale} />
         <nav className="text-sm text-[#9C9C9C] mb-4 md:mb-6 flex items-center">
           <Link href={`/${locale}`} className="hover:text-[#1C1C1C]">Головна</Link>
           <span className="mx-1.5">›</span>
@@ -118,14 +175,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <p className="text-[#9C0000] text-[clamp(24px,2.5vw,32px)] font-bold">{product?.price} ₴</p>
               <span className={`text-sm font-semibold ${isInStock ? 'text-[#2E7900]' : 'text-[#9C0000]'}`}>
-                {isInStock ? 'В наявності' : 'Немає в наявності'}
+                {isInStock ? tCard('inStock') : tCard('outOfStock')}
               </span>
             </div>
 
             <ProductActions product={product} />
 
             <div className="border border-[#E6E6E6] rounded-xl p-4 md:p-5">
-              <h2 className="text-base font-bold text-[#1C1C1C] mb-3">Характеристики</h2>
+              <h2 className="text-base font-bold text-[#1C1C1C] mb-3">{tPage('characteristics')}</h2>
               <div className="space-y-3 text-sm">
                 {attributes.length > 0 ? (
                   attributes.map((attr: any) => (
@@ -136,15 +193,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   ))
                 ) : (
                   <>
-                    <div className="flex justify-between"><span className="text-[#6B7280]">Матеріал</span><span className="text-[#1C1C1C]">—</span></div>
-                    <div className="flex justify-between"><span className="text-[#6B7280]">Стан</span><span className="text-[#1C1C1C]">—</span></div>
+                    <div className="flex justify-between"><span className="text-[#6B7280]">{tPage('material')}</span><span className="text-[#1C1C1C]">—</span></div>
+                    <div className="flex justify-between"><span className="text-[#6B7280]">{tPage('condition')}</span><span className="text-[#1C1C1C]">—</span></div>
                   </>
                 )}
               </div>
             </div>
 
             <div className="border border-[#E6E6E6] rounded-xl p-4 md:p-5">
-              <h2 className="text-base font-bold text-[#1C1C1C] mb-4">Доставка</h2>
+              <h2 className="text-base font-bold text-[#1C1C1C] mb-4">{tPage('delivery')}</h2>
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#BCBCBC33]">
                   <div className="flex items-start items-center gap-3 min-w-0">
@@ -153,7 +210,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     </span>
                     <div>
                       <p className="font-semibold text-[#1C1C1C]">Нова Пошта</p>
-                      <p className="text-xs text-[#6B7280] mt-0.5">Доставка по всій Україні, оплата при отриманні</p>
+                      <p className="text-xs text-[#6B7280] mt-0.5">{tPage('deliveryNovaDesc')}</p>
                     </div>
                   </div>
                   <span className="text-[#9C0000] font-semibold shrink-0">45–70 грн.</span>
@@ -165,7 +222,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     </span>
                     <div>
                       <p className="font-semibold text-[#1C1C1C]">Укрпошта</p>
-                      <p className="text-xs text-[#6B7280] mt-0.5">Доставка по всій Україні, оплата при отриманні</p>
+                      <p className="text-xs text-[#6B7280] mt-0.5">{tPage('deliveryUkrDesc')}</p>
                     </div>
                   </div>
                   <span className="text-[#9C0000] font-semibold shrink-0">45–70 грн.</span>
@@ -201,17 +258,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
           )}
         </section>
-      </main>
+      </div>
     );
   } catch (error: any) {
     console.error('Error fetching product:', error.message);
     return (
-      <main className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Помилка завантаження</h1>
           <p>{error.message || 'Не вдалося завантажити товар'}</p>
         </div>
-      </main>
+      </div>
     );
   }
 }

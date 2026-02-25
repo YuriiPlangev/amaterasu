@@ -1,16 +1,18 @@
 'use client';
-import React from 'react'
+import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
+import { useTranslations } from 'next-intl';
 
 import ProductCard from '../ProductCard';
 import { useProducts } from '../../hooks/useProducts';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css/pagination';
 import Image from 'next/image';
-import { ProductSkeleton, SquareSkeleton } from '../ui/Skeletons'
+import { ProductSkeleton, SquareSkeleton } from '../ui/Skeletons';
 
 const BestSellers = () => {
+  const t = useTranslations('a11y');
   const { data: products, isLoading } = useProducts({ bestseller: true });
 
 
@@ -38,16 +40,16 @@ const BestSellers = () => {
         <div className='relative overflow-visible'>
           <button 
             className="swiper-button-prev-custom absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer border border-[#1C1C1C] rounded-full p-2.5 shadow-md bg-white hidden md:flex items-center justify-center -left-[60px]"
-            aria-label="Прокрутити вліво"
+            aria-label={t('scrollLeft')}
           >
-            <Image src='/svg/arrow-left.svg' alt='arrow-left' width={24} height={24} />
+            <Image src='/svg/arrow-left.svg' alt="" width={24} height={24} />
           </button>
 
           <button 
             className="swiper-button-next-custom absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer border border-[#1C1C1C] rounded-full p-2.5 shadow-md bg-white hidden md:flex items-center justify-center -right-[60px]"
-            aria-label="Прокрутити вправо"
+            aria-label={t('scrollRight')}
           >
-            <Image src='/svg/arrow-right.svg' alt='arrow-right' width={24} height={24} />
+            <Image src='/svg/arrow-right.svg' alt="" width={24} height={24} />
           </button>
 
           {products && products.length > 0 ? (
