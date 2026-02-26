@@ -35,7 +35,7 @@ const Hero = () => {
         <div className="md:grid md:grid-cols-2 md:h-full relative">
           
           <div className="z-20 flex flex-col justify-center h-full">
-            <div className="w-full mx-auto md:mx-0">
+            <div className="w-full mx-auto md:mx-0 mb-10">
               <h1 className={`hero-entrance text-[clamp(28px,3vw,65px)] font-bold pb-4 uppercase text-white leading-[1.1] drop-shadow-2xl ${revealTitle}`}>
                 {t('title')}
               </h1>
