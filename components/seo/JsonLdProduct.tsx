@@ -36,9 +36,18 @@ export default function JsonLdProduct({
     sku: product.sku || undefined,
     offers: {
       '@type': 'Offer',
-      price: product.price ? parseFloat(String(product.price).replace(/[^\d.,]/g, '').replace(',', '.') : undefined,
+      price: product.price
+        ? parseFloat(
+            String(product.price)
+              .replace(/[^\d.,]/g, '')
+              .replace(',', '.'),
+          )
+        : undefined,
       priceCurrency: 'UAH',
-      availability: product.stock_status === 'instock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      availability:
+        product.stock_status === 'instock'
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
     },
   };
   return (

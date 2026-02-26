@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       entries.push({
         url,
         lastModified: new Date(),
-        changeFrequency: path === '' ? 'daily' : (path === '/news' ? 'daily' : 'weekly') as const,
+        changeFrequency: path === '' ? 'daily' : (path === '/news' ? 'daily' : 'weekly'),
         priority: path === '' ? 1 : 0.8,
       });
     }
