@@ -181,10 +181,6 @@ export default function CatalogPage() {
   const { data: productsData, isLoading, error } = useProducts(productParams);
 
   // Debug: логируем параметры запроса
-  useEffect(() => {
-    console.log('Catalog params:', productParams);
-    console.log('Current page:', currentPage);
-  }, [currentPage, productParams]);
 
   // Скидаємо сторінку і накопичені товари при зміні фільтрів
   useEffect(() => {

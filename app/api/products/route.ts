@@ -23,18 +23,34 @@ function productMatchesAttribute(
   if (!allowedValues?.length) return true;
   const attrs = product.attributes || [];
   const targetNorm = attrName.toLowerCase();
-  const attr = attrs.find((a: any) => {
+  
+  // Пробуем найти атрибут по разным критериям
+  let attr = attrs.find((a: any) => {
     const n = normalizeAttrKey(a?.name || "");
     const s = normalizeAttrKey(a?.slug || "");
     return n === targetNorm || s === targetNorm;
   });
-  if (!attr) return false;
+  
+  // Если не нашли, пробуем поиск более гибкий (содержит substring)
+  if (!attr && attrName === "character") {
+    attr = attrs.find((a: any) => {
+      const n = (a?.name || "").toLowerCase();
+      const s = (a?.slug || "").toLowerCase();
+      return n.includes("character") || s.includes("character");
+    });
+  }
+  
+  if (!attr) {
+    return false;
+  }
+  
   const opts = Array.isArray(attr.options)
     ? attr.options
     : attr.option
     ? [attr.option]
     : [];
   const productValues = opts.map((v: string) => String(v || "").trim().toLowerCase());
+  
   return allowedValues.some((v) =>
     productValues.includes(String(v).trim().toLowerCase())
   );
@@ -107,22 +123,39 @@ export async function GET(req: Request) {
     wcParams.order = "desc";
   }
 
+  // Загруженные значения фильтров
+  const titleVals = params.attribute_title
+    ? String(params.attribute_title).split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+  const characterVals = params.attribute_character
+    ? String(params.attribute_character).split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+  const genreVals = params.attribute_genre
+    ? String(params.attribute_genre).split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+
   const hasComplexFilters =
     categoryIds.length > 1 ||
-    params.attribute_title ||
-    params.attribute_character ||
-    params.attribute_genre ||
+    titleVals.length > 0 ||
+    characterVals.length > 0 ||
+    genreVals.length > 0 ||
     params.price_min ||
     params.price_max ||
     (params.search && String(params.search).trim());
+  
   if (hasComplexFilters) {
-    wcParams.per_page = 500;
+    wcParams.per_page = 100;  // WooCommerce max is 100
     wcParams.page = 1;
   }
 
   try {
+    console.log("[Products API] GET request started with params:", params);
+    console.log("[Products API] WC params:", wcParams);
+    
     const res = await woo.get("products", wcParams);
     let filteredProducts = res.data || [];
+    
+    console.log("[Products API] Raw WooCommerce response - first product keys:", Object.keys(filteredProducts[0] || {}).join(", "));
     
     // Получаем информацию о пагинации из заголовков WooCommerce
     const totalProducts = res.headers?.['x-wp-total'] ? parseInt(res.headers['x-wp-total']) : filteredProducts.length;
@@ -135,7 +168,7 @@ export async function GET(req: Request) {
       received_products: filteredProducts.length,
       total_products: totalProducts,
       total_pages: totalPages,
-      wcParams: wcParams
+      first_product_has_attributes: filteredProducts[0]?.attributes?.length > 0
     });
 
     // Поиск по названию и описанию (гарантированная фильтрация на нашей стороне)
@@ -166,32 +199,64 @@ export async function GET(req: Request) {
         p.tags?.some((t: any) => t.id === tagId)
       );
     }
-
-    // Атрибуты title, character, genre
-    const titleVals = params.attribute_title
-      ? String(params.attribute_title).split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
-    const characterVals = params.attribute_character
-      ? String(params.attribute_character).split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
-    const genreVals = params.attribute_genre
-      ? String(params.attribute_genre).split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
-
-    if (titleVals.length) {
-      filteredProducts = filteredProducts.filter((p: any) =>
-        productMatchesAttribute(p, "title", titleVals)
-      );
-    }
+    
+    // Фильтруем по атрибутам на нашей стороне (всегда, потому что WooCommerce API не поддерживает это правильно)
     if (characterVals.length) {
+      console.log("[Products API] ====== CHARACTER FILTER DEBUG ======");
+      console.log("[Products API] Requested characters:", characterVals);
+      console.log("[Products API] Total products before filter:", filteredProducts.length);
+      
+      // Логируем ВСЕ товары и их атрибуты
+      console.log("[Products API] Logging first 3 products with all attributes:");
+      filteredProducts.slice(0, 3).forEach((p: any, idx: number) => {
+        console.log(`[Products API] Product ${idx}: ${p.name} (id: ${p.id})`, {
+          attributes_count: p.attributes?.length,
+          attributes: p.attributes?.map((a: any) => ({
+            name: a.name,
+            slug: a.slug,
+            options: Array.isArray(a.options) ? a.options : [a.option],
+          }))
+        });
+      });
+      
+      // Собираем все возможные значения character атрибута для отладки
+      const allCharacterValues = new Set<string>();
+      filteredProducts.forEach((p: any) => {
+        const attr = p.attributes?.find((a: any) => {
+          const n = (a?.name || "").toLowerCase();
+          const s = (a?.slug || "").toLowerCase();
+          return n.includes("character") || s.includes("character");
+        });
+        if (attr) {
+          const opts = Array.isArray(attr.options) ? attr.options : [attr.option];
+          opts.forEach((v: any) => allCharacterValues.add(String(v).toLowerCase()));
+        }
+      });
+      console.log("[Products API] Available character values in DB:", Array.from(allCharacterValues).slice(0, 10));
+      console.log("[Products API] Requested (lowercase):", characterVals.map(v => v.toLowerCase()));
+      
+      const beforeCount = filteredProducts.length;
       filteredProducts = filteredProducts.filter((p: any) =>
         productMatchesAttribute(p, "character", characterVals)
       );
+      console.log("[Products API] After character filter:", filteredProducts.length, "(removed", beforeCount - filteredProducts.length, ")");
+      console.log("[Products API] ====== CHARACTER FILTER DEBUG END ======");
+    }
+    if (titleVals.length) {
+      console.log("[Products API] Filtering by title:", titleVals, "from", filteredProducts.length, "products");
+      const beforeCount = filteredProducts.length;
+      filteredProducts = filteredProducts.filter((p: any) =>
+        productMatchesAttribute(p, "title", titleVals)
+      );
+      console.log("[Products API] After title filter:", filteredProducts.length, "(removed", beforeCount - filteredProducts.length, ")");
     }
     if (genreVals.length) {
+      console.log("[Products API] Filtering by genre:", genreVals, "from", filteredProducts.length, "products");
+      const beforeCount = filteredProducts.length;
       filteredProducts = filteredProducts.filter((p: any) =>
         productMatchesAttribute(p, "genre", genreVals)
       );
+      console.log("[Products API] After genre filter:", filteredProducts.length, "(removed", beforeCount - filteredProducts.length, ")");
     }
 
     // Бестселлеры
@@ -288,10 +353,22 @@ export async function GET(req: Request) {
       },
     });
   } catch (err: any) {
-    console.error("Woo API Error:", err.message);
+    console.error("[Products API] Woo API Error:", {
+      message: err.message,
+      status: err.status,
+      statusCode: err.statusCode,
+      response: err.response?.data || err.response,
+      stack: err.stack
+    });
+    const errorDetails = {
+      error: "Failed to fetch",
+      message: err.message,
+      status: err.status || err.statusCode,
+      timestamp: new Date().toISOString()
+    };
     return new Response(
-      JSON.stringify({ error: "Failed to fetch", details: err.message }),
-      { status: 500 }
+      JSON.stringify(errorDetails),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
