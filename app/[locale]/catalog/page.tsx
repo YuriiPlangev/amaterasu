@@ -527,13 +527,13 @@ export default function CatalogPage() {
                     ))}
                   </section>
                   
-                  {/* Кнопка "Показать еще" */}
-                  {hasMore && (
+                  {/* Кнопка "Показать еще" - показываем если есть еще товары ИЛИ идет загрузка */}
+                  {(hasMore || (isLoading && currentPage > 1)) && (
                     <div className="flex flex-col items-center mt-8 gap-4">
                       <button
                         onClick={loadMore}
-                        disabled={isLoading && currentPage > 1}
-                        className="bg-[#9C0000] text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-[#7a0000] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        disabled={isLoading}
+                        className="bg-[#9C0000] text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-[#7a0000] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2 min-w-[180px] justify-center"
                       >
                         {isLoading && currentPage > 1 ? (
                           <>
