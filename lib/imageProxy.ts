@@ -2,7 +2,7 @@
  * Преобразует внешнюю URL изображения в прокси через локальное API
  * чтобы избежать SSL сертифікатних проблем
  */
-export function getProxiedImageUrl(imageUrl: string | undefined): string {
+export function getProxiedImageUrl(imageUrl: string | null | undefined): string {
   if (!imageUrl) {
     return '/images/placeholder.jpg';
   }
