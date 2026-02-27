@@ -149,26 +149,17 @@ export async function GET(req: Request) {
   }
 
   try {
-    console.log("[Products API] GET request started with params:", params);
-    console.log("[Products API] WC params:", wcParams);
-    
     const res = await woo.get("products", wcParams);
     let filteredProducts = res.data || [];
-    
-    console.log("[Products API] Raw WooCommerce response - first product keys:", Object.keys(filteredProducts[0] || {}).join(", "));
     
     // Получаем информацию о пагинации из заголовков WooCommerce
     const totalProducts = res.headers?.['x-wp-total'] ? parseInt(res.headers['x-wp-total']) : filteredProducts.length;
     const totalPages = res.headers?.['x-wp-totalpages'] ? parseInt(res.headers['x-wp-totalpages']) : 1;
     
     console.log('WooCommerce response:', {
-      requested_page: wcParams.page,
-      requested_per_page: wcParams.per_page,
-      hasComplexFilters,
       received_products: filteredProducts.length,
       total_products: totalProducts,
-      total_pages: totalPages,
-      first_product_has_attributes: filteredProducts[0]?.attributes?.length > 0
+      total_pages: totalPages
     });
 
     // Поиск по названию и описанию (гарантированная фильтрация на нашей стороне)
@@ -200,63 +191,21 @@ export async function GET(req: Request) {
       );
     }
     
-    // Фильтруем по атрибутам на нашей стороне (всегда, потому что WooCommerce API не поддерживает это правильно)
+    // Фильтруем по атрибутам на нашей стороне
     if (characterVals.length) {
-      console.log("[Products API] ====== CHARACTER FILTER DEBUG ======");
-      console.log("[Products API] Requested characters:", characterVals);
-      console.log("[Products API] Total products before filter:", filteredProducts.length);
-      
-      // Логируем ВСЕ товары и их атрибуты
-      console.log("[Products API] Logging first 3 products with all attributes:");
-      filteredProducts.slice(0, 3).forEach((p: any, idx: number) => {
-        console.log(`[Products API] Product ${idx}: ${p.name} (id: ${p.id})`, {
-          attributes_count: p.attributes?.length,
-          attributes: p.attributes?.map((a: any) => ({
-            name: a.name,
-            slug: a.slug,
-            options: Array.isArray(a.options) ? a.options : [a.option],
-          }))
-        });
-      });
-      
-      // Собираем все возможные значения character атрибута для отладки
-      const allCharacterValues = new Set<string>();
-      filteredProducts.forEach((p: any) => {
-        const attr = p.attributes?.find((a: any) => {
-          const n = (a?.name || "").toLowerCase();
-          const s = (a?.slug || "").toLowerCase();
-          return n.includes("character") || s.includes("character");
-        });
-        if (attr) {
-          const opts = Array.isArray(attr.options) ? attr.options : [attr.option];
-          opts.forEach((v: any) => allCharacterValues.add(String(v).toLowerCase()));
-        }
-      });
-      console.log("[Products API] Available character values in DB:", Array.from(allCharacterValues).slice(0, 10));
-      console.log("[Products API] Requested (lowercase):", characterVals.map(v => v.toLowerCase()));
-      
-      const beforeCount = filteredProducts.length;
       filteredProducts = filteredProducts.filter((p: any) =>
         productMatchesAttribute(p, "character", characterVals)
       );
-      console.log("[Products API] After character filter:", filteredProducts.length, "(removed", beforeCount - filteredProducts.length, ")");
-      console.log("[Products API] ====== CHARACTER FILTER DEBUG END ======");
     }
     if (titleVals.length) {
-      console.log("[Products API] Filtering by title:", titleVals, "from", filteredProducts.length, "products");
-      const beforeCount = filteredProducts.length;
       filteredProducts = filteredProducts.filter((p: any) =>
         productMatchesAttribute(p, "title", titleVals)
       );
-      console.log("[Products API] After title filter:", filteredProducts.length, "(removed", beforeCount - filteredProducts.length, ")");
     }
     if (genreVals.length) {
-      console.log("[Products API] Filtering by genre:", genreVals, "from", filteredProducts.length, "products");
-      const beforeCount = filteredProducts.length;
       filteredProducts = filteredProducts.filter((p: any) =>
         productMatchesAttribute(p, "genre", genreVals)
       );
-      console.log("[Products API] After genre filter:", filteredProducts.length, "(removed", beforeCount - filteredProducts.length, ")");
     }
 
     // Бестселлеры
