@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getProxiedImageUrl } from '../../lib/imageProxy';
 
 const PopularCategory = ({ category, locale = 'uk' }: { category: any; locale?: string }) => {
   const name = category.name ? encodeURIComponent(category.name) : '';
@@ -10,41 +11,35 @@ const PopularCategory = ({ category, locale = 'uk' }: { category: any; locale?: 
   
   // Обработка различных форматов изображений
   const getImageUrl = () => {
+    let imageUrl = '';
+    
     // WooCommerce REST API format: category.image.src
     if (category.image?.src) {
-      return category.image.src;
+      imageUrl = category.image.src;
     }
     // Direct image URL
-    if (typeof category.image === 'string' && category.image) {
-      return category.image;
+    else if (typeof category.image === 'string' && category.image) {
+      imageUrl = category.image;
     }
     // ACF image field (может быть объектом или строкой)
-    if (category.acf?.image) {
+    else if (category.acf?.image) {
       if (typeof category.acf.image === 'string') {
-        return category.acf.image;
-      }
-      if (category.acf.image.url) {
-        return category.acf.image.url;
-      }
-      if (category.acf.image.sizes?.large) {
-        return category.acf.image.sizes.large;
+        imageUrl = category.acf.image;
+      } else if (category.acf.image.url) {
+        imageUrl = category.acf.image.url;
+      } else if (category.acf.image.sizes?.large) {
+        imageUrl = category.acf.image.sizes.large;
       }
     }
     
-    // Debug: показываем что пришло в консоли
-    if (typeof window !== 'undefined') {
-      console.log('Category image data:', {
-        name: category.name,
-        image: category.image,
-        acf: category.acf
-      });
+    if (!imageUrl) {
+      return null;
     }
     
-    // Fallback to placeholder
-    return '/images/placeholder.jpg';
+    return imageUrl;
   };
   
-  const imageUrl = getImageUrl();
+  const imageUrl = getProxiedImageUrl(getImageUrl());
   
   return (
     <Link href={href} className="block">
@@ -55,7 +50,7 @@ const PopularCategory = ({ category, locale = 'uk' }: { category: any; locale?: 
             alt={category.name || 'Category'}
             fill
             className='object-cover transition-transform duration-500 group-hover:scale-105'
-            unoptimized={imageUrl.startsWith('http')}
+            unoptimized={false}
           />
         </div>
 

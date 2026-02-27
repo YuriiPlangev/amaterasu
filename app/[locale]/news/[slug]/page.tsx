@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useNewsPost } from '../../../../hooks/useNews';
+import { getProxiedImageUrl } from '../../../../lib/imageProxy';
 
 export default function NewsSlugPage() {
   const t = useTranslations('newsSlug');
@@ -72,7 +73,7 @@ export default function NewsSlugPage() {
           {post.image && (
             <div className="relative w-full aspect-[21/9] md:aspect-[3/1] bg-[#F3F4F6]">
               <Image
-                src={post.image}
+                src={getProxiedImageUrl(post.image)}
                 alt={post.title.replace(/<[^>]*>/g, '')}
                 fill
                 className="object-cover"

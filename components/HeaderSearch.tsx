@@ -127,7 +127,7 @@ export default function HeaderSearch({
                 {results.map((p) => (
                   <li key={p.id}>
                     <Link
-                      href={`${basePath}/product/${encodeURIComponent(p.slug)}`}
+                      href={`${basePath}/product/${encodeURIComponent(p.slug)}?id=${p.id}`}
                       onClick={onClose}
                       className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#2a2a2a] text-white text-sm"
                     >

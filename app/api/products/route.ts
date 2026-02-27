@@ -146,6 +146,12 @@ export async function GET(req: Request) {
       );
     }
 
+    // Убедиться что все товары имеют slug (если нет - использовать ID как fallback)
+    filteredProducts = filteredProducts.map((p: any) => ({
+      ...p,
+      slug: p.slug || String(p.id)
+    }));
+
     // Категории: несколько ID — фильтруем вручную
     if (categoryIds.length > 0) {
       filteredProducts = filteredProducts.filter((p: any) =>

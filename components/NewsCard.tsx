@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
+import { getProxiedImageUrl } from '../lib/imageProxy';
 
 interface NewsCardProps {
   post: {
@@ -42,7 +43,7 @@ export default function NewsCard({ post }: NewsCardProps) {
 
       <div className="news-card-image-zoom overflow-hidden rounded-t-2xl">
         <Image
-          src={post.image || '/images/placeholder.jpg'}
+          src={getProxiedImageUrl(post.image)}
           alt={post.title}
           width={400}
           height={250}

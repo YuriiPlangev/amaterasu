@@ -15,8 +15,6 @@ export async function GET() {
       woo.get("products/attributes")
     ]);
 
-    // Лог для проверки в консоли сервера (терминале)
-    console.log("FETCHED CATEGORIES COUNT:", catRes.data?.length);
 
     const attrIds = {
       character: attrsRes.data.find((a: any) => a.slug === 'pa_character' || a.slug === 'character')?.id,

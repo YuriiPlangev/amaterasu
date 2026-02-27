@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useCartStore } from '../store/cartStore';
 import { useFavoritesStore } from '../store/favoritesStore';
 import { useToastStore } from '../store/toastStore';
+import { getProxiedImageUrl } from '../lib/imageProxy';
 
 export default function ProductCard({ product }: { product: any }) {
   const t = useTranslations('toast');
@@ -40,7 +41,17 @@ export default function ProductCard({ product }: { product: any }) {
   };
 
   const productTag = product?.tags?.[0]?.name || '';
-  const productHref = `/${locale}/product/${product?.slug || product?.id}`;
+  const productHref = `/${locale}/product/${product?.slug || product?.id}?id=${product?.id}`;
+
+  const handleProductClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('[ProductNav] click', {
+      id: product?.id,
+      slug: product?.slug,
+      name: product?.name,
+      href: productHref,
+    });
+  };
 
   return (
     <article className={`relative border border-[#D8D8D8] px-5 py-4 flex flex-col rounded-2xl items-center gap-4 transition-all duration-300 hover:shadow-[0px_12px_28px_0px_#0000001A] ${!isInStock ? 'opacity-50' : ''}`}>
@@ -50,8 +61,8 @@ export default function ProductCard({ product }: { product: any }) {
         </span>
       )}
 
-      <Link href={productHref} className="block w-full cursor-pointer" onClick={(e) => e.stopPropagation()}>
-        <Image src={product?.images?.[0]?.src || '/images/placeholder.jpg'} alt={product?.name} width={300} height={260} className="w-full h-[260px] object-contain" />
+      <Link href={productHref} className="block w-full cursor-pointer" onClick={handleProductClick}>
+        <Image src={getProxiedImageUrl(product?.images?.[0]?.src)} alt={product?.name} width={300} height={260} className="w-full h-[260px] object-contain" />
         <div className="flex flex-col items-center w-full gap-[10px]">
           <div className="flex justify-between items-center w-full gap-2">
             <p className="text-[#9C0000] font-semibold text-[25px] whitespace-nowrap shrink-0">{product?.price} ₴</p>

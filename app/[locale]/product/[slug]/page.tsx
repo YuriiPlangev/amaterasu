@@ -14,25 +14,80 @@ import JsonLdBreadcrumb from '../../../../components/seo/JsonLdBreadcrumb';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+async function getProductById(productId: number) {
+  try {
+    const res = await woo.get(`products/${productId}`);
+    return res.data || null;
+  } catch {
+    return null;
+  }
+}
+
 async function getProductBySlug(slug: string) {
   try {
     const decoded = decodeURIComponent(slug);
     const res = await woo.get('products', { params: { slug: decoded } });
-    const normalize = (s: string) => decodeURIComponent(s).toLowerCase();
-    const want = normalize(decoded);
-    return res.data?.find((p: any) => normalize(p.slug || '') === want) || null;
-  } catch {
+    
+    const normalizeSlug = (s: string): string => {
+      try {
+        return decodeURIComponent(s).toLowerCase().trim();
+      } catch {
+        return s.toLowerCase().trim();
+      }
+    };
+    
+    const normalizedWant = normalizeSlug(decoded);
+    
+    // Сначала пробуем найти по совпадению slug
+    let product = res.data?.find((p: any) => {
+      const normalizedProduct = normalizeSlug(p.slug || '');
+      return normalizedProduct === normalizedWant;
+    });
+    
+    if (product) {
+      return product;
+    }
+    
+    // Если не найден, пробуем по ID
+    if (!isNaN(Number(decoded))) {
+      product = res.data?.find((p: any) => p.id === Number(decoded));
+      if (product) {
+        return product;
+      }
+    }
+    
+    // Если все еще не найден, ищем по частичному совпадению
+    if (res.data) {
+      const searchSlug = decoded.toLowerCase();
+      product = res.data.find((p: any) => {
+        const match = (p.slug || '').toLowerCase().includes(searchSlug) ||
+          searchSlug.includes((p.slug || '').toLowerCase());
+        return match;
+      });
+      if (product) {
+        return product;
+      }
+    }
+    
+    return null;
+  } catch (error) {
     return null;
   }
 }
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string; locale: string }> | { slug: string; locale: string };
+  searchParams?: Promise<{ id?: string }> | { id?: string };
 }): Promise<Metadata> {
   const { slug, locale } = await Promise.resolve(params);
-  const product = await getProductBySlug(slug);
+  const resolvedSearchParams = await Promise.resolve(searchParams || {});
+  const requestedId = Number(resolvedSearchParams?.id);
+  const product = Number.isFinite(requestedId) && requestedId > 0
+    ? await getProductById(requestedId)
+    : await getProductBySlug(slug);
   if (!product) return { title: 'Товар не знайдено' };
   const name = product.name || 'Product';
   const desc =
@@ -57,10 +112,19 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProductPage({ params }: { params: Promise<{ slug: string; locale: string }> | { slug: string; locale: string } }) {
+export default async function ProductPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string; locale: string }> | { slug: string; locale: string };
+  searchParams?: Promise<{ id?: string }> | { id?: string };
+}) {
   try {
     // В Next.js 15 params может быть промисом
     const resolvedParams = await Promise.resolve(params);
+    const resolvedSearchParams = await Promise.resolve(searchParams || {});
+    const requestedId = Number(resolvedSearchParams?.id);
+    const rawSlug = resolvedParams.slug;
     // Нормализуем slug - декодируем если он в URL-encoded формате
     let productSlug = resolvedParams.slug;
     try {
@@ -70,36 +134,94 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       // Если уже декодирован, используем как есть
       productSlug = resolvedParams.slug;
     }
+
+    console.log('[ProductPage] open', {
+      locale: resolvedParams.locale,
+      rawSlug,
+      decodedSlug: productSlug,
+      requestedId: Number.isFinite(requestedId) && requestedId > 0 ? requestedId : null,
+    });
+    const tCard = await getTranslations('productCard');
+    const tPage = await getTranslations('productPage');
+
+    let product: any = null;
+
+    if (Number.isFinite(requestedId) && requestedId > 0) {
+      product = await getProductById(requestedId);
+      console.log('[ProductPage] direct id lookup', {
+        productId: requestedId,
+        found: Boolean(product),
+      });
+    }
     
- 
-    
-    // Получаем товар по slug через WooCommerce API
-    const res = await woo.get('products', { params: { slug: productSlug } });
-    
-    
+    let res: any = { data: [] };
+    if (!product) {
+      // Получаем товар по slug через WooCommerce API
+      res = await woo.get('products', { params: { slug: productSlug } });
+      console.log('[ProductPage] woo candidates', {
+        count: Array.isArray(res.data) ? res.data.length : 0,
+        requestedSlug: productSlug,
+      });
+    }
     
     // Нормализуем и сравниваем slug'и
     // Ищем товар с точным совпадением slug (нормализуем оба значения)
     const normalizeSlug = (slug: string): string => {
       try {
-        return decodeURIComponent(slug).toLowerCase();
+        return decodeURIComponent(slug).toLowerCase().trim();
       } catch {
-        return slug.toLowerCase();
+        return slug.toLowerCase().trim();
       }
     };
     
     const normalizedRequestSlug = normalizeSlug(productSlug);
-    const tCard = await getTranslations('productCard');
-    const tPage = await getTranslations('productPage');
 
-    const product = res.data?.find((p: any) => {
-      const normalizedProductSlug = normalizeSlug(p.slug || '');
-      return normalizedProductSlug === normalizedRequestSlug;
-    }) || null;
+    if (!product) {
+      // Сначала пробуем найти по slug
+      product = res.data?.find((p: any) => {
+        const normalizedProductSlug = normalizeSlug(p.slug || '');
+        return normalizedProductSlug === normalizedRequestSlug;
+      }) || null;
+
+      console.log('[ProductPage] exact slug match', {
+        found: Boolean(product),
+        normalizedRequestSlug,
+      });
+    }
+
+    // Если не найден по slug, пробуем как ID (на случай если slug - это число)
+    if (!product && !isNaN(Number(productSlug))) {
+      const productId = Number(productSlug);
+      product = res.data?.find((p: any) => p.id === productId) || null;
+      console.log('[ProductPage] fallback id match', {
+        found: Boolean(product),
+        productId,
+      });
+    }
+
+    // Если все еще не найден, пробуем поиск без нормализации (на сдучай если был изменен slug)
+    if (!product && res.data && res.data.length > 0) {
+      // Ищем по частичному совпадению для товаров с проблемами кодирования
+      const searchSlug = productSlug.toLowerCase();
+      product = res.data.find((p: any) => 
+        (p.slug || '').toLowerCase().includes(searchSlug) ||
+        searchSlug.includes((p.slug || '').toLowerCase())
+      ) || null;
+      console.log('[ProductPage] fallback partial match', {
+        found: Boolean(product),
+        searchSlug,
+      });
+    }
     
 
     
     if (!product) {
+      console.error('[ProductPage] not found', {
+        rawSlug,
+        decodedSlug: productSlug,
+        normalizedRequestSlug,
+        candidates: (res.data || []).map((p: any) => ({ id: p.id, slug: p.slug })),
+      });
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">

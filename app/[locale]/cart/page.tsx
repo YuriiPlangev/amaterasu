@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useCartStore } from '../../../store/cartStore';
+import { getProxiedImageUrl } from '../../../lib/imageProxy';
 
 export default function CartPage() {
   const t = useTranslations('cart');
@@ -326,7 +327,7 @@ export default function CartPage() {
                 >
                   {item.image && (
                     <Image
-                      src={item.image}
+                      src={getProxiedImageUrl(item.image)}
                       alt={item.name}
                       width={120}
                       height={120}

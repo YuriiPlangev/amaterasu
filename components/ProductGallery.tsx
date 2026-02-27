@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useFavoritesStore } from '../store/favoritesStore';
 import { useToastStore } from '../store/toastStore';
+import { getProxiedImageUrl } from '../lib/imageProxy';
 
 interface ProductGalleryProps {
   product?: { id: number; name?: string; slug?: string; price?: string; images?: Array<{ src?: string }> };
@@ -52,7 +53,7 @@ export default function ProductGallery({ product, name, tag, images, fallbackSrc
 
       <div className="flex-1 flex items-center justify-center min-h-0">
         <Image
-          src={active}
+          src={getProxiedImageUrl(active)}
           alt={name}
           width={620}
           height={620}
@@ -70,7 +71,7 @@ export default function ProductGallery({ product, name, tag, images, fallbackSrc
             }`}
           >
             <Image
-              src={img?.src || fallbackSrc}
+              src={getProxiedImageUrl(img?.src || fallbackSrc)}
               alt={name}
               width={80}
               height={80}
