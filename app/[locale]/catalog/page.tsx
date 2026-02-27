@@ -12,6 +12,24 @@ import { Swiper, SwiperSlide,  } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 
+// CSS для анимации
+const fadeInStyles = `
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .new-product-animate {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+`;
+
 const FunnelIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
@@ -44,6 +62,9 @@ export default function CatalogPage() {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [categoryNames, setCategoryNames] = useState<Record<number, string>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [newProductIds, setNewProductIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const q = searchParams.get('search') ?? '';
@@ -77,6 +98,7 @@ export default function CatalogPage() {
       .catch(() => {});
   }, []);
 
+  
   const hasActiveFilters =
     filterState.priceFrom !== '' ||
     filterState.priceTo !== '' ||
@@ -140,7 +162,8 @@ export default function CatalogPage() {
   };
 
   const productParams: Record<string, string | undefined> = {
-    per_page: '24',
+    per_page: '16',
+    page: String(currentPage),
     sort: sortBy,
   };
   if (searchApplied.trim()) {
@@ -155,10 +178,96 @@ export default function CatalogPage() {
   if (filterState.characters.length) productParams.attribute_character = filterState.characters.join(',');
   if (filterState.genres.length) productParams.attribute_genre = filterState.genres.join(',');
 
-  const { data: products, isLoading, error } = useProducts(productParams);
+  const { data: productsData, isLoading, error } = useProducts(productParams);
+
+  // Debug: логируем параметры запроса
+  useEffect(() => {
+    console.log('Catalog params:', productParams);
+    console.log('Current page:', currentPage);
+  }, [currentPage, productParams]);
+
+  // Скидаємо сторінку і накопичені товари при зміні фільтрів
+  useEffect(() => {
+    console.log('Filters changed, resetting to page 1');
+    setCurrentPage(1);
+    setAllProducts([]);
+  }, [
+    searchApplied,
+    sortBy,
+    filterState.categoryIds.join(','),
+    filterState.priceFrom,
+    filterState.priceTo,
+    filterState.titles.join(','),
+    filterState.characters.join(','),
+    filterState.genres.join(','),
+  ]);
+
+  // Накопичуємо товари при завантаженні нової сторінки
+  useEffect(() => {
+    if (productsData && typeof productsData === 'object' && 'products' in productsData) {
+      console.log('Products data received:', {
+        page: productsData.page,
+        currentPage,
+        productsCount: productsData.products?.length,
+        hasMore: productsData.hasMore
+      });
+      
+      if (currentPage === 1) {
+        setAllProducts(productsData.products || []);
+      } else {
+        // Добавляем только уникальные товары (избегаем дубликатов)
+        setAllProducts(prev => {
+          const existingIds = new Set(prev.map((p: any) => p.id));
+          const newProducts = (productsData.products || []).filter((p: any) => !existingIds.has(p.id));
+          console.log('Adding new products:', newProducts.length, 'of', productsData.products?.length);
+          
+          // Отмечаем новые товары для анимации
+          const newIds = new Set<number>(newProducts.map((p: any) => p.id));
+          setNewProductIds(newIds);
+          
+          // Убираем анимацию через 600ms
+          setTimeout(() => {
+            setNewProductIds(new Set());
+          }, 600);
+          
+          return [...prev, ...newProducts];
+        });
+      }
+    } else if (Array.isArray(productsData)) {
+      // Старий формат (для зворотної сумісності)
+      if (currentPage === 1) {
+        setAllProducts(productsData);
+      }
+    }
+  }, [productsData, currentPage]);
+
+  const hasMore = productsData && typeof productsData === 'object' && 'hasMore' in productsData 
+    ? productsData.hasMore 
+    : false;
+
+  const loadMore = () => {
+    setCurrentPage(prev => prev + 1);
+    
+    // Плавная прокрутка к новым товарам после загрузки
+    setTimeout(() => {
+      const catalogSection = document.querySelector('section.grid');
+      if (catalogSection) {
+        const currentScrollY = window.scrollY;
+        const sectionBottom = catalogSection.getBoundingClientRect().bottom + currentScrollY;
+        const targetScrollY = sectionBottom - window.innerHeight + 200;
+        
+        window.scrollTo({
+          top: Math.min(targetScrollY, currentScrollY + 400),
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
+  };
 
   return (
-    <div className="max-w-[1920px] w-full mx-auto site-padding-x py-10 mt-20">
+    <>
+      <style dangerouslySetInnerHTML={{ __html: fadeInStyles }} />
+      <div className="max-w-[1920px] w-full mx-auto site-padding-x py-10 mt-20">
       {/* Mobile: при открытых фильтрах — только фильтры, header и footer видны, контент скрыт */}
       {isMobileFiltersOpen ? (
         <div className="md:hidden flex flex-col min-h-[60vh]">
@@ -393,7 +502,8 @@ export default function CatalogPage() {
 
             </header>
 
-          {isLoading && (
+          {/* Загрузка первой страницы */}
+          {isLoading && currentPage === 1 && (
             <div className="py-10 text-center text-gray-600">{t('loadingProducts')}</div>
           )}
 
@@ -401,16 +511,45 @@ export default function CatalogPage() {
             <div className="py-10 text-center text-red-600">{t('loadError')}</div>
           )}
 
-          {!isLoading && !error && (
+          {!error && ((currentPage === 1 && !isLoading) || currentPage > 1) && (
             <>
-              {products && products.length > 0 ? (
-                <section className="grid grid-cols-2 lg:grid-cols-3 [@media(min-width:1600px)]:grid-cols-4 gap-6">
-                  {products.map((product: any) => (
-                    <div key={product.id} className="w-full">
-                      <ProductCard product={product} />
+              {allProducts && allProducts.length > 0 ? (
+                <>
+                  <section className="grid grid-cols-2 lg:grid-cols-3 [@media(min-width:1600px)]:grid-cols-4 gap-6">
+                    {allProducts.map((product: any, index: number) => (
+                      <div 
+                        key={product.id} 
+                        className={`w-full ${newProductIds.has(product.id) ? 'new-product-animate' : ''}`}
+                        style={newProductIds.has(product.id) ? { animationDelay: `${(index % 16) * 0.05}s` } : {}}
+                      >
+                        <ProductCard product={product} />
+                      </div>
+                    ))}
+                  </section>
+                  
+                  {/* Кнопка "Показать еще" */}
+                  {hasMore && (
+                    <div className="flex flex-col items-center mt-8 gap-4">
+                      <button
+                        onClick={loadMore}
+                        disabled={isLoading && currentPage > 1}
+                        className="bg-[#9C0000] text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-[#7a0000] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {isLoading && currentPage > 1 ? (
+                          <>
+                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            {t('loadingMore')}
+                          </>
+                        ) : (
+                          t('loadMore')
+                        )}
+                      </button>
                     </div>
-                  ))}
-                </section>
+                  )}
+                </>
               ) : (
                 <div className="py-10 text-center text-gray-600">{t('noProducts')}</div>
               )}
@@ -420,7 +559,8 @@ export default function CatalogPage() {
       </div>
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

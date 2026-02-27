@@ -154,7 +154,9 @@
     "titles": "Titles",
     "scrollLeft": "Scroll left",
     "scrollRight": "Scroll right",
-    "filterLabel": "Filter:"
+    "filterLabel": "Filter:",
+    "loadMore": "Load More",
+    "loadingMore": "Loading..."
   },
   "catalogFilters": {
     "price": "Price",

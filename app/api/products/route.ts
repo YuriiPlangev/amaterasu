@@ -44,8 +44,12 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const params = Object.fromEntries(url.searchParams.entries());
 
-  const wcParams: any = { per_page: params.per_page ? Number(params.per_page) : 50 };
-  if (params.page) wcParams.page = Number(params.page);
+  // Устанавливаем дефолтные значения для пагинации
+  const wcParams: any = { 
+    per_page: params.per_page ? Number(params.per_page) : 16,
+    page: params.page ? Number(params.page) : 1  // ВАЖНО: всегда устанавливаем page
+  };
+  
   if (params.search && String(params.search).trim()) {
     wcParams.search = String(params.search).trim();
   }
@@ -117,8 +121,22 @@ export async function GET(req: Request) {
   }
 
   try {
-    const res = await woo.get("products", { params: wcParams });
+    const res = await woo.get("products", wcParams);
     let filteredProducts = res.data || [];
+    
+    // Получаем информацию о пагинации из заголовков WooCommerce
+    const totalProducts = res.headers?.['x-wp-total'] ? parseInt(res.headers['x-wp-total']) : filteredProducts.length;
+    const totalPages = res.headers?.['x-wp-totalpages'] ? parseInt(res.headers['x-wp-totalpages']) : 1;
+    
+    console.log('WooCommerce response:', {
+      requested_page: wcParams.page,
+      requested_per_page: wcParams.per_page,
+      hasComplexFilters,
+      received_products: filteredProducts.length,
+      total_products: totalProducts,
+      total_pages: totalPages,
+      wcParams: wcParams
+    });
 
     // Поиск по названию и описанию (гарантированная фильтрация на нашей стороне)
     const searchTerm = params.search ? String(params.search).trim() : "";
@@ -211,15 +229,52 @@ export async function GET(req: Request) {
       });
     }
 
-    // Пагинация при complex-фильтрах
+    // Пагинация при complex-фільтрах
     if (hasComplexFilters) {
-      const perPage = Number(params.per_page) || 24;
+      const perPage = Number(params.per_page) || 16;
       const page = Math.max(1, Number(params.page) || 1);
       const start = (page - 1) * perPage;
+      const total = filteredProducts.length;
       filteredProducts = filteredProducts.slice(start, start + perPage);
+      
+      return new Response(JSON.stringify({
+        products: filteredProducts,
+        hasMore: start + perPage < total,
+        total: total,
+        page: page,
+        perPage: perPage
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      });
     }
 
-    return new Response(JSON.stringify(filteredProducts), {
+    // Для простих запитів без складних фільтрів
+    const perPage = Number(params.per_page) || 16;
+    const page = Math.max(1, Number(params.page) || 1);
+    
+    // Используем информацию из заголовков WooCommerce для определения hasMore
+    const hasMorePages = page < totalPages;
+    
+    console.log('Simple request result:', {
+      page,
+      perPage,
+      hasMore: hasMorePages,
+      totalPages,
+      products_count: filteredProducts.length
+    });
+    
+    return new Response(JSON.stringify({
+      products: filteredProducts,
+      hasMore: hasMorePages,
+      total: totalProducts,
+      page: page,
+      perPage: perPage,
+      totalPages: totalPages
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",

@@ -154,7 +154,9 @@
     "titles": "Тайтли",
     "scrollLeft": "Прокрутити вліво",
     "scrollRight": "Прокрутити вправо",
-    "filterLabel": "Фільтр:"
+    "filterLabel": "Фільтр:",
+    "loadMore": "Показати ще",
+    "loadingMore": "Завантаження..."
   },
   "catalogFilters": {
     "price": "Ціна",
