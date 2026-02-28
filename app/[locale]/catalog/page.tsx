@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useProducts } from '../../../hooks/useProducts';
 import ProductCard from '../../../components/ProductCard';
 import CatalogSearch from '../../../components/ui/CatalogSearch';
@@ -54,6 +54,7 @@ export default function CatalogPage() {
     { value: 'price_asc', label: t('sortPriceAsc') },
     { value: 'price_desc', label: t('sortPriceDesc') },
   ];
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const [filterState, setFilterState] = useState<CatalogFilterState>(initialFilterState);
   const [searchInput, setSearchInput] = useState('');
@@ -62,6 +63,8 @@ export default function CatalogPage() {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [categoryNames, setCategoryNames] = useState<Record<number, string>>({});
+  const [categorySlugs, setCategorySlugs] = useState<Record<number, string>>({});
+  const [customCategoryIds, setCustomCategoryIds] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [newProductIds, setNewProductIds] = useState<Set<number>>(new Set());
@@ -90,10 +93,18 @@ export default function CatalogPage() {
       .then((r) => r.json())
       .then((d) => {
         const map: Record<number, string> = {};
+        const slugMap: Record<number, string> = {};
         for (const c of d?.categories ?? []) {
-          if (c?.id != null) map[c.id] = c.name || '';
+          if (c?.id != null) {
+            map[c.id] = c.name || '';
+            slugMap[c.id] = c.slug || '';
+          }
         }
         setCategoryNames(map);
+        setCategorySlugs(slugMap);
+        setCustomCategoryIds((d?.customProductionCategories ?? [])
+          .map((c: any) => Number(c?.id))
+          .filter((id: number) => Number.isFinite(id)));
       })
       .catch(() => {});
   }, []);
@@ -106,6 +117,7 @@ export default function CatalogPage() {
     filterState.titles.length > 0 ||
     filterState.characters.length > 0 ||
     filterState.genres.length > 0 ||
+    filterState.games.length > 0 ||
     searchApplied.trim().length > 0;
 
   const activeFilterTags: { key: string; label: string }[] = [
@@ -114,6 +126,7 @@ export default function CatalogPage() {
     ...filterState.titles.map((t) => ({ key: `title-${t}`, label: t })),
     ...filterState.characters.map((c) => ({ key: `char-${c}`, label: c })),
     ...filterState.genres.map((g) => ({ key: `genre-${g}`, label: g })),
+    ...filterState.games.map((game) => ({ key: `game-${game}`, label: game })),
   ];
 
   const clearFilters = () => {
@@ -139,6 +152,9 @@ export default function CatalogPage() {
     } else if (key.startsWith('genre-')) {
       const v = key.replace('genre-', '');
       setFilterState((s) => ({ ...s, genres: s.genres.filter((x) => x !== v) }));
+    } else if (key.startsWith('game-')) {
+      const v = key.replace('game-', '');
+      setFilterState((s) => ({ ...s, games: s.games.filter((x) => x !== v) }));
     }
   };
 
@@ -177,6 +193,7 @@ export default function CatalogPage() {
   if (filterState.titles.length) productParams.attribute_title = filterState.titles.join(',');
   if (filterState.characters.length) productParams.attribute_character = filterState.characters.join(',');
   if (filterState.genres.length) productParams.attribute_genre = filterState.genres.join(',');
+  if (filterState.games.length) productParams.attribute_games = filterState.games.join(',');
 
   const { data: productsData, isLoading, error } = useProducts(productParams);
 
@@ -196,6 +213,7 @@ export default function CatalogPage() {
     filterState.titles.join(','),
     filterState.characters.join(','),
     filterState.genres.join(','),
+    filterState.games.join(','),
   ]);
 
   // Накопичуємо товари при завантаженні нової сторінки
@@ -240,6 +258,28 @@ export default function CatalogPage() {
   const hasMore = productsData && typeof productsData === 'object' && 'hasMore' in productsData 
     ? productsData.hasMore 
     : false;
+
+  const selectedCustomCategoryId = filterState.categoryIds.find((id) => customCategoryIds.includes(id));
+  const customCategoryName = selectedCustomCategoryId ? categoryNames[selectedCustomCategoryId] : '';
+  const customCategorySlug = selectedCustomCategoryId ? categorySlugs[selectedCustomCategoryId] : '';
+
+  const customDesignProduct = selectedCustomCategoryId
+    ? {
+        id: -selectedCustomCategoryId,
+        slug: `custom-design-${customCategorySlug || selectedCustomCategoryId}`,
+        name: customCategoryName ? `${customCategoryName} з вашим дизайном` : 'З вашим дизайном',
+        short_description: 'Індивідуальне виготовлення під ваш макет. Натисніть, щоб дізнатися деталі замовлення.',
+        price: '0',
+        stock_status: 'instock',
+        images: [{ src: '/images/placeholder.jpg' }],
+        isCustomDesign: true,
+        customUrl: `/${locale}/custom-order/${customCategorySlug || selectedCustomCategoryId}?category=${encodeURIComponent(customCategoryName || '')}`,
+      }
+    : null;
+
+  const displayedProducts = customDesignProduct
+    ? [customDesignProduct, ...allProducts]
+    : allProducts;
 
   const loadMore = () => {
     setCurrentPage(prev => prev + 1);
@@ -509,10 +549,10 @@ export default function CatalogPage() {
 
           {!error && ((currentPage === 1 && !isLoading) || currentPage > 1) && (
             <>
-              {allProducts && allProducts.length > 0 ? (
+              {displayedProducts && displayedProducts.length > 0 ? (
                 <>
                   <section className="grid grid-cols-2 lg:grid-cols-3 [@media(min-width:1600px)]:grid-cols-4 gap-6">
-                    {allProducts.map((product: any, index: number) => (
+                    {displayedProducts.map((product: any, index: number) => (
                       <div 
                         key={product.id} 
                         className={`w-full ${newProductIds.has(product.id) ? 'new-product-animate' : ''}`}

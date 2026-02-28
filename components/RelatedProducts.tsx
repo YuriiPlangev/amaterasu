@@ -26,36 +26,44 @@ export default function RelatedProducts({
   const t = useTranslations('productPage');
   const tCommon = useTranslations('common');
   const tA11y = useTranslations('a11y');
+  
+  // Первичный запрос с фильтром
   const params: any = {};
   if (tagId) params.tag = tagId;
   if (categoryId) params.category = categoryId;
 
   const { data: products, isLoading } = useProducts(params);
+  
+  // Fallback: загружаем последние товары если фильтр пусто
+  const { data: allProducts, isLoading: isLoadingFallback } = useProducts({
+    per_page: 100,
+  });
 
   const filteredProducts = React.useMemo(() => {
-    if (!products) return [];
-    let filtered = products;
+    const getProductsArray = (data: any) => {
+      if (!data) return [];
+      if (Array.isArray(data)) return data;
+      return data.products || [];
+    };
 
-    if (tagId) {
-      filtered = filtered.filter((product: any) => {
-        return product.tags && product.tags.some((tag: any) => tag.id === tagId);
-      });
+    let filtered = getProductsArray(products);
+
+    // Если отфильтрованный результат пустой и нет специального фильтра - используем fallback
+    if (filtered.length === 0 && !tagId && !categoryId) {
+      filtered = getProductsArray(allProducts);
     }
 
-    if (categoryId) {
-      filtered = filtered.filter((product: any) => {
-        return product.categories && product.categories.some((cat: any) => cat.id === categoryId);
-      });
-    }
-
+    // Исключаем товар если передан идентификатор
     if (excludeProductId) {
       filtered = filtered.filter((product: any) => product.id !== excludeProductId);
     }
 
     return filtered.slice(0, limit);
-  }, [products, tagId, categoryId, excludeProductId, limit]);
+  }, [products, allProducts, tagId, categoryId, excludeProductId, limit]);
 
-  if (isLoading) {
+  const isLoadingState = isLoading || (!products && !filteredProducts.length && isLoadingFallback);
+
+  if (isLoadingState) {
     return (
       <div className="flex flex-col gap-6">
         {showTitle && <h2 className="text-2xl font-bold text-[#1C1C1C]">{t('similarProducts')}</h2>}

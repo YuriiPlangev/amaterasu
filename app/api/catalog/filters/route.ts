@@ -15,18 +15,19 @@ export async function GET() {
       woo.get("products/attributes")
     ]);
 
-
     const attrIds = {
       character: attrsRes.data.find((a: any) => a.slug === 'pa_character' || a.slug === 'character')?.id,
       genre: attrsRes.data.find((a: any) => a.slug === 'pa_genre' || a.slug === 'genre')?.id,
       title: attrsRes.data.find((a: any) => a.slug === 'pa_title' || a.slug === 'title')?.id,
+      games: attrsRes.data.find((a: any) => a.slug === 'pa_game' || a.slug === 'game')?.id,
     };
 
     // 2) Загружаем термины (тоже через строку для надежности) и ACF
-    const [charactersData, genresData, titlesData, wpRes] = await Promise.all([
+    const [charactersData, genresData, titlesData, gamesData, wpRes] = await Promise.all([
       attrIds.character ? woo.get(`products/attributes/${attrIds.character}/terms?per_page=100`) : { data: [] },
       attrIds.genre ? woo.get(`products/attributes/${attrIds.genre}/terms?per_page=100`) : { data: [] },
       attrIds.title ? woo.get(`products/attributes/${attrIds.title}/terms?per_page=100`) : { data: [] },
+      attrIds.games ? woo.get(`products/attributes/${attrIds.games}/terms?per_page=100`) : { data: [] },
       fetch(`${WP_URL}/wp-json/wp/v2/product_cat?per_page=100&_fields=id,acf`, {
         next: { revalidate: 3600 }
       }).then(r => r.ok ? r.json() : [])
@@ -60,6 +61,7 @@ export async function GET() {
         titles: titlesData.data.map((t: any) => t.name).sort(),
         characters: charactersData.data.map((t: any) => t.name).sort(),
         genres: genresData.data.map((t: any) => t.name).sort(),
+        games: gamesData.data.map((t: any) => t.name).sort(),
       },
       {
         headers: { "Cache-Control": "public, s-maxage=3600" }

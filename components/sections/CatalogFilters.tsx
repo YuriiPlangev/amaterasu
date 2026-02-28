@@ -11,6 +11,7 @@ export interface CatalogFilterState {
   titles: string[];
   characters: string[];
   genres: string[];
+  games: string[];
 }
 
 const initialFilterState: CatalogFilterState = {
@@ -20,6 +21,7 @@ const initialFilterState: CatalogFilterState = {
   titles: [],
   characters: [],
   genres: [],
+  games: [],
 };
 
 interface FilterOptions {
@@ -28,6 +30,7 @@ interface FilterOptions {
   titles: string[];
   characters: string[];
   genres: string[];
+  games: string[];
 }
 
 interface FilterSectionProps {
@@ -202,11 +205,19 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
     update({ genres: next });
   };
 
+  const toggleGames = (v: string) => {
+    const next = value.games.includes(v)
+      ? value.games.filter((x) => x !== v)
+      : [...value.games, v];
+    update({ games: next });
+  };
+
   const categories = (data?.categories ?? []).map((c) => ({ id: c.id, label: c.name }));
   const customProductionCategories = (data?.customProductionCategories ?? []).map((c) => ({ id: c.id, label: c.name }));
   const titles = (data?.titles ?? []).map((v) => ({ label: v }));
   const characters = (data?.characters ?? []).map((v) => ({ label: v }));
   const genres = (data?.genres ?? []).map((v) => ({ label: v }));
+  const games = (data?.games ?? []).map((v) => ({ label: v }));
 
   return (
     <div
@@ -283,12 +294,22 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
         />
       )}
 
-      {/* Тайтли, Персонаж, Жанр */}
+      {/* Тайтли, Ігри, Персонаж, Жанр */}
       <FilterSection
         title={t('titles')}
         items={titles}
         selected={value.titles}
         onToggle={(v) => toggleTitle(String(v))}
+        isLoading={isLoading}
+        placeholder={t('searchPlaceholder')}
+        loadingText={t('loading')}
+        nothingFoundText={t('nothingFound')}
+      />
+      <FilterSection
+        title={t('games')}
+        items={games}
+        selected={value.games}
+        onToggle={(v) => toggleGames(String(v))}
         isLoading={isLoading}
         placeholder={t('searchPlaceholder')}
         loadingText={t('loading')}

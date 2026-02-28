@@ -167,6 +167,7 @@
     "titles": "Titles",
     "character": "Character",
     "genre": "Genre",
+    "games": "Games",
     "searchPlaceholder": "Search...",
     "loading": "Loading...",
     "nothingFound": "Nothing found"
@@ -175,7 +176,34 @@
     "inStock": "In stock",
     "outOfStock": "Out of stock",
     "buy": "Buy",
-    "toCart": "To cart"
+    "toCart": "To cart",
+    "details": "Details"
+  },
+  "customOrder": {
+    "backToCatalog": "← Back to catalog",
+    "badge": "Made to order",
+    "defaultCategory": "Product",
+    "title": "with your design",
+    "description": "This product is made individually with your custom design. You can share your idea, and we will prepare a mockup and confirm it with you before production.",
+    "previewTitle": "Preview your design",
+    "previewPlaceholder": "Your image will appear here",
+    "uploadTitle": "Upload your image",
+    "uploadSubtitle": "Drag and drop a file here or click to select",
+    "uploadFormats": "JPG, PNG, WEBP (max 10 MB)",
+    "uploadHint": "Upload an image to see how it will look on your product. This is just a preview — we will prepare the final mockup after confirmation.",
+    "imageUploaded": "Image uploaded",
+    "imageReady": "Ready for preview",
+    "removeImage": "Remove",
+    "errorInvalidFormat": "Please upload an image in JPG, PNG, or WEBP format",
+    "errorFileSize": "File size exceeds 10 MB. Please select a smaller file",
+    "successUpload": "Image uploaded successfully!",
+    "howTitle": "How it works",
+    "howText": "Send us your reference/idea and requirements in Telegram. We clarify details, prepare a preview, and start production after your approval.",
+    "termsTitle": "Timing & price",
+    "termsText": "Final price and production time depend on design complexity and quantity. Estimated production time is 2–5 business days.",
+    "contactTitle": "Place an order",
+    "contactText": "To place a custom order, click the button below and message us on Telegram.",
+    "contactButton": "Message us on Telegram"
   },
   "delivery": {
     "title": "Delivery and Payment",

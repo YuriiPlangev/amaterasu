@@ -355,30 +355,24 @@ export default async function ProductPage({
         </section>
 
         <section className="mt-12 md:mt-16 space-y-12 md:space-y-16">
-          {(firstTagId || firstCategoryId) && (
-            <div>
-              <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold mb-6 text-[#1C1C1C]">Схожі товари</h2>
-              <RelatedProducts
-                tagId={firstTagId}
-                categoryId={firstCategoryId}
-                excludeProductId={product.id}
-                limit={6}
-                showTitle={false}
-              />
-            </div>
-          )}
-          {firstCategoryId && (
-            <div>
-              <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold mb-6 text-[#1C1C1C]">Схожі товари по категоріям</h2>
-              <RelatedProducts
-                tagId={firstTagId}
-                categoryId={firstCategoryId}
-                excludeProductId={product.id}
-                limit={6}
-                showTitle={false}
-              />
-            </div>
-          )}
+          <div>
+            <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold mb-6 text-[#1C1C1C]">Схожі товари</h2>
+            <RelatedProducts
+              tagId={firstTagId}
+              excludeProductId={product.id}
+              limit={10}
+              showTitle={false}
+            />
+          </div>
+          <div>
+            <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold mb-6 text-[#1C1C1C]">Схожі товари по категоріям</h2>
+            <RelatedProducts
+              categoryId={firstCategoryId}
+              excludeProductId={product.id}
+              limit={10}
+              showTitle={false}
+            />
+          </div>
         </section>
       </div>
     );

@@ -14,7 +14,7 @@ function productMatchesSearch(product: any, searchTerm: string): boolean {
   return name.includes(term) || shortDesc.includes(term) || longDesc.includes(term);
 }
 
-/** Проверяет, подходит ли товар по атрибуту (title, character, genre) */
+/** Проверяет, подходит ли товар по атрибуту (title, character, genre, game) */
 function productMatchesAttribute(
   product: any,
   attrName: string,
@@ -32,11 +32,11 @@ function productMatchesAttribute(
   });
   
   // Если не нашли, пробуем поиск более гибкий (содержит substring)
-  if (!attr && attrName === "character") {
+  if (!attr) {
     attr = attrs.find((a: any) => {
       const n = (a?.name || "").toLowerCase();
       const s = (a?.slug || "").toLowerCase();
-      return n.includes("character") || s.includes("character");
+      return n.includes(targetNorm) || s.includes(targetNorm);
     });
   }
   
@@ -133,12 +133,16 @@ export async function GET(req: Request) {
   const genreVals = params.attribute_genre
     ? String(params.attribute_genre).split(",").map((s) => s.trim()).filter(Boolean)
     : [];
+  const gameVals = params.attribute_games
+    ? String(params.attribute_games).split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
 
   const hasComplexFilters =
     categoryIds.length > 1 ||
     titleVals.length > 0 ||
     characterVals.length > 0 ||
     genreVals.length > 0 ||
+    gameVals.length > 0 ||
     params.price_min ||
     params.price_max ||
     (params.search && String(params.search).trim());
@@ -156,11 +160,6 @@ export async function GET(req: Request) {
     const totalProducts = res.headers?.['x-wp-total'] ? parseInt(res.headers['x-wp-total']) : filteredProducts.length;
     const totalPages = res.headers?.['x-wp-totalpages'] ? parseInt(res.headers['x-wp-totalpages']) : 1;
     
-    console.log('WooCommerce response:', {
-      received_products: filteredProducts.length,
-      total_products: totalProducts,
-      total_pages: totalPages
-    });
 
     // Поиск по названию и описанию (гарантированная фильтрация на нашей стороне)
     const searchTerm = params.search ? String(params.search).trim() : "";
@@ -205,6 +204,11 @@ export async function GET(req: Request) {
     if (genreVals.length) {
       filteredProducts = filteredProducts.filter((p: any) =>
         productMatchesAttribute(p, "genre", genreVals)
+      );
+    }
+    if (gameVals.length) {
+      filteredProducts = filteredProducts.filter((p: any) =>
+        productMatchesAttribute(p, "game", gameVals)
       );
     }
 
@@ -278,14 +282,6 @@ export async function GET(req: Request) {
     
     // Используем информацию из заголовков WooCommerce для определения hasMore
     const hasMorePages = page < totalPages;
-    
-    console.log('Simple request result:', {
-      page,
-      perPage,
-      hasMore: hasMorePages,
-      totalPages,
-      products_count: filteredProducts.length
-    });
     
     return new Response(JSON.stringify({
       products: filteredProducts,

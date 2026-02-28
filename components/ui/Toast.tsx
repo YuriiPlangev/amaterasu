@@ -8,6 +8,8 @@ const icons = {
   cart: '/svg/shopping-bag-red.svg',
   favorite_add: '/svg/heart-filled.svg',
   favorite_remove: '/svg/heart.svg',
+  success: '/svg/heart-filled.svg',
+  error: '/svg/heart.svg',
 };
 
 export default function Toast() {

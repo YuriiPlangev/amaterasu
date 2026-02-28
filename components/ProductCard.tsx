@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCartStore } from '../store/cartStore';
 import { useFavoritesStore } from '../store/favoritesStore';
@@ -18,6 +19,8 @@ export default function ProductCard({ product }: { product: any }) {
   const isFavorite = useFavoritesStore((state) => state.isFavorite(product?.id));
   const showToast = useToastStore((state) => state.show);
   const locale = useLocale();
+  const router = useRouter();
+  const isCustomDesign = Boolean(product?.isCustomDesign);
 
   const cleanDescription = product?.short_description
     ? product.short_description.replace(/<[^>]*>/g, '').trim()
@@ -28,8 +31,20 @@ export default function ProductCard({ product }: { product: any }) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (isCustomDesign) {
+      router.push(productHref);
+      return;
+    }
+
     addToCart(product, 1);
     showToast(t('addedToCart'), 'cart');
+  };
+
+  const handleGoToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/${locale}/cart`);
   };
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
@@ -41,7 +56,7 @@ export default function ProductCard({ product }: { product: any }) {
   };
 
   const productTag = product?.tags?.[0]?.name || '';
-  const productHref = `/${locale}/product/${product?.slug || product?.id}?id=${product?.id}`;
+  const productHref = product?.customUrl || `/${locale}/product/${product?.slug || product?.id}?id=${product?.id}`;
 
   const handleProductClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -80,7 +95,7 @@ export default function ProductCard({ product }: { product: any }) {
       <div className="flex justify-between items-center w-full gap-3" onClick={(e) => e.stopPropagation()}>
         <button
           type="button"
-          onClick={handleAddToCart}
+          onClick={isCustomDesign ? handleAddToCart : isInCart ? handleGoToCart : handleAddToCart}
           onMouseEnter={() => setIsCartHovered(true)}
           onMouseLeave={() => setIsCartHovered(false)}
           disabled={!isInStock}
@@ -90,8 +105,8 @@ export default function ProductCard({ product }: { product: any }) {
               : 'bg-[#9C0000] text-white hover:bg-white hover:text-[#9C0000] hover:border-[#9C0000] hover:border'
           }`}
         >
-          {isInCart ? tCard('toCart') : tCard('buy')}
-          {!isInCart && (
+          {isCustomDesign ? tCard('details') : isInCart ? tCard('toCart') : tCard('buy')}
+          {!isInCart && !isCustomDesign && (
             <Image
               src={isCartHovered ? '/svg/shopping-bag-red.svg' : '/svg/shopping-bag.svg'}
               alt="cart"
@@ -100,13 +115,15 @@ export default function ProductCard({ product }: { product: any }) {
             />
           )}
         </button>
-        <button
-          type="button"
-          onClick={handleToggleFavorite}
-          className="heart-hover-pulse transition-transform duration-200"
-        >
-          <Image src={isFavorite ? '/svg/heart-filled.svg' : '/svg/heart.svg'} alt="favorite" width={32} height={32} className="transition-transform duration-200" />
-        </button>
+        {!isCustomDesign && (
+          <button
+            type="button"
+            onClick={handleToggleFavorite}
+            className="heart-hover-pulse transition-transform duration-200"
+          >
+            <Image src={isFavorite ? '/svg/heart-filled.svg' : '/svg/heart.svg'} alt="favorite" width={32} height={32} className="transition-transform duration-200" />
+          </button>
+        )}
       </div>
     </article>
   );
