@@ -48,7 +48,7 @@ export default async function CustomOrderPage({
           <h3 className="font-semibold text-[#1C1C1C] mb-2">{t('contactTitle')}</h3>
           <p className="text-[#4B5563] text-sm mb-4">{t('contactText')}</p>
           <a
-            href="https://t.me/amaterasu1shop"
+            href="https://t.me/amaterasuAnimeShopBot"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center justify-center rounded-lg bg-[#9C0000] text-white px-5 py-2.5 font-semibold"

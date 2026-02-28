@@ -95,7 +95,7 @@ export default function DeliveryPage() {
             <p className="text-[#374151] text-[15px] leading-relaxed">
               {t('returnText')}{' '}
               <a
-                href="https://t.me/amaterasu1shop"
+                href="https://t.me/amaterasuAnimeShopBot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#9C0000] font-semibold hover:underline"
@@ -113,13 +113,13 @@ export default function DeliveryPage() {
             {t('questionsText')}
           </p>
           <a
-            href="https://t.me/amaterasu1shop"
+            href="https://t.me/amaterasuAnimeShopBot"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 mt-4 text-[#9C0000] font-semibold hover:underline"
           >
             <Image src="/svg/tg.svg" alt="" width={20} height={20} className=" brightness-0 invert" />
-            @amaterasu1shop
+            @amaterasuAnimeShopBot
           </a>
         </div>
       </div>
