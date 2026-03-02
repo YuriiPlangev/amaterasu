@@ -23,6 +23,8 @@ export function useNews(limit?: number) {
         : [];
       return limit ? sorted.slice(0, limit) : sorted;
     },
+    staleTime: 1 * 60 * 1000, // 1 минута для новостей
+    refetchInterval: 2 * 60 * 1000, // Автоматически обновляем каждые 2 минуты
   });
 }
 
@@ -39,5 +41,6 @@ export function useNewsPost(slug: string | null) {
       return res.json();
     },
     enabled: !!slug,
+    staleTime: 2 * 60 * 1000, // 2 минуты для отдельного поста
   });
 }
