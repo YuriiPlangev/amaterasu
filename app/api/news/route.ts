@@ -13,7 +13,6 @@ export async function GET() {
       );
     }
 
-    console.log('Завантаження новостей з:', `${wpUrl}/wp-json/wp/v2/posts`);
 
     const response = await axios.get(
       `${wpUrl}/wp-json/wp/v2/posts`,

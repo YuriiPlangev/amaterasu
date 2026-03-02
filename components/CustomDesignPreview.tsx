@@ -4,12 +4,14 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useToastStore } from '../store/toastStore';
 import Image from 'next/image';
+import html2canvas from 'html2canvas';
 
 interface CustomDesignPreviewProps {
   categoryName: string;
+  productType?: 'cup' | 'badge';
 }
 
-export default function CustomDesignPreview({ categoryName }: CustomDesignPreviewProps) {
+export default function CustomDesignPreview({ categoryName, productType = 'cup' }: CustomDesignPreviewProps) {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -20,6 +22,7 @@ export default function CustomDesignPreview({ categoryName }: CustomDesignPrevie
   const [userContact, setUserContact] = useState('');
   const [originalImageData, setOriginalImageData] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const t = useTranslations('customOrder');
   const { addToast } = useToastStore();
 
@@ -100,6 +103,10 @@ export default function CustomDesignPreview({ categoryName }: CustomDesignPrevie
   };
 
   const generateMockupImage = async (): Promise<string> => {
+    if (!uploadedImage) {
+      throw new Error('No image uploaded');
+    }
+
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -108,91 +115,110 @@ export default function CustomDesignPreview({ categoryName }: CustomDesignPrevie
         return;
       }
 
-      // Set canvas size to match cup image aspect ratio (16:9)
-      canvas.width = 1600;
-      canvas.height = 900;
+      // Set canvas size based on product type
+      if (productType === 'badge') {
+        canvas.width = 1200;
+        canvas.height = 600; // 2:1 ratio - NO SQUISHING
+      } else {
+        canvas.width = 1600;
+        canvas.height = 900; // 16:9 ratio
+      }
 
-      const cupImage = new window.Image();
-      cupImage.crossOrigin = 'anonymous';
-      cupImage.src = '/images/cup.png';
+      const productImage = new window.Image();
+      productImage.crossOrigin = 'anonymous';
+      productImage.src = productType === 'badge' ? '/images/badge.jpg' : '/images/cup.jpg';
 
-      cupImage.onload = () => {
-        // Draw cup background
-        ctx.drawImage(cupImage, 0, 0, canvas.width, canvas.height);
+      productImage.onload = () => {
+        // Draw product background - maintain aspect ratio with cover
+        const imgAspect = productImage.width / productImage.height;
+        const canvasAspect = canvas.width / canvas.height;
 
-        if (uploadedImage) {
-          // Calculate design rectangle position (matching the preview exactly)
-          const rectLeft = canvas.width * 0.27;
-          const rectTop = canvas.height * 0.24;
-          const rectWidth = canvas.width * 0.68;
-          const rectHeight = canvas.height * 0.57;
+        let drawWidth, drawHeight, offsetX, offsetY;
 
-          // Save context state
+        if (imgAspect > canvasAspect) {
+          drawHeight = canvas.height;
+          drawWidth = drawHeight * imgAspect;
+          offsetX = (canvas.width - drawWidth) / 2;
+          offsetY = 0;
+        } else {
+          drawWidth = canvas.width;
+          drawHeight = drawWidth / imgAspect;
+          offsetX = 0;
+          offsetY = (canvas.height - drawHeight) / 2;
+        }
+
+        ctx.drawImage(productImage, offsetX, offsetY, drawWidth, drawHeight);
+
+        // Draw user image
+        const userImage = new window.Image();
+        userImage.crossOrigin = 'anonymous';
+        userImage.src = uploadedImage;
+
+        userImage.onload = () => {
+          const imgAspect = userImage.width / userImage.height;
+
+          // Calculate design area based on product type
+          let rectLeft, rectTop, rectWidth, rectHeight, isCircle;
+          
+          if (productType === 'badge') {
+            // Left circle for badge
+            rectLeft = canvas.width * 0.18;
+            rectTop = canvas.height * 0.04;
+            rectWidth = canvas.width * 0.455;
+            rectHeight = canvas.height * 0.91;
+            isCircle = true;
+          } else {
+            // Rectangle for cup
+            rectLeft = canvas.width * 0.27;
+            rectTop = canvas.height * 0.25;
+            rectWidth = canvas.width * 0.68;
+            rectHeight = canvas.height * 0.55;
+            isCircle = false;
+          }
+
           ctx.save();
 
-          // Create clipping region for the design rectangle
+          // Create clipping region
           ctx.beginPath();
-          ctx.rect(rectLeft, rectTop, rectWidth, rectHeight);
-          ctx.clip();
-
-          const userImage = new window.Image();
-          userImage.crossOrigin = 'anonymous';
-          userImage.src = uploadedImage;
-
-          userImage.onload = () => {
-            // Apply rotation first (at center of rectangle)
+          if (isCircle) {
             const centerX = rectLeft + rectWidth / 2;
             const centerY = rectTop + rectHeight / 2;
+            const radius = Math.min(rectWidth, rectHeight) / 2;
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          } else {
+            ctx.rect(rectLeft, rectTop, rectWidth, rectHeight);
+          }
+          ctx.clip();
 
-            ctx.translate(centerX, centerY);
-            ctx.rotate((rotation * Math.PI) / 180);
-            ctx.translate(-centerX, -centerY);
+          // Calculate size with scale
+          const scaleMultiplier = scale / 100;
+          const drawWidth = rectWidth * scaleMultiplier;
+          const drawHeight = drawWidth / imgAspect;
 
-            // Calculate size based on CSS backgroundSize logic
-            // backgroundSize: ${scale}% means scale% of container size
-            const scaleMultiplier = scale / 100;
-            const scaledWidth = rectWidth * scaleMultiplier;
-            const scaledHeight = rectHeight * scaleMultiplier;
+          // Calculate position with offsets
+          const posX = rectLeft + (rectWidth - drawWidth) * (offsetX / 100);
+          const posY = rectTop + (rectHeight - drawHeight) * (offsetY / 100);
 
-            // Fit image to scaled dimensions while maintaining aspect ratio
-            const imgAspect = userImage.width / userImage.height;
-            const rectAspect = rectWidth / rectHeight;
+          // Apply rotation
+          const imageCenterX = posX + drawWidth / 2;
+          const imageCenterY = posY + drawHeight / 2;
+          
+          ctx.translate(imageCenterX, imageCenterY);
+          ctx.rotate((rotation * Math.PI) / 180);
+          ctx.translate(-imageCenterX, -imageCenterY);
 
-            let drawWidth: number;
-            let drawHeight: number;
+          // Draw user image
+          ctx.drawImage(userImage, posX, posY, drawWidth, drawHeight);
 
-            if (imgAspect > rectAspect) {
-              drawWidth = scaledWidth;
-              drawHeight = scaledWidth / imgAspect;
-            } else {
-              drawHeight = scaledHeight;
-              drawWidth = drawHeight * imgAspect;
-            }
+          ctx.restore();
 
-            // Calculate position based on CSS backgroundPosition logic
-            // backgroundPosition: ${offsetX}% ${offsetY}%
-            // This means: move the image so that its offsetX% point is at offsetX% of container
-            const offsetXPercent = (offsetX - 50) / 100; // Convert to -0.5 to 0.5 range
-            const offsetYPercent = (offsetY - 50) / 100;
+          resolve(canvas.toDataURL('image/png', 1.0));
+        };
 
-            const posX = rectLeft + (rectWidth - drawWidth) * (0.5 + offsetXPercent);
-            const posY = rectTop + (rectHeight - drawHeight) * (0.5 + offsetYPercent);
-
-            ctx.drawImage(userImage, posX, posY, drawWidth, drawHeight);
-
-            ctx.restore();
-
-            // Convert canvas to base64
-            resolve(canvas.toDataURL('image/jpeg', 0.95));
-          };
-
-          userImage.onerror = () => reject('Failed to load user image');
-        } else {
-          resolve(canvas.toDataURL('image/jpeg', 0.95));
-        }
+        userImage.onerror = () => reject('Failed to load user image');
       };
 
-      cupImage.onerror = () => reject('Failed to load cup image');
+      productImage.onerror = () => reject('Failed to load product image');
     });
   };
 
@@ -240,6 +266,24 @@ export default function CustomDesignPreview({ categoryName }: CustomDesignPrevie
     }
   };
 
+  const productBgImage = productType === 'badge' ? '/images/badge.jpg' : '/images/cup.jpg';
+  const productAspectRatio = productType === 'badge' ? '2/1' : '16/9';
+  
+  const designAreaStyle = productType === 'badge' 
+    ? {
+        left: '18%',
+        top: '4%',
+        width: '45.5%',
+        height: '91%',
+        borderRadius: '50%',
+      }
+    : {
+        left: '27%',
+        top: '25%',
+        width: '68%',
+        height: '55%',
+      };
+
   return (
     <div className="mb-8 rounded-xl bg-gradient-to-br from-[#F9FAFB] to-[#F3F4F6] border border-[#E5E7EB] p-6 md:p-8">
       <h2 className="text-xl font-semibold text-[#1C1C1C] mb-6">{t('previewTitle')}</h2>
@@ -247,26 +291,26 @@ export default function CustomDesignPreview({ categoryName }: CustomDesignPrevie
       {/* Mockup Preview - Full Width */}
       <div className="mb-6 rounded-xl overflow-hidden border-2 border-[#D1D5DB]">
         <div 
-          className="relative w-full"
+          ref={previewRef}
+          className="relative w-full bg-white"
           style={{
-            backgroundImage: 'url(/images/cup.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
             backgroundColor: '#F3F4F6',
             minHeight: '400px',
-            aspectRatio: '16/9',
+            aspectRatio: productAspectRatio,
           }}
         >
-          {/* Design Rectangle on Cup - Fixed position */}
+          {/* Product background image */}
+          <img
+            src={productBgImage}
+            alt="Product"
+            className="absolute inset-0 w-full h-full object-cover"
+            crossOrigin="anonymous"
+          />
+
+          {/* Design Area - Fixed position */}
           <div 
-            className="absolute border-2 border-[#333] rounded overflow-hidden bg-white shadow-xl"
-            style={{
-              left: '27%',
-              top: '24%',
-              width: '68%',
-              height: '57%',
-            }}
+            className="absolute overflow-hidden bg-white border-2 border-[#333]"
+            style={designAreaStyle}
           >
             {uploadedImage ? (
               <div
@@ -277,7 +321,7 @@ export default function CustomDesignPreview({ categoryName }: CustomDesignPrevie
                   backgroundPosition: `${offsetX}% ${offsetY}%`,
                   backgroundRepeat: 'no-repeat',
                   transform: `rotate(${rotation}deg)`,
-                  transition: 'transform 0.2s ease-out',
+                  transformOrigin: 'center',
                 }}
               />
             ) : (

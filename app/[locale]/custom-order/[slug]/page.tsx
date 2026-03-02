@@ -9,10 +9,15 @@ export default async function CustomOrderPage({
   params: Promise<{ locale: string; slug: string }> | { locale: string; slug: string };
   searchParams?: Promise<{ category?: string }> | { category?: string };
 }) {
-  const { locale } = await Promise.resolve(params);
+  const { locale, slug } = await Promise.resolve(params);
   const resolvedSearchParams = await Promise.resolve(searchParams || {});
   const t = await getTranslations('customOrder');
   const categoryName = resolvedSearchParams?.category || t('defaultCategory');
+  
+  // Determine product type based on slug
+  const productType = (slug.toLowerCase().includes('badge') || slug.toLowerCase().includes('значк')) 
+    ? 'badge' as const
+    : 'cup' as const;
 
   return (
     <div className="max-w-[1280px] w-full mx-auto site-padding-x py-10 mt-24">
@@ -31,7 +36,7 @@ export default async function CustomOrderPage({
           {t('description')}
         </p>
 
-        <CustomDesignPreview categoryName={categoryName} />
+        <CustomDesignPreview categoryName={categoryName} productType={productType} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className="rounded-xl border border-[#E5E7EB] p-4">

@@ -38,8 +38,7 @@ export async function GET() {
     // Фильтруем популярные категории
     const popular = categoriesWithAcf.filter((cat: any) => cat.acf?.is_popular === true);
 
-    console.log('Популярні категорії:', popular.length, 'з', categoriesWithAcf.length);
-    console.log('Приклад категорії:', popular[0]);
+  
 
     return NextResponse.json(popular, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },
