@@ -20,13 +20,19 @@ export async function GET() {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 
-  const customerId = String(payload.sub ?? "");
+  const customerId = String(payload.sub ?? "").trim();
+  const customerIdNum = Number.parseInt(customerId, 10);
+
+  if (!customerId || Number.isNaN(customerIdNum) || customerIdNum <= 0) {
+    return NextResponse.json({ error: "Invalid user id in token", orders: [] }, { status: 401 });
+  }
 
   try {
     const res = await woo.get("orders", {
-      params: { customer: customerId, per_page: 50, orderby: "date", order: "desc" },
+      params: { customer: customerIdNum, per_page: 50, orderby: "date", order: "desc" },
     });
-    const orders = Array.isArray(res.data) ? res.data : [];
+    const rawOrders = Array.isArray(res.data) ? res.data : [];
+    const orders = rawOrders.filter((order: any) => Number(order?.customer_id) === customerIdNum);
     return NextResponse.json({ orders });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to fetch orders";

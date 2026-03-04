@@ -20,12 +20,12 @@ export default async function CustomOrderPage({
     : 'cup' as const;
 
   return (
-    <div className="max-w-[1280px] w-full mx-auto site-padding-x py-10 mt-24">
+    <div className="max-w-[1280px] w-full mx-auto site-padding-x py-6 md:py-10 mt-16 md:mt-24">
       <div className="mb-6 text-sm text-[#6B7280]">
         <Link href={`/${locale}/catalog`} className="hover:text-[#1C1C1C]">{t('backToCatalog')}</Link>
       </div>
 
-      <section className="rounded-2xl border border-[#E5E7EB] bg-white p-6 md:p-8">
+      <section className="rounded-2xl border border-[#E5E7EB] bg-white p-4 sm:p-6 md:p-8">
         <p className="inline-flex items-center rounded-md bg-[#9C0000] text-white px-3 py-1 text-sm font-semibold mb-4">
           {t('badge')}
         </p>

@@ -43,6 +43,17 @@ function amaterasu_process_checkout($request) {
             return new WP_Error('order_creation_failed', $order->get_error_message(), array('status' => 500));
         }
 
+        // Привязываем заказ к авторизованному пользователю, если передан customerId
+        if ($customer_id > 0) {
+            $order->set_customer_id($customer_id);
+
+            // Если email не передали в checkout, подставим email пользователя WP
+            $customer_user = get_userdata($customer_id);
+            if ($customer_user && empty($data['billing']['email'])) {
+                $data['billing']['email'] = $customer_user->user_email;
+            }
+        }
+
         // Добавляем товары в заказ
         foreach ($data['items'] as $item) {
             $product_id = intval($item['id']);

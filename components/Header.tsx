@@ -121,22 +121,10 @@ export default function Header() {
 
       {/* ОГОНЬ (как в футере): показываем только если это НЕ главная; -1px чтобы не было белой полоски */}
       {!isHomePage && (
-        <div className='flex overflow-hidden w-full absolute left-0 leading-[0] pointer-events-none' style={{ top: 'calc(100% - 1px)' }}>
-          <Image 
-            src={'/svg/flamefooter.svg'} 
-            alt='' 
-            width={100} 
-            height={100} 
-            className='w-full h-auto rotate-180 scale-x-110' 
-          />
-          <Image 
-            src={'/svg/flamefooter.svg'} 
-            alt='' 
-            width={100} 
-            height={100} 
-            className='w-full h-auto -ml-3 rotate-180 scale-x-110' 
-          />
-        </div>
+        <div
+          className='header-flame-mask [--header-flame-height:78px] bg-[#1C1C1C] w-full absolute left-0 pointer-events-none'
+          style={{ top: 'calc(100% - 1px)' }}
+        />
       )}
 
       {/* Mobile Menu Overlay & Sidebar */}
@@ -177,6 +165,41 @@ export default function Header() {
                   </Link>
                 </div>
               ))}
+
+              <div className='mt-6 flex items-center gap-3' role='group' aria-label={tA11y('languageGroup')}>
+                <button
+                  type='button'
+                  onClick={() => {
+                    switchLocale('uk');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`px-3 py-1.5 rounded border text-sm font-semibold ${
+                    locale === 'uk'
+                      ? 'border-white text-white'
+                      : 'border-[#6B7280] text-[#9CA3AF]'
+                  }`}
+                  aria-label={tA11y('languageUk')}
+                  aria-current={locale === 'uk' ? 'true' : undefined}
+                >
+                  UA
+                </button>
+                <button
+                  type='button'
+                  onClick={() => {
+                    switchLocale('en');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`px-3 py-1.5 rounded border text-sm font-semibold ${
+                    locale === 'en'
+                      ? 'border-white text-white'
+                      : 'border-[#6B7280] text-[#9CA3AF]'
+                  }`}
+                  aria-label={tA11y('languageEn')}
+                  aria-current={locale === 'en' ? 'true' : undefined}
+                >
+                  EN
+                </button>
+              </div>
             </nav>
             <div className='px-6 pb-8 pt-4'>
               <a

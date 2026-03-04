@@ -268,6 +268,9 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
 
   const productBgImage = productType === 'badge' ? '/images/badge.jpg' : '/images/cup.jpg';
   const productAspectRatio = productType === 'badge' ? '2/1' : '16/9';
+  const previewMinHeightClass = productType === 'badge'
+    ? 'min-h-[170px] sm:min-h-[260px] md:min-h-[400px]'
+    : 'min-h-[210px] sm:min-h-[300px] md:min-h-[400px]';
   
   const designAreaStyle = productType === 'badge' 
     ? {
@@ -285,17 +288,16 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
       };
 
   return (
-    <div className="mb-8 rounded-xl bg-gradient-to-br from-[#F9FAFB] to-[#F3F4F6] border border-[#E5E7EB] p-6 md:p-8">
+    <div className="mb-8 rounded-xl bg-gradient-to-br from-[#F9FAFB] to-[#F3F4F6] border border-[#E5E7EB] p-4 sm:p-5 md:p-8">
       <h2 className="text-xl font-semibold text-[#1C1C1C] mb-6">{t('previewTitle')}</h2>
       
       {/* Mockup Preview - Full Width */}
       <div className="mb-6 rounded-xl overflow-hidden border-2 border-[#D1D5DB]">
         <div 
           ref={previewRef}
-          className="relative w-full bg-white"
+          className={`relative w-full bg-white ${previewMinHeightClass}`}
           style={{
             backgroundColor: '#F3F4F6',
-            minHeight: '400px',
             aspectRatio: productAspectRatio,
           }}
         >
@@ -344,10 +346,10 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
               <label className="text-sm text-[#6B7280]">Поворот</label>
               <span className="text-sm font-semibold text-[#9C0000]">{rotation}°</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <button
                 onClick={() => setRotation(r => r - 15)}
-                className="px-3 py-1.5 rounded bg-[#F3F4F6] hover:bg-[#E5E7EB] text-sm font-medium"
+                className="px-3 py-1.5 rounded bg-[#F3F4F6] hover:bg-[#E5E7EB] text-sm font-medium w-full sm:w-auto"
               >
                 ↺ -15°
               </button>
@@ -361,7 +363,7 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
               />
               <button
                 onClick={() => setRotation(r => r + 15)}
-                className="px-3 py-1.5 rounded bg-[#F3F4F6] hover:bg-[#E5E7EB] text-sm font-medium"
+                className="px-3 py-1.5 rounded bg-[#F3F4F6] hover:bg-[#E5E7EB] text-sm font-medium w-full sm:w-auto"
               >
                 ↻ +15°
               </button>
@@ -385,7 +387,7 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
           </div>
 
           {/* Position */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm text-[#6B7280]">Позиція X</label>
@@ -476,7 +478,7 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onClick={() => fileInputRef.current?.click()}
-            className={`relative cursor-pointer rounded-xl border-2 border-dashed p-8 transition-all ${
+            className={`relative cursor-pointer rounded-xl border-2 border-dashed p-5 sm:p-6 md:p-8 transition-all ${
               isDragging
                 ? 'border-[#9C0000] bg-[#9C0000]/5'
                 : 'border-[#D1D5DB] bg-white hover:border-[#9C0000]/50'
