@@ -122,3 +122,116 @@ function amaterasu_process_checkout($request) {
     }
 }
 
+// ========================
+// ENDPOINTS ДЛЯ КОММЕНТАРИЕВ
+// ========================
+
+add_action('rest_api_init', function () {
+    // Получение комментариев к посту
+    register_rest_route('custom/v1', '/posts/(?P<id>\d+)/comments', array(
+        'methods' => 'GET',
+        'callback' => 'custom_get_post_comments',
+        'permission_callback' => '__return_true',
+        'args' => array(
+            'id' => array(
+                'required' => true,
+                'validate_callback' => function($param) {
+                    return is_numeric($param);
+                }
+            ),
+        ),
+    ));
+    
+    // Создание комментария
+    register_rest_route('custom/v1', '/comments', array(
+        'methods' => 'POST',
+        'callback' => 'custom_create_comment',
+        'permission_callback' => '__return_true',
+        'args' => array(
+            'post_id' => array('required' => true),
+            'user_id' => array('required' => true),
+            'content' => array('required' => true),
+        ),
+    ));
+});
+
+/**
+ * Получить комментарии к посту
+ */
+function custom_get_post_comments($request) {
+    $post_id = intval($request['id']);
+    
+    $comments = get_comments(array(
+        'post_id' => $post_id,
+        'status' => 'approve',
+        'orderby' => 'comment_date',
+        'order' => 'DESC',
+    ));
+    
+    $result = array();
+    foreach ($comments as $comment) {
+        $result[] = array(
+            'id' => $comment->comment_ID,
+            'author' => $comment->comment_author,
+            'content' => $comment->comment_content,
+            'date' => $comment->comment_date,
+            'userId' => $comment->user_id,
+        );
+    }
+    
+    return rest_ensure_response($result);
+}
+
+/**
+ * Создать комментарий
+ */
+function custom_create_comment($request) {
+    $data = $request->get_json_params();
+    
+    // Валидация
+    if (empty($data['post_id']) || empty($data['user_id']) || empty($data['content'])) {
+        return new WP_Error('missing_data', 'Отсутствуют обязательные поля', array('status' => 400));
+    }
+    
+    $post_id = intval($data['post_id']);
+    $user_id = intval($data['user_id']);
+    $content = sanitize_textarea_field($data['content']);
+    
+    // Проверяем, существует ли пост
+    if (!get_post($post_id)) {
+        return new WP_Error('invalid_post', 'Пост не найден', array('status' => 404));
+    }
+    
+    // Проверяем, существует ли пользователь
+    $user = get_userdata($user_id);
+    if (!$user) {
+        return new WP_Error('invalid_user', 'Пользователь не найден', array('status' => 404));
+    }
+    
+    // Создаем комментарий
+    $comment_data = array(
+        'comment_post_ID' => $post_id,
+        'comment_author' => $user->user_login,
+        'comment_author_email' => $user->user_email,
+        'comment_content' => $content,
+        'user_id' => $user_id,
+        'comment_approved' => 1, // Автоматически одобряем
+    );
+    
+    $comment_id = wp_insert_comment($comment_data);
+    
+    if (!$comment_id) {
+        return new WP_Error('comment_creation_failed', 'Не удалось создать комментарий', array('status' => 500));
+    }
+    
+    $comment = get_comment($comment_id);
+    
+    return rest_ensure_response(array(
+        'id' => $comment->comment_ID,
+        'author' => $comment->comment_author,
+        'content' => $comment->comment_content,
+        'date' => $comment->comment_date,
+        'userId' => $comment->user_id,
+    ));
+}
+
