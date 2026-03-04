@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
+import { decodeHtmlEntities } from '../../../lib/html';
 
 export async function GET() {
   try {
@@ -36,16 +37,18 @@ export async function GET() {
 
       return {
         id: post.id,
-        title: post.title.rendered,
+        title: decodeHtmlEntities(post.title.rendered),
         // 2. Если есть короткое описание в ACF — берем его, если нет — чистим стандартный excerpt
-        excerpt: post.acf?.short_description 
-          ? post.acf.short_description 
-          : post.excerpt.rendered.replace(/<[^>]*>/g, ''),
+        excerpt: decodeHtmlEntities(
+          post.acf?.short_description 
+            ? post.acf.short_description 
+            : post.excerpt.rendered.replace(/<[^>]*>/g, '')
+        ),
         content: post.content.rendered,
         date: post.date,
         slug: post.slug,
         image: imageUrl, // Передаем нормальную ссылку на картинку
-        badge: post.acf?.badge || '', // Пробрасываем нашу плашку
+        badge: decodeHtmlEntities(post.acf?.badge || ''), // Пробрасываем нашу плашку
       };
     }); 
 

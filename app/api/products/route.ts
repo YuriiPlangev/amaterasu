@@ -1,7 +1,18 @@
 import { woo } from "../../../lib/woo";
+import { decodeHtmlEntities } from "../../../lib/html";
 
 function normalizeAttrKey(val: string): string {
   return String(val || "").toLowerCase().replace(/^pa_/, "").trim();
+}
+
+/** Декодирует HTML-сущности в полях товара */
+function decodeProductFields(product: any): any {
+  return {
+    ...product,
+    name: decodeHtmlEntities(product.name || ''),
+    short_description: decodeHtmlEntities(product.short_description || ''),
+    description: decodeHtmlEntities(product.description || ''),
+  };
 }
 
 /** Проверяет, есть ли подстрока в названии или описании товара (без учёта регистра, HTML убран) */
@@ -170,10 +181,12 @@ export async function GET(req: Request) {
     }
 
     // Убедиться что все товары имеют slug (если нет - использовать ID как fallback)
-    filteredProducts = filteredProducts.map((p: any) => ({
-      ...p,
-      slug: p.slug || String(p.id)
-    }));
+    filteredProducts = filteredProducts.map((p: any) =>
+      decodeProductFields({
+        ...p,
+        slug: p.slug || String(p.id)
+      })
+    );
 
     // Категории: несколько ID — фильтруем вручную
     if (categoryIds.length > 0) {

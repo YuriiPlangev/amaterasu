@@ -76,17 +76,63 @@ export default function CatalogPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    const categoryParam = searchParams.get('category');
+    const categoryParam = searchParams.get('category') || searchParams.get('categories');
     if (categoryParam) {
-      const id = Number(categoryParam);
-      if (!isNaN(id)) {
+      const ids = categoryParam.split(',').map(Number).filter(id => !isNaN(id));
+      if (ids.length > 0) {
         setFilterState((s) => ({
           ...s,
-          categoryIds: s.categoryIds.includes(id) ? s.categoryIds : [id],
+          categoryIds: ids,
         }));
       }
     }
-  }, [searchParams.get('category')]);
+  }, [searchParams.get('category'), searchParams.get('categories')]);
+
+  // Apply filters from URL parameters
+  useEffect(() => {
+    const newState: Partial<CatalogFilterState> = {};
+    
+    const titleParam = searchParams.get('attribute_title');
+    if (titleParam) {
+      newState.titles = titleParam.split(',').map(decodeURIComponent);
+    }
+    
+    const characterParam = searchParams.get('attribute_character');
+    if (characterParam) {
+      newState.characters = characterParam.split(',').map(decodeURIComponent);
+    }
+    
+    const genreParam = searchParams.get('attribute_genre');
+    if (genreParam) {
+      newState.genres = genreParam.split(',').map(decodeURIComponent);
+    }
+    
+    const gamesParam = searchParams.get('attribute_games');
+    if (gamesParam) {
+      newState.games = gamesParam.split(',').map(decodeURIComponent);
+    }
+    
+    const priceMin = searchParams.get('price_min');
+    if (priceMin) {
+      newState.priceFrom = priceMin;
+    }
+    
+    const priceMax = searchParams.get('price_max');
+    if (priceMax) {
+      newState.priceTo = priceMax;
+    }
+    
+    if (Object.keys(newState).length > 0) {
+      setFilterState((s) => ({ ...s, ...newState }));
+    }
+  }, [
+    searchParams.get('attribute_title'),
+    searchParams.get('attribute_character'),
+    searchParams.get('attribute_genre'),
+    searchParams.get('attribute_games'),
+    searchParams.get('price_min'),
+    searchParams.get('price_max'),
+  ]);
 
   useEffect(() => {
     fetch('/api/catalog/filters')

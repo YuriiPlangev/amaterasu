@@ -52,11 +52,11 @@ export default function NewsCard({ post }: NewsCardProps) {
       </div>
 
       <div className="p-6 border-x border-b border-[#BCBCBC] rounded-b-2xl flex flex-col flex-1">
-        {/* Заголовок (используем dangerouslySetInnerHTML, так как WP может прислать спецсимволы) */}
-        <h3 className="text-[24px] text-[#1C1C1C] font-semibold mb-2" dangerouslySetInnerHTML={{ __html: post.title }} />
+        {/* Заголовок */}
+        <h3 className="text-[24px] text-[#1C1C1C] font-semibold mb-2">{post.title}</h3>
         
         {/* Краткое описание */}
-        <p className="text-[#1C1C1C] opacity-70 line-clamp-3 mb-4 flex-1" dangerouslySetInnerHTML={{ __html: post.excerpt }} />
+        <p className="text-[#1C1C1C] opacity-70 line-clamp-3 mb-4 flex-1">{post.excerpt}</p>
         
         <div className="flex items-center justify-between mt-auto">
           <Link href={`/${locale}/news/${post.slug}`}>

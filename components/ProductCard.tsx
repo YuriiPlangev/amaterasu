@@ -8,6 +8,7 @@ import { useCartStore } from '../store/cartStore';
 import { useFavoritesStore } from '../store/favoritesStore';
 import { useToastStore } from '../store/toastStore';
 import { getProxiedImageUrl } from '../lib/imageProxy';
+import { cleanDescription } from '../lib/html';
 
 export default function ProductCard({ product }: { product: any }) {
   const t = useTranslations('toast');
@@ -22,11 +23,14 @@ export default function ProductCard({ product }: { product: any }) {
   const router = useRouter();
   const isCustomDesign = Boolean(product?.isCustomDesign);
 
-  const cleanDescription = product?.short_description
-    ? product.short_description.replace(/<[^>]*>/g, '').trim()
-    : '';
+  const productDescription = cleanDescription(product?.short_description || '');
   const isInStock = product?.stock_status === 'instock';
   const [isCartHovered, setIsCartHovered] = useState(false);
+  
+  // Price and discount logic
+  const currentPrice = parseFloat(product?.price || '0');
+  const regularPrice = parseFloat(product?.regular_price || '0');
+  const hasDiscount = regularPrice > currentPrice && currentPrice > 0 && regularPrice > 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -69,25 +73,30 @@ export default function ProductCard({ product }: { product: any }) {
   };
 
   return (
-    <article className={`relative border border-[#D8D8D8] px-5 py-4 flex flex-col rounded-2xl items-center gap-4 transition-all duration-300 hover:shadow-[0px_12px_28px_0px_#0000001A] ${!isInStock ? 'opacity-50' : ''}`}>
+    <article className={`relative border border-[#D8D8D8] px-5 py-4 flex flex-col rounded-2xl items-center gap-4 transition-all duration-300 hover:shadow-[0px_12px_28px_0px_#0000001A] h-full ${!isInStock ? 'opacity-50' : ''}`}>
       {productTag && (
         <span className="absolute top-4 left-4 bg-[#9C0000] text-white font-semibold rounded-[4px] z-10 px-[clamp(8px,1.6vw,16px)] py-[clamp(4px,0.6vw,8px)] text-[clamp(12px,1.2vw,17px)]">
           {productTag}
         </span>
       )}
 
-      <Link href={productHref} className="block w-full cursor-pointer" onClick={handleProductClick}>
+      <Link href={productHref} className="flex flex-col w-full cursor-pointer flex-1" onClick={handleProductClick}>
         <Image src={getProxiedImageUrl(product?.images?.[0]?.src)} alt={product?.name} width={300} height={260} className="w-full h-[260px] object-contain" />
-        <div className="flex flex-col items-center w-full gap-[10px]">
-          <div className="flex justify-between items-center w-full gap-2">
-            <p className="text-[#9C0000] font-semibold text-[25px] whitespace-nowrap shrink-0">{product?.price} ₴</p>
+        <div className="flex flex-col items-center w-full gap-[10px] flex-1">
+          <div className="flex justify-between items-start w-full gap-2">
+            <div className="flex flex-col items-start gap-0.5">
+              <p className="text-[#9C0000] font-semibold text-[25px] whitespace-nowrap shrink-0">{product?.price} ₴</p>
+              {hasDiscount && (
+                <p className="text-[#9C0000] font-semibold text-sm line-through opacity-60">{regularPrice.toFixed(2)} ₴</p>
+              )}
+            </div>
             <p className={`font-semibold text-[14px] text-right flex-1 min-w-0 ${isInStock ? 'text-[#2E7900]' : 'text-[#9C0000]'}`}>
               {isInStock ? tCard('inStock') : tCard('outOfStock')}
             </p>
           </div>
           <div className="self-start w-full min-w-0">
             <h3 className="text-black font-medium text-[16px] truncate" title={product?.name}>{product?.name}</h3>
-            <p className="text-black font-medium text-[15px] truncate">{cleanDescription}</p>
+            <p className="text-black font-medium text-[15px] truncate">{productDescription}</p>
           </div>
         </div>
       </Link>

@@ -2,12 +2,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   const t = useTranslations('auth.login');
   const locale = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get('returnTo') || `/${locale}/account`;
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -43,8 +45,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Успешно — редирект на страницу аккаунта
-      window.location.href = `/${locale}/account`;
+      // Успешно — редирект на страницу аккаунта или на returnTo
+      window.location.href = returnTo;
     } catch (error) {
       console.error("Login error:", error);
       setError(t('generalError'));
@@ -112,7 +114,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-[#6D6D6D]">
               {t('noAccount')}{" "}
-              <Link href={`/${locale}/auth/register`} className="text-[#9C0000] hover:text-[#7D0000] font-semibold">
+              <Link href={`/${locale}/auth/register${returnTo && returnTo !== `/${locale}/account` ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`} className="text-[#9C0000] hover:text-[#7D0000] font-semibold">
                 {t('register')}
               </Link>
             </p>

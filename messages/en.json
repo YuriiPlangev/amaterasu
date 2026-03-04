@@ -294,6 +294,16 @@
     "deliveryNovaDesc": "Delivery across Ukraine, cash on delivery",
     "deliveryUkrDesc": "Delivery across Ukraine",
     "similarProducts": "Similar products"
+  },
+  "comments": {
+    "title": "Comments",
+    "placeholder": "Share your thoughts...",
+    "submit": "Post",
+    "submitting": "Posting...",
+    "loading": "Loading comments...",
+    "loginRequired": "Only registered users can leave comments",
+    "login": "Sign in",
+    "noComments": "No comments yet. Be the first!"
   }
 }
 

@@ -2,10 +2,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 
 export default function RegisterPage() {
   const t = useTranslations('auth.register');
   const locale = useLocale();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get('returnTo') || `/${locale}/account`;
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,7 +39,7 @@ export default function RegisterPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        window.location.href = `/${locale}/auth/login`;
+        window.location.href = `/${locale}/auth/login?returnTo=${encodeURIComponent(returnTo)}`;
       }, 2000);
     } catch (error) {
       console.error("Registration error:", error);
@@ -127,7 +130,7 @@ export default function RegisterPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-[#6D6D6D]">
               {t('hasAccount')}{" "}
-              <Link href={`/${locale}/auth/login`} className="text-[#9C0000] hover:text-[#7D0000] font-semibold">
+              <Link href={`/${locale}/auth/login${returnTo && returnTo !== `/${locale}/account` ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`} className="text-[#9C0000] hover:text-[#7D0000] font-semibold">
                 {t('login')}
               </Link>
             </p>

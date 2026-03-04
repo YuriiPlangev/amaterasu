@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
+import { decodeHtmlEntities } from '../../../../lib/html';
 
 export async function GET(
   request: NextRequest,
@@ -32,15 +33,17 @@ export async function GET(
 
     const mapped = {
       id: post.id,
-      title: post.title.rendered,
-      excerpt: post.acf?.short_description
-        ? post.acf.short_description
-        : post.excerpt.rendered.replace(/<[^>]*>/g, ''),
+      title: decodeHtmlEntities(post.title.rendered),
+      excerpt: decodeHtmlEntities(
+        post.acf?.short_description
+          ? post.acf.short_description
+          : post.excerpt.rendered.replace(/<[^>]*>/g, '')
+      ),
       content: post.content.rendered,
       date: post.date,
       slug: post.slug,
       image: imageUrl,
-      badge: post.acf?.badge || '',
+      badge: decodeHtmlEntities(post.acf?.badge || ''),
     };
 
     return NextResponse.json(mapped, {

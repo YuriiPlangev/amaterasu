@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useNewsPost } from '../../../../hooks/useNews';
 import { getProxiedImageUrl } from '../../../../lib/imageProxy';
+import NewsComments from '../../../../components/NewsComments';
 
 export default function NewsSlugPage() {
   const t = useTranslations('newsSlug');
@@ -92,8 +93,9 @@ export default function NewsSlugPage() {
 
             <h1
               className="text-[clamp(24px,2.8vw,38px)] font-bold text-[#1C1C1C] mb-3 leading-tight"
-              dangerouslySetInnerHTML={{ __html: post.title }}
-            />
+            >
+              {post.title}
+            </h1>
 
             <p className="text-[#9CA3AF] text-sm mb-6">{formattedDate}</p>
 
@@ -114,6 +116,8 @@ export default function NewsSlugPage() {
             )}
           </div>
         </article>
+
+        <NewsComments slug={slug} />
       </div>
     </div>
   );

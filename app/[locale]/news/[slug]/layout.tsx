@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import axios from 'axios';
 import { absoluteUrl } from '../../../../lib/seo';
+import { decodeHtmlEntities } from '../../../../lib/html';
 
 async function getPostBySlug(slug: string) {
   const wpUrl = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
@@ -12,8 +13,8 @@ async function getPostBySlug(slug: string) {
     if (!data?.length) return null;
     const post = data[0];
     return {
-      title: post.title?.rendered?.replace(/<[^>]*>/g, '') || '',
-      excerpt: post.excerpt?.rendered?.replace(/<[^>]*>/g, '').slice(0, 160) || '',
+      title: decodeHtmlEntities(post.title?.rendered?.replace(/<[^>]*>/g, '') || ''),
+      excerpt: decodeHtmlEntities(post.excerpt?.rendered?.replace(/<[^>]*>/g, '').slice(0, 160) || ''),
       image: post._embedded?.['wp:featuredmedia']?.[0]?.source_url || post._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.large?.source_url || '',
     };
   } catch {

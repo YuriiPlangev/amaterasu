@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { woo } from '../../../../lib/woo';
 import { absoluteUrl } from '../../../../lib/seo';
+import { cleanDescription } from '../../../../lib/html';
 import RelatedProducts from '../../../../components/RelatedProducts';
 import ProductGallery from '../../../../components/ProductGallery';
 import ProductActions from '../../../../components/ProductActions';
@@ -90,18 +91,19 @@ export async function generateMetadata({
     : await getProductBySlug(slug);
   if (!product) return { title: 'Товар не знайдено' };
   const name = product.name || 'Product';
-  const desc =
-    (product.short_description && product.short_description.replace(/<[^>]*>/g, '').trim()) ||
-    (product.description && product.description.replace(/<[^>]*>/g, '').trim().slice(0, 160)) ||
-    '';
+  const desc = cleanDescription(
+    product.short_description ||
+    product.description ||
+    ''
+  ).slice(0, 160);
   const image = product.images?.[0]?.src;
   const path = `/${locale}/product/${slug}`;
   return {
     title: name,
-    description: desc.slice(0, 160),
+    description: desc,
     openGraph: {
       title: name,
-      description: desc.slice(0, 160),
+      description: desc,
       url: absoluteUrl(path),
       images: image ? [{ url: image, alt: name }] : undefined,
       locale: locale === 'uk' ? 'uk_UA' : 'en_GB',
@@ -241,12 +243,23 @@ export default async function ProductPage({
     const locale = resolvedParams.locale || 'uk';
     const isInStock = product?.stock_status === 'instock';
     const productTag = product?.tags?.[0]?.name || '';
+    const productCategory = product?.categories?.[0]?.name || '';
+    const productCategoryId = product?.categories?.[0]?.id || null;
     const images = product?.images || [];
     const mainImage = images?.[0]?.src || '/images/placeholder.jpg';
 
-    const shortDescription = product?.short_description
-      ? product.short_description.replace(/<[^>]*>/g, '').trim()
-      : '';
+    const shortDescription = cleanDescription(product?.short_description || '');
+
+    // Extract title and character from attributes
+    const titleAttr = product?.attributes?.find((attr: any) => 
+      attr?.name?.toLowerCase() === 'тайтл' || attr?.name?.toLowerCase() === 'title'
+    );
+    const characterAttr = product?.attributes?.find((attr: any) => 
+      attr?.name?.toLowerCase() === 'персонаж' || attr?.name?.toLowerCase() === 'character'
+    );
+    
+    const productTitle = titleAttr?.options?.[0] || titleAttr?.option || '';
+    const productCharacter = characterAttr?.options?.[0] || characterAttr?.option || '';
 
     const attributes = (product?.attributes || [])
       .filter((attr: any) => attr?.name && (attr?.options?.length || attr?.option))
@@ -256,26 +269,50 @@ export default async function ProductPage({
         value: Array.isArray(attr.options) ? attr.options.join(', ') : attr.option || ''
       }));
 
-    const breadcrumbItems = [
-      { name: locale === 'uk' ? 'Головна' : 'Home', path: '' },
-      { name: productTag || (locale === 'uk' ? 'Каталог' : 'Catalog'), path: '/catalog' },
-      { name: product.name, path: `/product/${product.slug}` },
-    ];
+    // Build breadcrumbs: Catalog - Category - Title - Character - Product Name (skip if not available)
+    const breadcrumbItems = [];
+    breadcrumbItems.push({ name: locale === 'uk' ? 'Каталог' : 'Catalog', path: '/catalog' });
+    
+    if (productCategory && productCategoryId) {
+      breadcrumbItems.push({ 
+        name: productCategory, 
+        path: `/catalog?categories=${productCategoryId}` 
+      });
+    }
+    
+    if (productTitle) {
+      breadcrumbItems.push({ 
+        name: productTitle, 
+        path: `/catalog?attribute_title=${encodeURIComponent(productTitle)}` 
+      });
+    }
+    
+    if (productCharacter) {
+      breadcrumbItems.push({ 
+        name: productCharacter, 
+        path: `/catalog?attribute_character=${encodeURIComponent(productCharacter)}` 
+      });
+    }
+    
+    breadcrumbItems.push({ name: product.name, path: '' });
 
     return (
       <div className="max-w-[1920px] w-full mx-auto site-padding-x py-6 md:py-8 pt-20 md:pt-24 mt-12">
         <JsonLdProduct product={product} locale={locale} />
         <JsonLdBreadcrumb items={breadcrumbItems} locale={locale} />
-        <nav className="text-sm text-[#9C9C9C] mb-4 md:mb-6 flex items-center">
-          <Link href={`/${locale}`} className="hover:text-[#1C1C1C]">Головна</Link>
-          <span className="mx-1.5">›</span>
-          {productTag && (
-            <>
-              <Link href={`/${locale}/catalog`} className="hover:text-[#1C1C1C]">{productTag}</Link>
-              <span className="mx-1.5">›</span>
-            </>
-          )}
-          <span className="text-[#1C1C1C] truncate max-w-[200px] sm:max-w-none inline-block">{product?.name}</span>
+        <nav className="text-sm text-[#9C9C9C] mb-4 md:mb-6 flex items-center flex-wrap gap-1">
+          {breadcrumbItems.map((item, index) => (
+            <div key={index} className="flex items-center gap-1.5">
+              {index > 0 && <span className="text-[#9C9C9C] flex-shrink-0">›</span>}
+              {item.path ? (
+                <Link href={`/${locale}${item.path}`} className="hover:text-[#1C1C1C] truncate">
+                  {item.name}
+                </Link>
+              ) : (
+                <span className="text-[#1C1C1C] truncate">{item.name}</span>
+              )}
+            </div>
+          ))}
         </nav>
 
         <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-6 lg:gap-8 items-stretch">
@@ -295,7 +332,12 @@ export default async function ProductPage({
               )}
             </h1>
             <div className="flex items-center justify-between gap-4 flex-wrap">
-              <p className="text-[#9C0000] text-[clamp(24px,2.5vw,32px)] font-bold">{product?.price} ₴</p>
+              <div className="flex flex-col items-start gap-1">
+                <p className="text-[#9C0000] text-[clamp(24px,2.5vw,32px)] font-bold">{product?.price} ₴</p>
+                {product?.regular_price && parseFloat(product?.regular_price) > parseFloat(product?.price || '0') && (
+                  <p className="text-[#9C9C9C] text-[clamp(16px,1.8vw,20px)] font-semibold line-through">{product?.regular_price} ₴</p>
+                )}
+              </div>
               <span className={`text-sm font-semibold ${isInStock ? 'text-[#2E7900]' : 'text-[#9C0000]'}`}>
                 {isInStock ? tCard('inStock') : tCard('outOfStock')}
               </span>
