@@ -83,19 +83,19 @@ export default function ProductCard({ product }: { product: any }) {
       <Link href={productHref} className="flex flex-col w-full cursor-pointer flex-1" onClick={handleProductClick}>
         <Image src={getProxiedImageUrl(product?.images?.[0]?.src)} alt={product?.name} width={300} height={260} className="w-full h-[260px] object-contain" />
         <div className="flex flex-col items-center w-full gap-[10px] flex-1">
-          <div className="flex justify-between items-start w-full gap-2">
-            <div className="flex flex-col items-start gap-0.5">
-              <p className="text-[#9C0000] font-semibold text-[25px] whitespace-nowrap shrink-0">{product?.price} ₴</p>
-              {hasDiscount && (
-                <p className="text-[#9C0000] font-semibold text-sm line-through opacity-60">{regularPrice.toFixed(2)} ₴</p>
-              )}
-            </div>
-            <p className={`font-semibold text-[14px] text-right flex-1 min-w-0 ${isInStock ? 'text-[#2E7900]' : 'text-[#9C0000]'}`}>
-              {isInStock ? tCard('inStock') : tCard('outOfStock')}
-            </p>
-          </div>
           <div className="self-start w-full min-w-0">
             <h3 className="text-black font-medium text-[16px] truncate" title={product?.name}>{product?.name}</h3>
+          </div>
+          <div className="flex flex-col items-start gap-0.5 self-start w-full">
+            <p className="text-[#9C0000] font-semibold text-[25px] whitespace-nowrap shrink-0">{product?.price} ₴</p>
+            {hasDiscount && (
+              <p className="text-[#9C0000] font-semibold text-sm line-through opacity-60">{regularPrice.toFixed(2)} ₴</p>
+            )}
+          </div>
+          <p className={`font-semibold text-[14px] self-start ${isInStock ? 'text-[#2E7900]' : 'text-[#9C0000]'}`}>
+            {isInStock ? tCard('inStock') : tCard('outOfStock')}
+          </p>
+          <div className="self-start w-full min-w-0">
             <p className="text-black font-medium text-[15px] truncate">{productDescription}</p>
           </div>
         </div>
