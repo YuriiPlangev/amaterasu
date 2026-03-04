@@ -209,16 +209,6 @@ export async function POST(
       console.error('Error creating comment:', error);
       throw error;
     }
-
-    return NextResponse.json(
-      {
-        id: commentResponse.data.id.toString(),
-        author: commentResponse.data.author_name,
-        content: commentResponse.data.content.rendered,
-        date: commentResponse.data.date,
-      },
-      { status: 201 }
-    );
   } catch (error) {
     console.error('Error in POST /api/news/[slug]/comments:', error);
     const errorDetails = error instanceof axios.AxiosError 
