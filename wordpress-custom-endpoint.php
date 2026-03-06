@@ -29,6 +29,7 @@ function amaterasu_process_checkout($request) {
     }
 
     $data = $request->get_json_params();
+    $customer_id = isset($data['customerId']) ? intval($data['customerId']) : 0;
     
     // Валидация данных
     if (empty($data['items']) || empty($data['billing'])) {
@@ -93,7 +94,9 @@ function amaterasu_process_checkout($request) {
         $payment_method = $data['paymentMethod'] ?? 'cash_on_delivery';
         $order->set_payment_method($payment_method);
         $order->set_payment_method_title(
-            $payment_method === 'card' ? 'Оплата картою' : 'Накладений платіж'
+            $payment_method === 'liqpay'
+                ? 'LiqPay'
+                : ($payment_method === 'card' ? 'Оплата картою' : 'Накладений платіж')
         );
 
         // Устанавливаем примечания
@@ -103,6 +106,9 @@ function amaterasu_process_checkout($request) {
 
         // Устанавливаем валюту
         $order->set_currency('UAH');
+
+        // Пересчитываем итог заказа перед сохранением (важно для корректной суммы оплаты)
+        $order->calculate_totals();
         
         // Устанавливаем статус
         $order->set_status('pending', 'Заказ создан через API');

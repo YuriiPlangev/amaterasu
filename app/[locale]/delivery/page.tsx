@@ -113,13 +113,13 @@ export default function DeliveryPage() {
             {t('questionsText')}
           </p>
           <a
-            href="https://t.me/amaterasuAnimeShopBot"
+            href="https://t.me/amaterasu1shop"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 mt-4 text-[#9C0000] font-semibold hover:underline"
           >
             <Image src="/svg/tg.svg" alt="" width={20} height={20} className=" brightness-0 invert" />
-            @amaterasuAnimeShopBot
+            @amaterasu1shop
           </a>
         </div>
       </div>

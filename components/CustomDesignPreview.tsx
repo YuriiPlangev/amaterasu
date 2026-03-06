@@ -8,19 +8,26 @@ import html2canvas from 'html2canvas';
 
 interface CustomDesignPreviewProps {
   categoryName: string;
-  productType?: 'cup' | 'badge';
+  productType?: 'cup' | 'badge' | 'keychain';
 }
 
 export default function CustomDesignPreview({ categoryName, productType = 'cup' }: CustomDesignPreviewProps) {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedImage2, setUploadedImage2] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<1 | 2>(1);
   const [isDragging, setIsDragging] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [scale, setScale] = useState(100);
   const [offsetX, setOffsetX] = useState(50);
   const [offsetY, setOffsetY] = useState(50);
+  const [rotation2, setRotation2] = useState(0);
+  const [scale2, setScale2] = useState(100);
+  const [offsetX2, setOffsetX2] = useState(50);
+  const [offsetY2, setOffsetY2] = useState(50);
   const [isSending, setIsSending] = useState(false);
   const [userContact, setUserContact] = useState('');
   const [originalImageData, setOriginalImageData] = useState<string | null>(null);
+  const [originalImageData2, setOriginalImageData2] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const t = useTranslations('customOrder');
@@ -66,8 +73,13 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
-      setUploadedImage(result);
-      setOriginalImageData(result); // Save original
+      if (productType === 'keychain' && activeTab === 2) {
+        setUploadedImage2(result);
+        setOriginalImageData2(result);
+      } else {
+        setUploadedImage(result);
+        setOriginalImageData(result);
+      }
       addToast(t('successUpload'), 'success');
     };
     reader.readAsDataURL(file);
@@ -95,137 +107,54 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
   };
 
   const handleRemoveImage = () => {
-    setUploadedImage(null);
-    setOriginalImageData(null);
+    if (productType === 'keychain' && activeTab === 2) {
+      setUploadedImage2(null);
+      setOriginalImageData2(null);
+    } else {
+      setUploadedImage(null);
+      setOriginalImageData(null);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
   const generateMockupImage = async (): Promise<string> => {
-    if (!uploadedImage) {
+    if (!uploadedImage && !uploadedImage2) {
       throw new Error('No image uploaded');
     }
 
-    return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject('Canvas not supported');
-        return;
-      }
+    if (!previewRef.current) {
+      throw new Error('Preview element not found');
+    }
 
-      // Set canvas size based on product type
-      if (productType === 'badge') {
-        canvas.width = 1200;
-        canvas.height = 600; // 2:1 ratio - NO SQUISHING
-      } else {
-        canvas.width = 1600;
-        canvas.height = 900; // 16:9 ratio
-      }
-
-      const productImage = new window.Image();
-      productImage.crossOrigin = 'anonymous';
-      productImage.src = productType === 'badge' ? '/images/badge.jpg' : '/images/cup.jpg';
-
-      productImage.onload = () => {
-        // Draw product background - maintain aspect ratio with cover
-        const imgAspect = productImage.width / productImage.height;
-        const canvasAspect = canvas.width / canvas.height;
-
-        let drawWidth, drawHeight, offsetX, offsetY;
-
-        if (imgAspect > canvasAspect) {
-          drawHeight = canvas.height;
-          drawWidth = drawHeight * imgAspect;
-          offsetX = (canvas.width - drawWidth) / 2;
-          offsetY = 0;
-        } else {
-          drawWidth = canvas.width;
-          drawHeight = drawWidth / imgAspect;
-          offsetX = 0;
-          offsetY = (canvas.height - drawHeight) / 2;
-        }
-
-        ctx.drawImage(productImage, offsetX, offsetY, drawWidth, drawHeight);
-
-        // Draw user image
-        const userImage = new window.Image();
-        userImage.crossOrigin = 'anonymous';
-        userImage.src = uploadedImage;
-
-        userImage.onload = () => {
-          const imgAspect = userImage.width / userImage.height;
-
-          // Calculate design area based on product type
-          let rectLeft, rectTop, rectWidth, rectHeight, isCircle;
-          
-          if (productType === 'badge') {
-            // Left circle for badge
-            rectLeft = canvas.width * 0.18;
-            rectTop = canvas.height * 0.04;
-            rectWidth = canvas.width * 0.455;
-            rectHeight = canvas.height * 0.91;
-            isCircle = true;
-          } else {
-            // Rectangle for cup
-            rectLeft = canvas.width * 0.27;
-            rectTop = canvas.height * 0.25;
-            rectWidth = canvas.width * 0.68;
-            rectHeight = canvas.height * 0.55;
-            isCircle = false;
-          }
-
-          ctx.save();
-
-          // Create clipping region
-          ctx.beginPath();
-          if (isCircle) {
-            const centerX = rectLeft + rectWidth / 2;
-            const centerY = rectTop + rectHeight / 2;
-            const radius = Math.min(rectWidth, rectHeight) / 2;
-            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-          } else {
-            ctx.rect(rectLeft, rectTop, rectWidth, rectHeight);
-          }
-          ctx.clip();
-
-          // Calculate size with scale
-          const scaleMultiplier = scale / 100;
-          const drawWidth = rectWidth * scaleMultiplier;
-          const drawHeight = drawWidth / imgAspect;
-
-          // Calculate position with offsets
-          const posX = rectLeft + (rectWidth - drawWidth) * (offsetX / 100);
-          const posY = rectTop + (rectHeight - drawHeight) * (offsetY / 100);
-
-          // Apply rotation
-          const imageCenterX = posX + drawWidth / 2;
-          const imageCenterY = posY + drawHeight / 2;
-          
-          ctx.translate(imageCenterX, imageCenterY);
-          ctx.rotate((rotation * Math.PI) / 180);
-          ctx.translate(-imageCenterX, -imageCenterY);
-
-          // Draw user image
-          ctx.drawImage(userImage, posX, posY, drawWidth, drawHeight);
-
-          ctx.restore();
-
-          resolve(canvas.toDataURL('image/png', 1.0));
-        };
-
-        userImage.onerror = () => reject('Failed to load user image');
-      };
-
-      productImage.onerror = () => reject('Failed to load product image');
-    });
+    try {
+      const canvas = await html2canvas(previewRef.current, {
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        scale: 3, // Делаем картинку четкой (в 2 раза больше экранного размера)
+        backgroundColor: "#ffffff", // Белый фон вместо прозрачного
+      });
+      
+      return canvas.toDataURL('image/png', 1.0);
+    } catch (error) {
+      console.error('html2canvas error:', error);
+      throw new Error('Failed to generate mockup');
+    }
   };
 
   const handleSendToTelegram = async () => {
-    if (!uploadedImage || !originalImageData) {
-      addToast('Будь ласка, завантажте зображення', 'error');
-      return;
+    if (productType === 'keychain') {
+      if (!uploadedImage && !uploadedImage2) {
+        addToast('Будь ласка, завантажте хоча б одне зображення', 'error');
+        return;
+      }
+    } else {
+      if (!uploadedImage || !originalImageData) {
+        addToast('Будь ласка, завантажте зображення', 'error');
+        return;
+      }
     }
 
     if (!userContact.trim()) {
@@ -245,9 +174,11 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
         },
         body: JSON.stringify({
           originalImage: originalImageData,
+          originalImage2: productType === 'keychain' ? originalImageData2 : undefined,
           mockupImage,
           categoryName,
           userName: userContact.trim(),
+          productType,
         }),
       });
 
@@ -266,18 +197,20 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
     }
   };
 
-  const productBgImage = productType === 'badge' ? '/images/badge.jpg' : '/images/cup.jpg';
-  const productAspectRatio = productType === 'badge' ? '2/1' : '16/9';
-  const previewMinHeightClass = productType === 'badge'
+  const productBgImage = productType === 'badge' ? '/images/badge.jpg' 
+    : productType === 'keychain' ? '/images/keychain.png' 
+    : '/images/cup.jpg';
+  const productAspectRatio = (productType === 'badge' || productType === 'keychain') ? '2/1' : '16/9';
+  const previewMinHeightClass = (productType === 'badge' || productType === 'keychain')
     ? 'min-h-[170px] sm:min-h-[260px] md:min-h-[400px]'
     : 'min-h-[210px] sm:min-h-[300px] md:min-h-[400px]';
   
   const designAreaStyle = productType === 'badge' 
     ? {
-        left: '18%',
-        top: '4%',
-        width: '45.5%',
-        height: '91%',
+        left: '19%',
+        top: '18%',
+        width: '43.6%',
+        height: '61%',
         borderRadius: '50%',
       }
     : {
@@ -287,56 +220,194 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
         height: '55%',
       };
 
+  // Keychain areas (left and right) - adjust these based on your actual keychain image
+  const keychainLeftArea = {
+    left: '19.6%',
+    top: '39.5%',
+    width: '25.1%',
+    height: '39%',
+  };
+
+  const keychainRightArea = {
+    left: '54.1%',
+    top: '39.4%',
+    width: '25%',
+    height: '39.2%',
+  };
+  
+  // Current image and settings based on active tab
+  const currentImage = productType === 'keychain' && activeTab === 2 ? uploadedImage2 : uploadedImage;
+  const currentRotation = productType === 'keychain' && activeTab === 2 ? rotation2 : rotation;
+  const currentScale = productType === 'keychain' && activeTab === 2 ? scale2 : scale;
+  const currentOffsetX = productType === 'keychain' && activeTab === 2 ? offsetX2 : offsetX;
+  const currentOffsetY = productType === 'keychain' && activeTab === 2 ? offsetY2 : offsetY;
+
+  const setCurrentRotation = (value: number) => {
+    if (productType === 'keychain' && activeTab === 2) {
+      setRotation2(value);
+    } else {
+      setRotation(value);
+    }
+  };
+
+  const setCurrentScale = (value: number) => {
+    if (productType === 'keychain' && activeTab === 2) {
+      setScale2(value);
+    } else {
+      setScale(value);
+    }
+  };
+
+  const setCurrentOffsetX = (value: number) => {
+    if (productType === 'keychain' && activeTab === 2) {
+      setOffsetX2(value);
+    } else {
+      setOffsetX(value);
+    }
+  };
+
+  const setCurrentOffsetY = (value: number) => {
+    if (productType === 'keychain' && activeTab === 2) {
+      setOffsetY2(value);
+    } else {
+      setOffsetY(value);
+    }
+  };
+
   return (
     <div className="mb-8 rounded-xl bg-gradient-to-br from-[#F9FAFB] to-[#F3F4F6] border border-[#E5E7EB] p-4 sm:p-5 md:p-8">
       <h2 className="text-xl font-semibold text-[#1C1C1C] mb-6">{t('previewTitle')}</h2>
       
       {/* Mockup Preview - Full Width */}
-      <div className="mb-6 rounded-xl overflow-hidden border-2 border-[#D1D5DB]">
+      <div className="mb-6 rounded-xl overflow-hidden border-2 border-[#D1D5DB] max-w-[450px] mx-auto w-full]">
         <div 
-          ref={previewRef}
-          className={`relative w-full bg-white ${previewMinHeightClass}`}
-          style={{
-            backgroundColor: '#F3F4F6',
-            aspectRatio: productAspectRatio,
-          }}
+            ref={previewRef}
+            className="relative w-full bg-[#F3F4F6]"
+            style={{
+              // 120% дает идеальную пропорцию для брелков и значков (не растягивается)
+              // 56.25% дает пропорцию 16:9 (чашки)
+              paddingBottom: productType === 'keychain' ? '90%' : productType === 'badge' ? '70%' : '56.25%',
+            }}
         >
-          {/* Product background image */}
-          <img
-            src={productBgImage}
-            alt="Product"
-            className="absolute inset-0 w-full h-full object-cover"
-            crossOrigin="anonymous"
-          />
+          <div className="absolute inset-0 w-full h-full">
+    
+    {/* Product background image */}
+    <img
+      src={productBgImage}
+      alt="Product"
+      className={`absolute inset-0 w-full h-full ${productType === 'keychain' ? 'object-cover' : 'object-cover'}`}
+      crossOrigin="anonymous"
+    />
 
-          {/* Design Area - Fixed position */}
-          <div 
-            className="absolute overflow-hidden bg-white border-2 border-[#333]"
-            style={designAreaStyle}
-          >
-            {uploadedImage ? (
-              <div
-                className="w-full h-full"
-                style={{
-                  backgroundImage: `url(${uploadedImage})`,
-                  backgroundSize: `${scale}%`,
-                  backgroundPosition: `${offsetX}% ${offsetY}%`,
-                  backgroundRepeat: 'no-repeat',
-                  transform: `rotate(${rotation}deg)`,
-                  transformOrigin: 'center',
-                }}
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-[#9CA3AF] text-xs text-center p-2">
-                {t('previewPlaceholder')}
+          {/* Design Areas */}
+          {productType === 'keychain' ? (
+            <>
+              {/* Left Keychain */}
+              <div 
+                className="absolute overflow-hidden bg-white/90"
+                style={keychainLeftArea}
+              >
+                {uploadedImage ? (
+                  <div
+                    className="w-full h-full"
+                    style={{
+                      backgroundImage: `url(${uploadedImage})`,
+                      backgroundSize: `${scale}%`,
+                      backgroundPosition: `${offsetX}% ${offsetY}%`,
+                      backgroundRepeat: 'no-repeat',
+                      transform: `rotate(${rotation}deg)`,
+                      transformOrigin: 'center',
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-[#9CA3AF] text-xs text-center p-2">
+                    Картинка 1
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+              {/* Right Keychain */}
+              <div 
+                className="absolute overflow-hidden bg-white/90 "
+                style={keychainRightArea}
+              >
+                {uploadedImage2 ? (
+                  <div
+                    className="w-full h-full"
+                    style={{
+                      backgroundImage: `url(${uploadedImage2})`,
+                      backgroundSize: `${scale2}%`,
+                      backgroundPosition: `${offsetX2}% ${offsetY2}%`,
+                      backgroundRepeat: 'no-repeat',
+                      transform: `rotate(${rotation2}deg)`,
+                      transformOrigin: 'center',
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-[#9CA3AF] text-xs text-center p-2">
+                    Картинка 2
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            /* Single Design Area for cup and badge */
+            <div 
+              className="absolute overflow-hidden bg-white border-2 border-[#333]"
+              style={designAreaStyle}
+            >
+              {uploadedImage ? (
+                <div
+                  className="w-full h-full"
+                  style={{
+                    backgroundImage: `url(${uploadedImage})`,
+                    backgroundSize: `${scale}%`,
+                    backgroundPosition: `${offsetX}% ${offsetY}%`,
+                    backgroundRepeat: 'no-repeat',
+                    transform: `rotate(${rotation}deg)`,
+                    transformOrigin: 'center',
+                  }}
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-[#9CA3AF] text-xs text-center p-2">
+                  {t('previewPlaceholder')}
+                </div>
+              )}
+            </div>
+          )}
+        
+              </div>
         </div>
       </div>
 
+      {/* Tabs for Keychain */}
+      {productType === 'keychain' && (
+        <div className="mb-6 flex gap-2 border-b border-[#E5E7EB]">
+          <button
+            onClick={() => setActiveTab(1)}
+            className={`px-4 py-2 text-sm font-medium transition-all ${
+              activeTab === 1
+                ? 'border-b-2 border-[#9C0000] text-[#9C0000]'
+                : 'text-[#6B7280] hover:text-[#1C1C1C]'
+            }`}
+          >
+            Картинка 1 (ліва)
+          </button>
+          <button
+            onClick={() => setActiveTab(2)}
+            className={`px-4 py-2 text-sm font-medium transition-all ${
+              activeTab === 2
+                ? 'border-b-2 border-[#9C0000] text-[#9C0000]'
+                : 'text-[#6B7280] hover:text-[#1C1C1C]'
+            }`}
+          >
+            Картинка 2 (права)
+          </button>
+        </div>
+      )}
+
       {/* Image Controls */}
-      {uploadedImage && (
+      {currentImage && (
         <div className="mb-6 rounded-xl bg-white border border-[#E5E7EB] p-4 md:p-6 space-y-4">
           <h3 className="text-sm font-semibold text-[#1C1C1C] mb-3">Налаштування зображення</h3>
           
@@ -344,11 +415,11 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm text-[#6B7280]">Поворот</label>
-              <span className="text-sm font-semibold text-[#9C0000]">{rotation}°</span>
+              <span className="text-sm font-semibold text-[#9C0000]">{currentRotation}°</span>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <button
-                onClick={() => setRotation(r => r - 15)}
+                onClick={() => setCurrentRotation(currentRotation - 15)}
                 className="px-3 py-1.5 rounded bg-[#F3F4F6] hover:bg-[#E5E7EB] text-sm font-medium w-full sm:w-auto"
               >
                 ↺ -15°
@@ -357,12 +428,12 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
                 type="range"
                 min="0"
                 max="360"
-                value={rotation}
-                onChange={(e) => setRotation(Number(e.target.value))}
+                value={currentRotation}
+                onChange={(e) => setCurrentRotation(Number(e.target.value))}
                 className="flex-1 h-2 bg-[#E5E7EB] rounded-lg appearance-none cursor-pointer accent-[#9C0000]"
               />
               <button
-                onClick={() => setRotation(r => r + 15)}
+                onClick={() => setCurrentRotation(currentRotation + 15)}
                 className="px-3 py-1.5 rounded bg-[#F3F4F6] hover:bg-[#E5E7EB] text-sm font-medium w-full sm:w-auto"
               >
                 ↻ +15°
@@ -374,14 +445,14 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm text-[#6B7280]">Масштаб</label>
-              <span className="text-sm font-semibold text-[#9C0000]">{scale}%</span>
+              <span className="text-sm font-semibold text-[#9C0000]">{currentScale}%</span>
             </div>
             <input
               type="range"
               min="50"
               max="200"
-              value={scale}
-              onChange={(e) => setScale(Number(e.target.value))}
+              value={currentScale}
+              onChange={(e) => setCurrentScale(Number(e.target.value))}
               className="w-full h-2 bg-[#E5E7EB] rounded-lg appearance-none cursor-pointer accent-[#9C0000]"
             />
           </div>
@@ -391,28 +462,28 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm text-[#6B7280]">Позиція X</label>
-                <span className="text-sm font-semibold text-[#9C0000]">{offsetX}%</span>
+                <span className="text-sm font-semibold text-[#9C0000]">{currentOffsetX}%</span>
               </div>
               <input
                 type="range"
                 min="0"
                 max="100"
-                value={offsetX}
-                onChange={(e) => setOffsetX(Number(e.target.value))}
+                value={currentOffsetX}
+                onChange={(e) => setCurrentOffsetX(Number(e.target.value))}
                 className="w-full h-2 bg-[#E5E7EB] rounded-lg appearance-none cursor-pointer accent-[#9C0000]"
               />
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm text-[#6B7280]">Позиція Y</label>
-                <span className="text-sm font-semibold text-[#9C0000]">{offsetY}%</span>
+                <span className="text-sm font-semibold text-[#9C0000]">{currentOffsetY}%</span>
               </div>
               <input
                 type="range"
                 min="0"
                 max="100"
-                value={offsetY}
-                onChange={(e) => setOffsetY(Number(e.target.value))}
+                value={currentOffsetY}
+                onChange={(e) => setCurrentOffsetY(Number(e.target.value))}
                 className="w-full h-2 bg-[#E5E7EB] rounded-lg appearance-none cursor-pointer accent-[#9C0000]"
               />
             </div>
@@ -421,10 +492,10 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
           {/* Reset Button */}
           <button
             onClick={() => {
-              setRotation(0);
-              setScale(100);
-              setOffsetX(50);
-              setOffsetY(50);
+              setCurrentRotation(0);
+              setCurrentScale(100);
+              setCurrentOffsetX(50);
+              setCurrentOffsetY(50);
             }}
             className="w-full px-4 py-2 rounded-lg bg-[#F3F4F6] hover:bg-[#E5E7EB] text-sm font-medium text-[#1C1C1C] transition-colors"
           >
@@ -432,7 +503,7 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
           </button>
 
           {/* Contact Input */}
-          {uploadedImage && (
+          {currentImage && (
             <>
               {/* User Contact Input */}
               <div className="rounded-lg bg-white border border-[#E5E7EB] p-4">
@@ -456,9 +527,15 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
           {/* Save Contact Button */}
           <button
             onClick={handleSendToTelegram}
-            disabled={isSending || !uploadedImage || !userContact.trim()}
+            disabled={
+              isSending || 
+              (productType === 'keychain' ? (!uploadedImage && !uploadedImage2) : !uploadedImage) ||
+              !userContact.trim()
+            }
             className={`w-full px-4 py-3 rounded-lg font-semibold text-white transition-all ${
-              isSending || !uploadedImage || !userContact.trim()
+              isSending || 
+              (productType === 'keychain' ? (!uploadedImage && !uploadedImage2) : !uploadedImage) ||
+              !userContact.trim()
                 ? 'bg-[#9C0000]/50 cursor-not-allowed'
                 : 'bg-[#9C0000] hover:bg-[#8B0000] shadow-lg hover:shadow-xl'
             }`}
@@ -494,25 +571,32 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
             
             <div className="text-center">
               <div className="text-4xl mb-3">📸</div>
-              <p className="text-[#1C1C1C] font-semibold mb-2">{t('uploadTitle')}</p>
+              <p className="text-[#1C1C1C] font-semibold mb-2">
+                {productType === 'keychain' 
+                  ? `${t('uploadTitle')} (${activeTab === 1 ? 'Картинка 1' : 'Картинка 2'})`
+                  : t('uploadTitle')
+                }
+              </p>
               <p className="text-[#6B7280] text-sm mb-2">{t('uploadSubtitle')}</p>
               <p className="text-[#9CA3AF] text-xs">{t('uploadFormats')}</p>
             </div>
           </div>
 
-          {uploadedImage && (
+          {currentImage && (
             <div className="flex items-center justify-between rounded-lg bg-white border border-[#E5E7EB] p-4">
               <div className="flex items-center gap-3">
                 <div className="relative w-12 h-12 rounded overflow-hidden border border-[#E5E7EB]">
                   <Image 
-                    src={uploadedImage} 
+                    src={currentImage} 
                     alt="Uploaded preview" 
                     fill
                     className="object-cover"
                   />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#1C1C1C]">{t('imageUploaded')}</p>
+                  <p className="text-sm font-medium text-[#1C1C1C]">
+                    {t('imageUploaded')} {productType === 'keychain' && `(${activeTab === 1 ? 'Картинка 1' : 'Картинка 2'})`}
+                  </p>
                   <p className="text-xs text-[#6B7280]">{t('imageReady')}</p>
                 </div>
               </div>

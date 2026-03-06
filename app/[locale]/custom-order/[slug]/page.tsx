@@ -14,10 +14,18 @@ export default async function CustomOrderPage({
   const t = await getTranslations('customOrder');
   const categoryName = resolvedSearchParams?.category || t('defaultCategory');
   
-  // Determine product type based on slug
-  const productType = (slug.toLowerCase().includes('badge') || slug.toLowerCase().includes('значк')) 
+  // Determine product type based on slug or category name
+  const slugLower = slug.toLowerCase();
+  const categoryLower = categoryName.toLowerCase();
+  
+  const productType = (slugLower.includes('badge') || slugLower.includes('значк') || categoryLower.includes('значк')) 
     ? 'badge' as const
+    : (slugLower.includes('keychain') || slugLower.includes('брелок') || slugLower.includes('брелки') || 
+       categoryLower.includes('брелок') || categoryLower.includes('брелки') || categoryLower.includes('keychain'))
+    ? 'keychain' as const
     : 'cup' as const;
+  
+  console.log('🔍 Debug:', { slug, categoryName, productType });
 
   return (
     <div className="max-w-[1280px] w-full mx-auto site-padding-x py-6 md:py-10 mt-16 md:mt-24">

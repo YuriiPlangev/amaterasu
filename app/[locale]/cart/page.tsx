@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useCartStore } from '../../../store/cartStore';
 import { getProxiedImageUrl } from '../../../lib/imageProxy';
@@ -13,6 +13,7 @@ export default function CartPage() {
   const locale = useLocale();
   const basePath = `/${locale}`;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const items = useCartStore((state) => state.items);
   const remove = useCartStore((state) => state.remove);
   const updateQty = useCartStore((state) => state.updateQty);
@@ -133,6 +134,15 @@ export default function CartPage() {
   }, [formData.deliveryMethod, ukrposhtaCitySearch, fetchUkrposhtaCities]);
 
   useEffect(() => {
+    if (searchParams.get('liqpay') === 'success') {
+      setOrderSuccess(true);
+      const orderFromQuery = searchParams.get('order');
+      setOrderNumber(orderFromQuery || null);
+      clear();
+    }
+  }, [searchParams, clear]);
+
+  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
       const clickedOutsideNp = !npDropdownRef.current?.contains(target);
@@ -196,6 +206,7 @@ export default function CartPage() {
         },
         body: JSON.stringify({
           items,
+          locale,
           billing: {
             firstName: formData.firstName,
             lastName: formData.lastName,
@@ -227,6 +238,31 @@ export default function CartPage() {
       const data = await response.json();
 
       if (data.success) {
+        if (data.paymentProvider === 'liqpay' && data.liqpay?.data && data.liqpay?.signature && data.liqpay?.checkoutUrl) {
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = data.liqpay.checkoutUrl;
+
+          const dataInput = document.createElement('input');
+          dataInput.type = 'hidden';
+          dataInput.name = 'data';
+          dataInput.value = data.liqpay.data;
+
+          const signatureInput = document.createElement('input');
+          signatureInput.type = 'hidden';
+          signatureInput.name = 'signature';
+          signatureInput.value = data.liqpay.signature;
+
+          form.appendChild(dataInput);
+          form.appendChild(signatureInput);
+          document.body.appendChild(form);
+
+          // Очищаем корзину перед переходом в платежный шлюз.
+          clear();
+          form.submit();
+          return;
+        }
+
         setOrderSuccess(true);
         setOrderNumber(data.orderNumber || data.orderId);
         clear();
@@ -651,6 +687,7 @@ export default function CartPage() {
                   >
                     <option value="cash_on_delivery">{t('cashOnDelivery')}</option>
                     <option value="card">{t('card')}</option>
+                    <option value="liqpay">LiqPay (Visa/Mastercard)</option>
                   </select>
                   
                   <textarea

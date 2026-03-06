@@ -62,8 +62,8 @@ export default function ContactsPage() {
               </li>
               <li className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
                 <span className="text-[#9C0000] font-semibold shrink-0">{t('telegram')}</span>
-                <a href="https://t.me/amaterasuAnimeShopBot" target="_blank" rel="noopener noreferrer" className="hover:text-[#9C0000] transition-colors break-all">
-                  @amaterasuAnimeShopBot
+                <a href="https://t.me/amaterasu1shop" target="_blank" rel="noopener noreferrer" className="hover:text-[#9C0000] transition-colors break-all">
+                  @amaterasu1shop
                 </a>
               </li>
               <li className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
