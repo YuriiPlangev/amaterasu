@@ -10,7 +10,7 @@ export default createMiddleware({
 });
 
 export const config = {
-  // Match only internationalized pathnames
-  matcher: ['/', '/(uk|en)(/.*)?']
+  // Run middleware for all non-static pages so next-intl can resolve locale.
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
 };
 
