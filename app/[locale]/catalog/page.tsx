@@ -267,13 +267,6 @@ export default function CatalogPage() {
   // Накопичуємо товари при завантаженні нової сторінки
   useEffect(() => {
     if (productsData && typeof productsData === 'object' && 'products' in productsData) {
-      console.log('Products data received:', {
-        page: productsData.page,
-        currentPage,
-        productsCount: productsData.products?.length,
-        hasMore: productsData.hasMore
-      });
-      
       if (currentPage === 1) {
         setAllProducts(productsData.products || []);
       } else {
@@ -281,7 +274,6 @@ export default function CatalogPage() {
         setAllProducts(prev => {
           const existingIds = new Set(prev.map((p: any) => p.id));
           const newProducts = (productsData.products || []).filter((p: any) => !existingIds.has(p.id));
-          console.log('Adding new products:', newProducts.length, 'of', productsData.products?.length);
           
           // Отмечаем новые товары для анимации
           const newIds = new Set<number>(newProducts.map((p: any) => p.id));
@@ -348,7 +340,7 @@ export default function CatalogPage() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: fadeInStyles }} />
-      <div className="max-w-[1920px] w-full mx-auto site-padding-x py-10 mt-20">
+      <div className="max-w-[1920px] w-full mx-auto site-padding-x pb-10 mt-20 min-h-[calc(100vh-5rem)]">
       {/* Mobile: при открытых фильтрах — только фильтры, header и footer видны, контент скрыт */}
       {isMobileFiltersOpen ? (
         <div className="md:hidden flex flex-col min-h-[60vh]">

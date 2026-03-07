@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
+import SocialAuthButtons from '../../../../components/auth/SocialAuthButtons';
 
 export default function RegisterPage() {
   const t = useTranslations('auth.register');
@@ -143,6 +144,8 @@ export default function RegisterPage() {
               {isLoading ? t('submitting') : success ? t('success') : t('submit')}
             </button>
           </form>
+
+          <SocialAuthButtons returnTo={returnTo} />
 
           <div className="mt-6 text-center">
             <p className="text-sm text-[#6D6D6D]">
