@@ -47,6 +47,13 @@
       "error": "Помилка реєстрації",
       "generalError": "Произошла ошибка. Попробуйте позже.",
       "successMessage": "Реєстрація успішна! Перенаправлення на сторінку входу..."
+    },
+    "social": {
+      "divider": "або",
+      "google": "Продовжити з Google",
+      "telegramLoading": "Перевіряємо Telegram авторизацію...",
+      "telegramError": "Помилка входу через Telegram",
+      "telegramNotConfigured": "Вхід через Telegram тимчасово недоступний"
     }
   },
   "cart": {

@@ -15,8 +15,7 @@ const PopularCategories = () => {
   // Debug: выводим данные категорий в консоль
   useEffect(() => {
     if (categories && categories.length > 0) {
-      console.log('Popular categories loaded:', categories.length);
-      console.log('First category example:', categories[0]);
+      console.log('Popular categories loaded:', categories.length)
     }
   }, [categories]);
 

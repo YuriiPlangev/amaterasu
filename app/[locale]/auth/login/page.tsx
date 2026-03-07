@@ -2,12 +2,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from 'next-intl';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import SocialAuthButtons from '../../../../components/auth/SocialAuthButtons';
 
 export default function LoginPage() {
   const t = useTranslations('auth.login');
   const locale = useLocale();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo') || `/${locale}/account`;
   const [username, setUsername] = useState("");
@@ -110,6 +110,10 @@ export default function LoginPage() {
               {isLoading ? t('submitting') : t('submit')}
             </button>
           </form>
+
+          <div className="mt-6">
+            <SocialAuthButtons returnTo={returnTo} />
+          </div>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-[#6D6D6D]">

@@ -47,6 +47,13 @@
       "error": "Registration error",
       "generalError": "An error occurred. Please try again later.",
       "successMessage": "Registration successful! Redirecting to login page..."
+    },
+    "social": {
+      "divider": "or",
+      "google": "Continue with Google",
+      "telegramLoading": "Validating Telegram login...",
+      "telegramError": "Telegram sign-in failed",
+      "telegramNotConfigured": "Telegram sign-in is temporarily unavailable"
     }
   },
   "cart": {

@@ -14,12 +14,11 @@ export function useProducts(params: any = {}) {
       
       console.log('Fetching products:', url);
       
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: 'no-store' });
 
       if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
       
-      console.log('Products received:', data);
       
       // Перевірка чи це новий формат (з пагінацією) чи старий (просто масив)
       if (data && typeof data === 'object' && 'products' in data) {

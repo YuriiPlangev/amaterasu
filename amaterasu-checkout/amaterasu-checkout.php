@@ -81,6 +81,13 @@ function amaterasu_register_auth_endpoints() {
         'callback' => 'amaterasu_handle_register',
         'permission_callback' => '__return_true',
     ));
+
+    // Social auth endpoint (Google / Telegram)
+    register_rest_route('custom/v1', '/social-auth', array(
+        'methods' => 'POST',
+        'callback' => 'amaterasu_handle_social_auth',
+        'permission_callback' => '__return_true',
+    ));
 }
 
 /**
@@ -406,5 +413,148 @@ function amaterasu_handle_register($request) {
             'roles' => $user->roles,
         ),
     ));
+}
+
+function amaterasu_normalize_social_provider($provider) {
+    $provider = sanitize_text_field((string) $provider);
+    if ($provider !== 'google' && $provider !== 'telegram') {
+        return '';
+    }
+    return $provider;
+}
+
+function amaterasu_generate_unique_username($base) {
+    $base = sanitize_user((string) $base, true);
+    if (empty($base)) {
+        $base = 'user_' . wp_generate_password(8, false, false);
+    }
+
+    $candidate = $base;
+    $suffix = 1;
+    while (username_exists($candidate)) {
+        $candidate = $base . '_' . $suffix;
+        $suffix++;
+    }
+
+    return $candidate;
+}
+
+function amaterasu_get_user_by_social_meta($provider, $provider_user_id) {
+    $meta_key = 'amaterasu_social_' . $provider . '_id';
+    $users = get_users(array(
+        'meta_key' => $meta_key,
+        'meta_value' => (string) $provider_user_id,
+        'number' => 1,
+        'count_total' => false,
+        'fields' => array('ID'),
+    ));
+
+    if (empty($users)) {
+        return null;
+    }
+
+    $user_id = intval($users[0]->ID);
+    if ($user_id <= 0) {
+        return null;
+    }
+
+    return get_user_by('id', $user_id);
+}
+
+function amaterasu_user_response($user) {
+    return array(
+        'success' => true,
+        'user' => array(
+            'ID' => $user->ID,
+            'user_login' => $user->user_login,
+            'user_email' => $user->user_email,
+            'roles' => $user->roles,
+        ),
+    );
+}
+
+/**
+ * Social auth (Google / Telegram): find or create user and return user payload.
+ */
+function amaterasu_handle_social_auth($request) {
+    $data = $request->get_json_params();
+
+    $provider = amaterasu_normalize_social_provider($data['provider'] ?? '');
+    $provider_user_id = sanitize_text_field((string) ($data['provider_user_id'] ?? ''));
+
+    if (empty($provider) || empty($provider_user_id)) {
+        return new WP_Error('missing_fields', 'Provider и provider_user_id обязательны', array('status' => 400));
+    }
+
+    $email_raw = isset($data['email']) ? (string) $data['email'] : '';
+    $email = sanitize_email($email_raw);
+    if (!empty($email_raw) && !is_email($email)) {
+        return new WP_Error('invalid_email', 'Некорректный email адрес', array('status' => 400));
+    }
+
+    $display_name = sanitize_text_field((string) ($data['display_name'] ?? ''));
+    $username_seed = sanitize_user((string) ($data['username'] ?? ''), true);
+
+    // 1) Existing by social meta.
+    $user = amaterasu_get_user_by_social_meta($provider, $provider_user_id);
+
+    // 2) Existing by email (if provided).
+    if (!$user && !empty($email)) {
+        $user = get_user_by('email', $email);
+    }
+
+    // 3) Create new user.
+    if (!$user) {
+        if (empty($username_seed) && !empty($email)) {
+            $parts = explode('@', $email);
+            $username_seed = sanitize_user($parts[0], true);
+        }
+
+        if (empty($username_seed)) {
+            $username_seed = $provider . '_' . $provider_user_id;
+        }
+
+        $username = amaterasu_generate_unique_username($username_seed);
+        $password = wp_generate_password(20, true, true);
+
+        // Telegram може не мати email; создаем технический уникальный.
+        $email_for_create = !empty($email)
+            ? $email
+            : ($provider . '_' . $provider_user_id . '@users.amaterasu.local');
+
+        if (email_exists($email_for_create)) {
+            $email_for_create = $provider . '_' . $provider_user_id . '_' . wp_generate_password(4, false, false) . '@users.amaterasu.local';
+        }
+
+        $user_id = wp_create_user($username, $password, $email_for_create);
+        if (is_wp_error($user_id)) {
+            return new WP_Error('social_registration_failed', $user_id->get_error_message(), array('status' => 500));
+        }
+
+        $user = get_user_by('id', $user_id);
+        if (!$user) {
+            return new WP_Error('social_registration_failed', 'Не удалось получить созданного пользователя', array('status' => 500));
+        }
+    }
+
+    if (!empty($display_name)) {
+        wp_update_user(array(
+            'ID' => $user->ID,
+            'display_name' => $display_name,
+        ));
+    }
+
+    update_user_meta($user->ID, 'amaterasu_social_' . $provider . '_id', (string) $provider_user_id);
+
+    // Если у пользователя был технический email и social-провайдер прислал реальный — обновим.
+    if (!empty($email) && is_email($email) && $user->user_email !== $email && !email_exists($email)) {
+        wp_update_user(array(
+            'ID' => $user->ID,
+            'user_email' => $email,
+        ));
+        $user = get_user_by('id', $user->ID);
+    }
+
+    return rest_ensure_response(amaterasu_user_response($user));
 }
 

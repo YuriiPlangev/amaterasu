@@ -5,6 +5,136 @@ function normalizeAttrKey(val: string): string {
   return String(val || "").toLowerCase().replace(/^pa_/, "").trim();
 }
 
+function toBooleanFlag(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return ["1", "true", "yes", "on"].includes(normalized);
+  }
+  return false;
+}
+
+function readMetaValue(metaData: any[] | undefined, key: string): unknown {
+  if (!Array.isArray(metaData)) return undefined;
+  const entry = metaData.find((m: any) => m?.key === key);
+  return entry?.value;
+}
+
+function isBestSellerProduct(product: any): boolean {
+  const acfValue = product?.acf?.is_bestseller;
+  if (toBooleanFlag(acfValue)) return true;
+
+  if (toBooleanFlag(product?.featured)) return true;
+
+  // Fallback: інколи ACF значення доступне лише у meta_data WooCommerce.
+  const metaCandidates = [
+    readMetaValue(product?.meta_data, "is_bestseller"),
+    readMetaValue(product?.meta_data, "_is_bestseller"),
+    readMetaValue(product?.meta_data, "acf_is_bestseller"),
+  ];
+
+  return metaCandidates.some((v) => toBooleanFlag(v));
+}
+
+async function fetchAllWooProducts(wcParams: any): Promise<{
+  products: any[];
+  totalProducts: number;
+  totalPages: number;
+}> {
+  const firstRes = await woo.get("products", { ...wcParams, page: 1, per_page: 100 });
+  const firstBatch = firstRes.data || [];
+  const totalProducts = firstRes.headers?.["x-wp-total"]
+    ? parseInt(firstRes.headers["x-wp-total"])
+    : firstBatch.length;
+  const totalPages = firstRes.headers?.["x-wp-totalpages"]
+    ? parseInt(firstRes.headers["x-wp-totalpages"])
+    : 1;
+
+  if (totalPages <= 1) {
+    return { products: firstBatch, totalProducts, totalPages };
+  }
+
+  const pagePromises: Promise<any>[] = [];
+  for (let page = 2; page <= totalPages; page++) {
+    pagePromises.push(woo.get("products", { ...wcParams, page, per_page: 100 }));
+  }
+
+  const pageResponses = await Promise.all(pagePromises);
+  const combined = [
+    ...firstBatch,
+    ...pageResponses.flatMap((r: any) => r.data || []),
+  ];
+
+  const uniqueById = new Map<number, any>();
+  for (const product of combined) {
+    if (product?.id != null) uniqueById.set(Number(product.id), product);
+  }
+
+  return {
+    products: Array.from(uniqueById.values()),
+    totalProducts,
+    totalPages,
+  };
+}
+
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  if (size <= 0) return [arr];
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
+async function mergeWpAcfForProducts(products: any[]): Promise<any[]> {
+  const wpUrl = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
+  if (!wpUrl || !products.length) return products;
+
+  const ids = products
+    .map((p: any) => Number(p?.id))
+    .filter((id: number) => Number.isFinite(id));
+
+  if (!ids.length) return products;
+
+  const idChunks = chunkArray(ids, 50);
+  const acfMap = new Map<number, any>();
+
+  await Promise.all(
+    idChunks.map(async (chunk) => {
+      const includeParam = chunk.join(",");
+      const wpRes = await fetch(
+        `${wpUrl}/wp-json/wp/v2/product?include=${includeParam}&per_page=100&_fields=id,acf`
+      );
+      if (!wpRes.ok) return;
+      const data = await wpRes.json();
+      if (!Array.isArray(data)) return;
+
+      for (const row of data) {
+        if (row?.id != null && row?.acf) {
+          acfMap.set(Number(row.id), row.acf);
+        }
+      }
+    })
+  );
+
+  if (!acfMap.size) return products;
+
+  return products.map((p: any) => {
+    const id = Number(p?.id);
+    if (!Number.isFinite(id)) return p;
+    const wpAcf = acfMap.get(id);
+    if (!wpAcf) return p;
+    return {
+      ...p,
+      acf: {
+        ...(p?.acf || {}),
+        ...wpAcf,
+      },
+    };
+  });
+}
+
 /** Декодирует HTML-сущности в полях товара */
 function decodeProductFields(product: any): any {
   return {
@@ -164,12 +294,28 @@ export async function GET(req: Request) {
   }
 
   try {
-    const res = await woo.get("products", wcParams);
-    let filteredProducts = res.data || [];
-    
-    // Получаем информацию о пагинации из заголовков WooCommerce
-    const totalProducts = res.headers?.['x-wp-total'] ? parseInt(res.headers['x-wp-total']) : filteredProducts.length;
-    const totalPages = res.headers?.['x-wp-totalpages'] ? parseInt(res.headers['x-wp-totalpages']) : 1;
+    let filteredProducts: any[] = [];
+    let totalProducts = 0;
+    let totalPages = 1;
+
+    if (params.bestseller === "true") {
+      const allProductsData = await fetchAllWooProducts(wcParams);
+      filteredProducts = allProductsData.products;
+      totalProducts = allProductsData.totalProducts;
+      totalPages = allProductsData.totalPages;
+
+      // Для бестселлерів подтягиваем ACF прямо из WP REST, если Woo его не вернул.
+      filteredProducts = await mergeWpAcfForProducts(filteredProducts);
+    } else {
+      const res = await woo.get("products", wcParams);
+      filteredProducts = res.data || [];
+      totalProducts = res.headers?.["x-wp-total"]
+        ? parseInt(res.headers["x-wp-total"])
+        : filteredProducts.length;
+      totalPages = res.headers?.["x-wp-totalpages"]
+        ? parseInt(res.headers["x-wp-totalpages"])
+        : 1;
+    }
     
 
     // Поиск по названию и описанию (гарантированная фильтрация на нашей стороне)
@@ -188,8 +334,10 @@ export async function GET(req: Request) {
       })
     );
 
-    // Категории: несколько ID — фильтруем вручную
-    if (categoryIds.length > 0) {
+    // Категории: при нескольких ID фильтруем вручную.
+    // Для одного ID WooCommerce уже фильтрує коректно (з урахуванням дочірніх категорій),
+    // а строгая ручная проверка по точному ID может скрыть валидные товары.
+    if (categoryIds.length > 1) {
       filteredProducts = filteredProducts.filter((p: any) =>
         p.categories?.some((c: any) => categoryIds.includes(c.id))
       );
@@ -227,9 +375,7 @@ export async function GET(req: Request) {
 
     // Бестселлеры
     if (params.bestseller === "true") {
-      filteredProducts = filteredProducts.filter(
-        (p: any) => p.acf?.is_bestseller === true
-      );
+      filteredProducts = filteredProducts.filter((p: any) => isBestSellerProduct(p));
     }
 
     // Ціна від/до
