@@ -21,21 +21,21 @@ add_action('rest_api_init', function() {
     // Login endpoint
     register_rest_route('custom/v1', '/login', array(
         'methods' => 'POST',
-        'callback' => 'amaterasu_handle_login',
+        'callback' => 'amaterasu_handle_login_v2',
         'permission_callback' => '__return_true',
     ));
     
     // Register endpoint
     register_rest_route('custom/v1', '/register', array(
         'methods' => 'POST',
-        'callback' => 'amaterasu_handle_register',
+        'callback' => 'amaterasu_handle_register_v2',
         'permission_callback' => '__return_true',
     ));
 
     // Social auth endpoint
     register_rest_route('custom/v1', '/social-auth', array(
         'methods' => 'POST',
-        'callback' => 'amaterasu_handle_social_auth',
+        'callback' => 'amaterasu_handle_social_auth_v2',
         'permission_callback' => '__return_true',
     ));
 });
@@ -43,7 +43,7 @@ add_action('rest_api_init', function() {
 /**
  * Обработка логина
  */
-function amaterasu_handle_login($request) {
+function amaterasu_handle_login_v2($request) {
     $data = $request->get_json_params();
     
     if (empty($data['username']) || empty($data['password'])) {
@@ -70,7 +70,7 @@ function amaterasu_handle_login($request) {
 /**
  * Обработка регистрации
  */
-function amaterasu_handle_register($request) {
+function amaterasu_handle_register_v2($request) {
     $data = $request->get_json_params();
     
     if (empty($data['username']) || empty($data['email']) || empty($data['password'])) {
@@ -115,7 +115,7 @@ function amaterasu_handle_register($request) {
 /**
  * Обработка социальной аутентификации (Google / Telegram)
  */
-function amaterasu_handle_social_auth($request) {
+function amaterasu_handle_social_auth_v2($request) {
     $data = $request->get_json_params();
 
     $provider = sanitize_text_field($data['provider'] ?? '');
@@ -217,4 +217,3 @@ function amaterasu_handle_social_auth($request) {
         ),
     ));
 }
-
