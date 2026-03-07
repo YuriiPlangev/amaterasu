@@ -25,12 +25,7 @@ export async function GET(req: NextRequest) {
   const code = requestUrl.searchParams.get("code");
   const state = requestUrl.searchParams.get("state") || "";
 
-  console.log("🔷 Google OAuth callback started");
-  console.log("Code:", code ? "✓ received" : "✗ missing");
-  console.log("State:", state ? "✓ received" : "✗ missing");
-
   if (!code || !state.includes("|")) {
-    console.error("❌ Missing code or state");
     return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_auth_failed`);
   }
 
@@ -57,12 +52,8 @@ export async function GET(req: NextRequest) {
     });
 
     const tokenData = await tokenRes.json();
-    console.log("🔷 Token response:", tokenRes.ok ? "✓ success" : `✗ ${tokenRes.status}`);
     if (!tokenRes.ok || !tokenData.access_token) {
-      console.error("❌ Token error:", tokenData);
-      const errorMsg = tokenData?.error_description || tokenData?.error || JSON.stringify(tokenData);
-      const errorDetails = encodeURIComponent(`Status ${tokenRes.status}: ${errorMsg}`);
-      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_token_failed&errorDetails=${errorDetails}`);
+      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_token_failed`);
     }
 
     const profileRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
@@ -71,13 +62,8 @@ export async function GET(req: NextRequest) {
     });
 
     const profile = await profileRes.json();
-    console.log("🔷 Profile response:", profileRes.ok ? "✓ success" : `✗ ${profileRes.status}`);
-    console.log("Profile data:", { sub: profile?.sub, email: profile?.email, name: profile?.name });
     if (!profileRes.ok || !profile?.sub) {
-      console.error("❌ Profile error:", profile);
-      const errorMsg = profile?.error_description || profile?.error || JSON.stringify(profile);
-      const errorDetails = encodeURIComponent(`Status ${profileRes.status}: ${errorMsg}`);
-      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_profile_failed&errorDetails=${errorDetails}`);
+      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_profile_failed`);
     }
 
     const socialRes = await fetch(`${wpUrl}/wp-json/custom/v1/social-auth`, {
@@ -93,24 +79,8 @@ export async function GET(req: NextRequest) {
     });
 
     const socialData = await socialRes.json();
-    console.log("🔷 WordPress social-auth response:", socialRes.ok ? "✓ success" : `✗ ${socialRes.status}`);
-    console.log("WordPress response data:", JSON.stringify(socialData, null, 2));
-    console.log("WordPress call details:", { 
-      url: `${wpUrl}/wp-json/custom/v1/social-auth`,
-      status: socialRes.status,
-      statusText: socialRes.statusText,
-    });
     if (!socialRes.ok || !socialData?.user?.ID) {
-      const errorMsg = socialData?.message || socialData?.error || JSON.stringify(socialData);
-      console.error("❌ Social auth error:", { 
-        status: socialRes.status, 
-        statusText: socialRes.statusText,
-        wpUrl, 
-        data: socialData,
-        headers: socialRes.headers
-      });
-      const errorDetails = encodeURIComponent(`Status ${socialRes.status}: ${errorMsg}`);
-      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=social_auth_failed&errorDetails=${errorDetails}`);
+      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=social_auth_failed`);
     }
 
     const user = socialData.user;

@@ -207,12 +207,13 @@ export default function CatalogPage() {
   // titleFilter — значение из фильтра «Тайтли» (должно совпадать с атрибутом в WooCommerce)
   const logoSlides: { src: string; alt: string; titleFilter: string }[] = [
     { src: '/images/naruto.png', alt: 'Naruto', titleFilter: 'Наруто' },
-    { src: '/images/onepiece.png', alt: 'One Piece', titleFilter: 'Ван Пис' },
+    { src: '/images/onepiece.png', alt: 'One Piece', titleFilter: 'Ван Піс' },
     { src: '/images/bleach.png', alt: 'Bleach', titleFilter: 'Бліч' },
     { src: '/images/attack.png', alt: 'Attack on Titan', titleFilter: 'Атака титанів' },
     { src: '/images/berserk.png', alt: 'Berserk', titleFilter: 'Берсерк' },
     { src: '/images/demonSlayer.png', alt: 'Demon Slayer', titleFilter: 'Клинок, що знищує демонів' },
     { src: '/images/jujutsu.png', alt: 'Jujutsu Kaisen', titleFilter: 'Магічна битва' },
+    { src: '/images/kpop.png', alt: 'K-pop', titleFilter: 'K-pop' },
   ];
 
   const setTitleFilter = (titleValue: string) => {
@@ -247,9 +248,10 @@ export default function CatalogPage() {
 
   // Скидаємо сторінку і накопичені товари при зміні фільтрів
   useEffect(() => {
-    console.log('Filters changed, resetting to page 1');
     setCurrentPage(1);
     setAllProducts([]);
+    // When filtered results are shorter than previous list, keep viewport anchored to top.
+    window.scrollTo({ top: 0, behavior: 'auto' });
   }, [
     searchApplied,
     sortBy,
@@ -301,6 +303,18 @@ export default function CatalogPage() {
     }
   }, [productsData, currentPage]);
 
+  useEffect(() => {
+    // If content shrinks after applying filters, clamp scroll to valid document bounds.
+    const raf = window.requestAnimationFrame(() => {
+      const maxScrollY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      if (window.scrollY > maxScrollY) {
+        window.scrollTo({ top: maxScrollY, behavior: 'auto' });
+      }
+    });
+
+    return () => window.cancelAnimationFrame(raf);
+  }, [allProducts.length, isLoading, currentPage]);
+
   const hasMore = productsData && typeof productsData === 'object' && 'hasMore' in productsData 
     ? productsData.hasMore 
     : false;
@@ -329,21 +343,6 @@ export default function CatalogPage() {
 
   const loadMore = () => {
     setCurrentPage(prev => prev + 1);
-    
-    // Плавная прокрутка к новым товарам после загрузки
-    setTimeout(() => {
-      const catalogSection = document.querySelector('section.grid');
-      if (catalogSection) {
-        const currentScrollY = window.scrollY;
-        const sectionBottom = catalogSection.getBoundingClientRect().bottom + currentScrollY;
-        const targetScrollY = sectionBottom - window.innerHeight + 200;
-        
-        window.scrollTo({
-          top: Math.min(targetScrollY, currentScrollY + 400),
-          behavior: 'smooth'
-        });
-      }
-    }, 100);
   };
 
   return (

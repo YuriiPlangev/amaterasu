@@ -37,6 +37,8 @@
       "usernamePlaceholder": "Enter your username",
       "email": "Email",
       "emailPlaceholder": "Enter your email",
+      "phone": "Phone",
+      "phonePlaceholder": "Enter your phone",
       "password": "Password",
       "passwordPlaceholder": "Enter your password",
       "submit": "Create Account",
@@ -207,7 +209,7 @@
     "howTitle": "How it works",
     "howText": "Send us your reference/idea and requirements in Telegram. We clarify details, prepare a preview, and start production after your approval.",
     "termsTitle": "Timing & price",
-    "termsText": "Final price and production time depend on design complexity and quantity. Estimated production time is 2–5 business days.",
+    "termsText": "Final price and production time depend on design complexity and quantity. Estimated production time is 1–3 business days.",
     "contactTitle": "Place an order",
     "contactText": "To place a custom order, click the button below and message us on Telegram.",
     "contactButton": "Message us on Telegram"

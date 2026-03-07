@@ -203,13 +203,13 @@ export default function Header() {
             </nav>
             <div className='px-6 pb-8 pt-4'>
               <a
-                href='https://instagram.com/amaterasu_anime_shop'
+                href='https://instagram.com/amaterasu1shop'
                 target='_blank'
                 rel='noopener noreferrer'
                 className='flex items-center gap-2 text-white hover:text-[#9C0000] transition-colors'
               >
                 <Image src='/svg/instagram.svg' alt='Instagram' width={24} height={24} className='shrink-0' />
-                <span className='text-sm'>@amaterasu_anime_shop</span>
+                <span className='text-sm'>@amaterasu1shop</span>
               </a>
             </div>
           </div>

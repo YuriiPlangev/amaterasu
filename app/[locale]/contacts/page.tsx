@@ -68,8 +68,8 @@ export default function ContactsPage() {
               </li>
               <li className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 min-w-0">
                 <span className="text-[#9C0000] font-semibold shrink-0">{t('instagram')}</span>
-                <a href="https://instagram.com/amaterasu_anime_shop" target="_blank" rel="noopener noreferrer" className="hover:text-[#9C0000] transition-colors break-all">
-                  @amaterasu_anime_shop
+                <a href="https://instagram.com/amaterasu1shop" target="_blank" rel="noopener noreferrer" className="hover:text-[#9C0000] transition-colors break-all">
+                  @amaterasu1shop
                 </a>
               </li>
             </ul>
@@ -98,8 +98,8 @@ export default function ContactsPage() {
               {t('socials')}
             </h2>
             <p className="text-[#374151] text-[15px] mb-4 break-all">
-            <a href="https://instagram.com/amaterasu_anime_shop" target="_blank" rel="noopener noreferrer" className="hover:text-[#9C0000] transition-colors">
-              @amaterasu_anime_shop
+            <a href="https://instagram.com/amaterasu1shop" target="_blank" rel="noopener noreferrer" className="hover:text-[#9C0000] transition-colors">
+              @amaterasu1shop
             </a>
             </p>
             <a

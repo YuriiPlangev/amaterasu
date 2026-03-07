@@ -3,7 +3,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import SocialAuthButtons from '../../../../components/auth/SocialAuthButtons';
 
 export default function RegisterPage() {
   const t = useTranslations('auth.register');
@@ -12,6 +11,7 @@ export default function RegisterPage() {
   const returnTo = searchParams.get('returnTo') || `/${locale}/account`;
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -26,7 +26,7 @@ export default function RegisterPage() {
     try {
       const res = await fetch("/api/register", {
         method: "POST",
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ username, email, phone, password }),
         headers: { "Content-Type": "application/json" }
       });
 
@@ -107,6 +107,22 @@ export default function RegisterPage() {
               />
             </div>
 
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-[#5A5A5A] mb-2">
+                {t('phone')}
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                placeholder={t('phonePlaceholder')}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-[#D8D8D8] rounded-lg focus:ring-2 focus:ring-[#9C0000] focus:border-[#9C0000] outline-none transition-all"
+                disabled={isLoading}
+              />
+            </div>
+
             {error && (
               <div className="bg-[#FFF2F2] border border-[#F5B7B7] text-[#9C0000] px-4 py-3 rounded-lg text-sm">
                 {error}
@@ -127,10 +143,6 @@ export default function RegisterPage() {
               {isLoading ? t('submitting') : success ? t('success') : t('submit')}
             </button>
           </form>
-
-          <div className="mt-6">
-            <SocialAuthButtons returnTo={returnTo} />
-          </div>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-[#6D6D6D]">

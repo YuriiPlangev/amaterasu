@@ -18,6 +18,13 @@ if (!defined('ABSPATH')) {
 
 // Инициализация при загрузке плагинов
 add_action('rest_api_init', function() {
+    // Checkout endpoint
+    register_rest_route('amaterasu/v1', '/checkout', array(
+        'methods' => 'POST',
+        'callback' => 'amaterasu_process_checkout',
+        'permission_callback' => '__return_true',
+    ));
+
     // Login endpoint
     register_rest_route('custom/v1', '/login', array(
         'methods' => 'POST',
@@ -41,6 +48,93 @@ add_action('rest_api_init', function() {
 });
 
 /**
+ * Checkout handler for WooCommerce orders.
+ */
+function amaterasu_process_checkout($request) {
+    if (!class_exists('WooCommerce')) {
+        return new WP_Error('woocommerce_not_active', 'WooCommerce не активен', array('status' => 500));
+    }
+
+    $data = $request->get_json_params();
+    if (empty($data['items']) || empty($data['billing'])) {
+        return new WP_Error('invalid_data', 'Недостаточно данных для создания заказа', array('status' => 400));
+    }
+
+    try {
+        $order = wc_create_order();
+        if (is_wp_error($order)) {
+            return new WP_Error('order_creation_failed', $order->get_error_message(), array('status' => 500));
+        }
+
+        if (!empty($data['customerId'])) {
+            $customer_id = intval($data['customerId']);
+            if ($customer_id > 0) {
+                $order->set_customer_id($customer_id);
+            }
+        }
+
+        foreach ($data['items'] as $item) {
+            $product_id = intval($item['id'] ?? 0);
+            $quantity = intval($item['qty'] ?? 0);
+            if ($product_id <= 0 || $quantity <= 0) {
+                continue;
+            }
+
+            $product = wc_get_product($product_id);
+            if ($product) {
+                $order->add_product($product, $quantity);
+            }
+        }
+
+        $billing = is_array($data['billing']) ? $data['billing'] : array();
+        $order->set_billing_first_name($billing['firstName'] ?? '');
+        $order->set_billing_last_name($billing['lastName'] ?? '');
+        $order->set_billing_email($billing['email'] ?? '');
+        $order->set_billing_phone($billing['phone'] ?? '');
+        $order->set_billing_address_1($billing['address'] ?? '');
+        $order->set_billing_city($billing['city'] ?? '');
+        $order->set_billing_postcode($billing['postcode'] ?? '');
+        $order->set_billing_country($billing['country'] ?? 'UA');
+
+        $shipping = isset($data['shipping']) && is_array($data['shipping']) ? $data['shipping'] : $billing;
+        $order->set_shipping_first_name($shipping['firstName'] ?? ($billing['firstName'] ?? ''));
+        $order->set_shipping_last_name($shipping['lastName'] ?? ($billing['lastName'] ?? ''));
+        $order->set_shipping_address_1($shipping['address'] ?? ($billing['address'] ?? ''));
+        $order->set_shipping_city($shipping['city'] ?? ($billing['city'] ?? ''));
+        $order->set_shipping_postcode($shipping['postcode'] ?? ($billing['postcode'] ?? ''));
+        $order->set_shipping_country($shipping['country'] ?? ($billing['country'] ?? 'UA'));
+
+        $payment_method = sanitize_text_field($data['paymentMethod'] ?? 'cash_on_delivery');
+        $order->set_payment_method($payment_method);
+        $order->set_payment_method_title($payment_method === 'liqpay' ? 'Оплата LiqPay' : 'Накладений платіж');
+
+        if (!empty($billing['notes'])) {
+            $order->set_customer_note(sanitize_text_field($billing['notes']));
+        }
+
+        $order->set_currency('UAH');
+        $order->set_status('pending', 'Заказ создан через API');
+
+        $order_id = $order->save();
+        if (!$order_id) {
+            return new WP_Error('order_save_failed', 'Не удалось сохранить заказ', array('status' => 500));
+        }
+
+        $saved_order = wc_get_order($order_id);
+        return rest_ensure_response(array(
+            'success' => true,
+            'orderId' => $order_id,
+            'orderNumber' => $saved_order ? $saved_order->get_order_number() : $order_id,
+            'orderKey' => $saved_order ? $saved_order->get_order_key() : '',
+            'status' => $saved_order ? $saved_order->get_status() : 'pending',
+            'total' => $saved_order ? $saved_order->get_total() : 0,
+        ));
+    } catch (Exception $e) {
+        return new WP_Error('order_exception', $e->getMessage(), array('status' => 500));
+    }
+}
+
+/**
  * Обработка логина
  */
 function amaterasu_handle_login($request) {
@@ -56,12 +150,19 @@ function amaterasu_handle_login($request) {
         return new WP_Error('invalid_credentials', 'Неверный логин или пароль', array('status' => 401));
     }
     
+    $phone = get_user_meta($user->ID, 'billing_phone', true);
+    if (empty($phone)) {
+        $phone = get_user_meta($user->ID, 'phone', true);
+    }
+
     return rest_ensure_response(array(
         'success' => true,
         'user' => array(
             'ID' => $user->ID,
             'user_login' => $user->user_login,
             'user_email' => $user->user_email,
+            'display_name' => $user->display_name,
+            'phone' => $phone,
             'roles' => $user->roles,
         ),
     ));
@@ -73,12 +174,13 @@ function amaterasu_handle_login($request) {
 function amaterasu_handle_register($request) {
     $data = $request->get_json_params();
     
-    if (empty($data['username']) || empty($data['email']) || empty($data['password'])) {
-        return new WP_Error('missing_fields', 'Username, email и password обязательны', array('status' => 400));
+    if (empty($data['username']) || empty($data['email']) || empty($data['phone']) || empty($data['password'])) {
+        return new WP_Error('missing_fields', 'Username, email, phone и password обязательны', array('status' => 400));
     }
     
     $username = sanitize_user($data['username']);
     $email = sanitize_email($data['email']);
+    $phone = sanitize_text_field($data['phone']);
     $password = $data['password'];
     
     if (!is_email($email)) {
@@ -100,6 +202,11 @@ function amaterasu_handle_register($request) {
     }
     
     $user = get_user_by('id', $user_id);
+
+    if (!empty($phone)) {
+        update_user_meta($user_id, 'billing_phone', $phone);
+        update_user_meta($user_id, 'phone', $phone);
+    }
     
     return rest_ensure_response(array(
         'success' => true,
@@ -107,6 +214,8 @@ function amaterasu_handle_register($request) {
             'ID' => $user->ID,
             'user_login' => $user->user_login,
             'user_email' => $user->user_email,
+            'display_name' => $user->display_name,
+            'phone' => $phone,
             'roles' => $user->roles,
         ),
     ));

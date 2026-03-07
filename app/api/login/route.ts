@@ -86,7 +86,7 @@ export async function POST(req: Request) {
     }
 
     // set cookie (httpOnly, secure in production)
-    const cookie = serialize('token', token, {
+    const tokenCookie = serialize('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -94,10 +94,24 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 * 7 // 7 days, keep in sync with JWT_EXPIRES_IN
     });
 
+    const profilePayload = {
+      displayName: user.display_name || user.user_login || '',
+      email: user.user_email || '',
+      phone: user.phone || '',
+    };
+
+    const profileCookie = serialize('profile', encodeURIComponent(JSON.stringify(profilePayload)), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+    });
+
     return new NextResponse(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
-        'Set-Cookie': cookie,
+        'Set-Cookie': `${tokenCookie}, ${profileCookie}`,
         'Content-Type': 'application/json'
       }
     });

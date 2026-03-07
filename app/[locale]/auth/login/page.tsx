@@ -3,7 +3,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import SocialAuthButtons from '../../../../components/auth/SocialAuthButtons';
 
 export default function LoginPage() {
   const t = useTranslations('auth.login');
@@ -11,20 +10,19 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo') || `/${locale}/account`;
   const errorParam = searchParams.get('error');
-  const errorDetails = searchParams.get('errorDetails');
   
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(errorParam ? getErrorMessage(errorParam, errorDetails, t) : "");
+  const [error, setError] = useState(errorParam ? getErrorMessage(errorParam) : "");
   const [isLoading, setIsLoading] = useState(false);
 
-  function getErrorMessage(errorCode: string, errorDetails: string | null, translations: any): string {
+  function getErrorMessage(errorCode: string): string {
     const errorMap: Record<string, string> = {
       'google_auth_failed': 'Google: не получен код авторизации',
       'google_state_mismatch': 'Google: ошибка проверки безопасности (state mismatch)',
-      'google_token_failed': errorDetails ? `Google: токен. ${decodeURIComponent(errorDetails)}` : 'Google: не удалось получить токен доступа',
-      'google_profile_failed': errorDetails ? `Google: профиль. ${decodeURIComponent(errorDetails)}` : 'Google: не удалось загрузить профиль',
-      'social_auth_failed': errorDetails ? `WordPress: ${decodeURIComponent(errorDetails)}` : 'WordPress: не удалось создать/найти пользователя. Проверьте WP_URL в .env и логи WordPress.',
+      'google_token_failed': 'Google: не удалось получить токен доступа',
+      'google_profile_failed': 'Google: не удалось загрузить профиль',
+      'social_auth_failed': 'WordPress: не удалось создать/найти пользователя',
       'google_unexpected_error': 'Неожиданная ошибка при входе через Google',
     };
     return errorMap[errorCode] || 'Ошибка при входе через Google';
@@ -125,10 +123,6 @@ export default function LoginPage() {
               {isLoading ? t('submitting') : t('submit')}
             </button>
           </form>
-
-          <div className="mt-6">
-            <SocialAuthButtons returnTo={returnTo} />
-          </div>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-[#6D6D6D]">

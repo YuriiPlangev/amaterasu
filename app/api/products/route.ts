@@ -155,6 +155,14 @@ function productMatchesSearch(product: any, searchTerm: string): boolean {
   return name.includes(term) || shortDesc.includes(term) || longDesc.includes(term);
 }
 
+/** Маппинг английских ключей атрибутов на кириллические названия в WooCommerce */
+const ATTR_NAME_MAP: Record<string, string[]> = {
+  title: ['тайтл', 'title', 'pa_title'],
+  character: ['персонаж', 'character', 'pa_character'],
+  genre: ['жанр', 'genre', 'pa_genre'],
+  game: ['гра', 'game', 'pa_game', 'games', 'pa_games'],
+};
+
 /** Проверяет, подходит ли товар по атрибуту (title, character, genre, game) */
 function productMatchesAttribute(
   product: any,
@@ -165,21 +173,21 @@ function productMatchesAttribute(
   const attrs = product.attributes || [];
   const targetNorm = attrName.toLowerCase();
   
-  // Пробуем найти атрибут по разным критериям
-  let attr = attrs.find((a: any) => {
-    const n = normalizeAttrKey(a?.name || "");
-    const s = normalizeAttrKey(a?.slug || "");
-    return n === targetNorm || s === targetNorm;
-  });
+  // Получаем возможные варианты названий атрибута (включая кириллицу)
+  const possibleNames = ATTR_NAME_MAP[targetNorm] || [targetNorm];
   
-  // Если не нашли, пробуем поиск более гибкий (содержит substring)
-  if (!attr) {
-    attr = attrs.find((a: any) => {
-      const n = (a?.name || "").toLowerCase();
-      const s = (a?.slug || "").toLowerCase();
-      return n.includes(targetNorm) || s.includes(targetNorm);
-    });
-  }
+  // Пробуем найти атрибут по всем возможным вариантам названий
+  let attr = attrs.find((a: any) => {
+    const attrName = (a?.name || "").toLowerCase().trim();
+    const attrSlug = (a?.slug || "").toLowerCase().trim();
+    
+    return possibleNames.some(possible => 
+      attrName === possible || 
+      attrSlug === possible ||
+      attrName.includes(possible) ||
+      attrSlug.includes(possible)
+    );
+  });
   
   if (!attr) {
     return false;
@@ -192,9 +200,8 @@ function productMatchesAttribute(
     : [];
   const productValues = opts.map((v: string) => String(v || "").trim().toLowerCase());
   
-  return allowedValues.some((v) =>
-    productValues.includes(String(v).trim().toLowerCase())
-  );
+  const normalizedAllowed = allowedValues.map((v) => String(v).trim().toLowerCase());
+  return normalizedAllowed.some((allowed) => productValues.includes(allowed));
 }
 
 export async function GET(req: Request) {
@@ -288,9 +295,10 @@ export async function GET(req: Request) {
     params.price_max ||
     (params.search && String(params.search).trim());
   
+  // При сложных фильтрах загружаем ВСЕ товары (все страницы)
   if (hasComplexFilters) {
-    wcParams.per_page = 100;  // WooCommerce max is 100
-    wcParams.page = 1;
+    delete wcParams.per_page;
+    delete wcParams.page;
   }
 
   try {
@@ -306,6 +314,12 @@ export async function GET(req: Request) {
 
       // Для бестселлерів подтягиваем ACF прямо из WP REST, если Woo его не вернул.
       filteredProducts = await mergeWpAcfForProducts(filteredProducts);
+    } else if (hasComplexFilters) {
+      // ВАЖНО: При атрибутных фильтрах загружаем ВСЕ товары
+      const allProductsData = await fetchAllWooProducts(wcParams);
+      filteredProducts = allProductsData.products;
+      totalProducts = allProductsData.totalProducts;
+      totalPages = allProductsData.totalPages;
     } else {
       const res = await woo.get("products", wcParams);
       filteredProducts = res.data || [];
@@ -418,10 +432,10 @@ export async function GET(req: Request) {
       const page = Math.max(1, Number(params.page) || 1);
       const start = (page - 1) * perPage;
       const total = filteredProducts.length;
-      filteredProducts = filteredProducts.slice(start, start + perPage);
+      const paginatedProducts = filteredProducts.slice(start, start + perPage);
       
       return new Response(JSON.stringify({
-        products: filteredProducts,
+        products: paginatedProducts,
         hasMore: start + perPage < total,
         total: total,
         page: page,

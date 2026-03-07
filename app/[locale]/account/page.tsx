@@ -24,6 +24,19 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   const userId = String(payload.sub ?? '');
   const userLogin = typeof payload.login === 'string' ? payload.login : 'User';
   const userRoles = Array.isArray(payload.roles) ? payload.roles : [];
+  let profileName = userLogin;
+
+  try {
+    const profileCookie = cookieStore.get('profile')?.value;
+    if (profileCookie) {
+      const parsed = JSON.parse(decodeURIComponent(profileCookie));
+      if (parsed?.displayName && typeof parsed.displayName === 'string') {
+        profileName = parsed.displayName;
+      }
+    }
+  } catch {
+    // Ignore malformed profile cookie.
+  }
 
   return (
     <div className="min-h-screen bg-white py-10 site-padding-x mt-16">
@@ -33,10 +46,10 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-white mb-1">{t('profileTitle')}</h1>
-                <p className="text-white/80">{t('welcome')} {userLogin}!</p>
+                <p className="text-white/80">{t('welcome')} {profileName}!</p>
               </div>
               <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-xl font-bold text-[#9C0000]">
-                {userLogin.charAt(0).toUpperCase()}
+                {profileName.charAt(0).toUpperCase()}
               </div>
             </div>
           </div>

@@ -10,7 +10,7 @@ export default function JsonLdOrganization() {
     description: 'Інтернет-магазин аніме атрибутики. Плакати, наклейки, мерч.',
     sameAs: [
       'https://t.me/amaterasuAnimeShopBot',
-      'https://instagram.com/amaterasu_anime_shop',
+      'https://instagram.com/amaterasu1shop',
     ],
   };
   return (

@@ -19,9 +19,9 @@ export default function Footer() {
               <Image src='/svg/tg.svg' alt="" width={24} height={24} className='shrink-0' aria-hidden />
               <p className='text-[#BCBCBC] text-sm md:text-base transition-colors duration-200'>@amaterasu1shop</p>
             </a>
-            <a href="https://instagram.com/amaterasu_anime_shop" target="_blank" rel="noopener noreferrer" className='footer-link-hover flex gap-2 items-center transition-opacity duration-200 hover:opacity-90' aria-label="Instagram: @amaterasu_anime_shop">
+            <a href="https://instagram.com/amaterasu1shop" target="_blank" rel="noopener noreferrer" className='footer-link-hover flex gap-2 items-center transition-opacity duration-200 hover:opacity-90' aria-label="Instagram: @amaterasu1shop">
               <Image src='/svg/instagram.svg' alt="" width={24} height={24} className='shrink-0' aria-hidden />
-              <p className='text-[#BCBCBC] text-sm md:text-base transition-colors duration-200'>@amaterasu_anime_shop</p>
+              <p className='text-[#BCBCBC] text-sm md:text-base transition-colors duration-200'>@amaterasu1shop</p>
             </a>
           </div>
         </div>

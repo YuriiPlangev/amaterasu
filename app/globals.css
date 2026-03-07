@@ -106,7 +106,7 @@ textarea:focus-visible {
 /* Медиа-запрос для очень широких экранов, чтобы огонь не становился гигантским */
 @media (min-width: 1920px) {
   .flame-boundary {
-     --flame-height: 180px; /* Фиксируем на максимуме */
+     --flame-height: 240px; /* Фиксируем на максимуме */
   }
 }
 .header-flame-mask {
@@ -123,7 +123,7 @@ textarea:focus-visible {
      Было: clamp(30px, 4vw, 60px)
      Стало: clamp(50px, 7vw, 100px) 
   */
-  --header-flame-height: clamp(50px, 7vw, 100px);
+  --header-flame-height: clamp(50px, 7vw, 200px);
 
   -webkit-mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 100% var(--header-flame-height);
   mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 100% var(--header-flame-height);

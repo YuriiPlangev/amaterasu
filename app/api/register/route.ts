@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   const body = await req.json();
   // Basic validation
-  if (!body.username || !body.email || !body.password) {
+  if (!body.username || !body.email || !body.phone || !body.password) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
   }
 
