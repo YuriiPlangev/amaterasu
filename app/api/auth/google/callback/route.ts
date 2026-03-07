@@ -60,7 +60,9 @@ export async function GET(req: NextRequest) {
     console.log("🔷 Token response:", tokenRes.ok ? "✓ success" : `✗ ${tokenRes.status}`);
     if (!tokenRes.ok || !tokenData.access_token) {
       console.error("❌ Token error:", tokenData);
-      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_token_failed`);
+      const errorMsg = tokenData?.error_description || tokenData?.error || JSON.stringify(tokenData);
+      const errorDetails = encodeURIComponent(`Status ${tokenRes.status}: ${errorMsg}`);
+      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_token_failed&errorDetails=${errorDetails}`);
     }
 
     const profileRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
@@ -73,7 +75,9 @@ export async function GET(req: NextRequest) {
     console.log("Profile data:", { sub: profile?.sub, email: profile?.email, name: profile?.name });
     if (!profileRes.ok || !profile?.sub) {
       console.error("❌ Profile error:", profile);
-      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_profile_failed`);
+      const errorMsg = profile?.error_description || profile?.error || JSON.stringify(profile);
+      const errorDetails = encodeURIComponent(`Status ${profileRes.status}: ${errorMsg}`);
+      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_profile_failed&errorDetails=${errorDetails}`);
     }
 
     const socialRes = await fetch(`${wpUrl}/wp-json/custom/v1/social-auth`, {
@@ -90,10 +94,23 @@ export async function GET(req: NextRequest) {
 
     const socialData = await socialRes.json();
     console.log("🔷 WordPress social-auth response:", socialRes.ok ? "✓ success" : `✗ ${socialRes.status}`);
-    console.log("WordPress response:", socialData);
+    console.log("WordPress response data:", JSON.stringify(socialData, null, 2));
+    console.log("WordPress call details:", { 
+      url: `${wpUrl}/wp-json/custom/v1/social-auth`,
+      status: socialRes.status,
+      statusText: socialRes.statusText,
+    });
     if (!socialRes.ok || !socialData?.user?.ID) {
-      console.error("❌ Social auth error:", { status: socialRes.status, wpUrl, data: socialData });
-      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=social_auth_failed`);
+      const errorMsg = socialData?.message || socialData?.error || JSON.stringify(socialData);
+      console.error("❌ Social auth error:", { 
+        status: socialRes.status, 
+        statusText: socialRes.statusText,
+        wpUrl, 
+        data: socialData,
+        headers: socialRes.headers
+      });
+      const errorDetails = encodeURIComponent(`Status ${socialRes.status}: ${errorMsg}`);
+      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=social_auth_failed&errorDetails=${errorDetails}`);
     }
 
     const user = socialData.user;
