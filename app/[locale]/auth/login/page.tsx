@@ -10,10 +10,24 @@ export default function LoginPage() {
   const locale = useLocale();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo') || `/${locale}/account`;
+  const errorParam = searchParams.get('error');
+  
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(errorParam ? getErrorMessage(errorParam, t) : "");
   const [isLoading, setIsLoading] = useState(false);
+
+  function getErrorMessage(errorCode: string, translations: any): string {
+    const errorMap: Record<string, string> = {
+      'google_auth_failed': 'Google: не получен код авторизации',
+      'google_state_mismatch': 'Google: ошибка проверки безопасности (state mismatch)',
+      'google_token_failed': 'Google: не удалось получить токен доступа',
+      'google_profile_failed': 'Google: не удалось загрузить профиль',
+      'social_auth_failed': 'WordPress: не удалось создать/найти пользователя',
+      'google_unexpected_error': 'Неожиданная ошибка при входе через Google',
+    };
+    return errorMap[errorCode] || 'Ошибка при входе через Google';
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

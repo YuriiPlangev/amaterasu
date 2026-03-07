@@ -25,7 +25,12 @@ export async function GET(req: NextRequest) {
   const code = requestUrl.searchParams.get("code");
   const state = requestUrl.searchParams.get("state") || "";
 
+  console.log("🔷 Google OAuth callback started");
+  console.log("Code:", code ? "✓ received" : "✗ missing");
+  console.log("State:", state ? "✓ received" : "✗ missing");
+
   if (!code || !state.includes("|")) {
+    console.error("❌ Missing code or state");
     return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_auth_failed`);
   }
 
@@ -52,7 +57,9 @@ export async function GET(req: NextRequest) {
     });
 
     const tokenData = await tokenRes.json();
+    console.log("🔷 Token response:", tokenRes.ok ? "✓ success" : `✗ ${tokenRes.status}`);
     if (!tokenRes.ok || !tokenData.access_token) {
+      console.error("❌ Token error:", tokenData);
       return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_token_failed`);
     }
 
@@ -62,7 +69,10 @@ export async function GET(req: NextRequest) {
     });
 
     const profile = await profileRes.json();
+    console.log("🔷 Profile response:", profileRes.ok ? "✓ success" : `✗ ${profileRes.status}`);
+    console.log("Profile data:", { sub: profile?.sub, email: profile?.email, name: profile?.name });
     if (!profileRes.ok || !profile?.sub) {
+      console.error("❌ Profile error:", profile);
       return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_profile_failed`);
     }
 
@@ -79,7 +89,10 @@ export async function GET(req: NextRequest) {
     });
 
     const socialData = await socialRes.json();
+    console.log("🔷 WordPress social-auth response:", socialRes.ok ? "✓ success" : `✗ ${socialRes.status}`);
+    console.log("WordPress response:", socialData);
     if (!socialRes.ok || !socialData?.user?.ID) {
+      console.error("❌ Social auth error:", { status: socialRes.status, wpUrl, data: socialData });
       return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=social_auth_failed`);
     }
 
