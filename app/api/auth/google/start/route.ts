@@ -5,9 +5,9 @@ const OAUTH_STATE_COOKIE = "oauth_state";
 
 export async function GET(req: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const requestOrigin = new URL(req.url).origin;
 
-  if (!clientId || !siteUrl) {
+  if (!clientId) {
     return NextResponse.json(
       { error: "Google OAuth is not configured" },
       { status: 500 }
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   const stateNonce = crypto.randomBytes(24).toString("hex");
   const statePayload = `${stateNonce}|${returnTo}`;
 
-  const redirectUri = `${siteUrl}/api/auth/google/callback`;
+  const redirectUri = new URL("/api/auth/google/callback", requestOrigin).toString();
 
   const googleUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   googleUrl.searchParams.set("client_id", clientId);

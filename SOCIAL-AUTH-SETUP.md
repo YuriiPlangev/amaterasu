@@ -121,6 +121,13 @@ TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz-1234567
 - Використовуйте **ngrok** або **Cloudflare Tunnel** для тестування
 - Або тестуйте тільки Google OAuth локально, а Telegram на production
 
+⚠️ **ВІДОМА ПРОБЛЕМА: Telegram може НЕ надсилати повідомлення на деякі Vercel піддомени (`*.vercel.app`)**
+
+**Якщо використовуєте Vercel:**
+- Краще налаштуйте власный домен (Custom Domain) в налаштуваннях Vercel
+- Або використовуйте тільки Google OAuth, а Telegram додайте після переїзду на власний домен
+- Telegram стабільніше працює з власними доменами (`amaterasu.shop`) ніж з `*.vercel.app`
+
 ---
 
 ### 5. NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
@@ -220,16 +227,69 @@ LIQPAY_PRIVATE_KEY=sandbox_...
 ### Telegram Auth
 1. Відкрийте `/uk/auth/register` або `/uk/auth/login`
 2. Натисніть на кнопку Telegram Login Widget
-3. Підтвердіть вхід у Telegram
-4. Перевірте, що ви увійшли і перенаправлені на `/uk/account`
+3. Введіть номер телефону (якщо просить)
+4. **ВАЖЛИВО:** Відкрийте додаток Telegram на телефоні/комп'ютері
+5. Знайдіть повідомлення від Telegram (у розділі "Service notifications" або просто в чатах)
+6. Натисніть кнопку "Confirm" / "Підтвердити" у повідомленні
+7. Після підтвердження браузер автоматично перенаправить на `/uk/account`
+
+⚠️ **Повідомлення приходить В ДОДАТОК TELEGRAM, а НЕ як SMS!**
 
 ---
 
 ## Troubleshooting
 
 ### Google OAuth помилки
-- **redirect_uri_mismatch**: перевірте, що в Google Console додано точний URI `{NEXT_PUBLIC_SITE_URL}/api/auth/google/callback`
-- **invalid_client**: перевірте GOOGLE_CLIENT_ID і GOOGLE_CLIENT_SECRET
+
+**"Ошибка 400: redirect_uri_mismatch" (найчастіша помилка):**
+
+Ця помилка означає, що redirect URI в Google Console НЕ збігається з вашим доменом.
+
+**КРИТИЧНО: URI має бути ТОЧНИМ, включаючи протокол, домен і шлях!**
+
+**Крок 1: Визначте ваш поточний домен**
+
+Подивіться на URL у браузері:
+- Якщо `https://amaterasu-gamma.vercel.app` → використовуйте цей домен
+- Якщо `http://localhost:3000` → використовуйте localhost
+- Якщо `https://amaterasu.shop` → використовуйте ваш production домен
+
+**Крок 2: Додайте ТОЧНИЙ redirect URI в Google Console**
+
+1. Відкрийте [Google Cloud Console](https://console.cloud.google.com/)
+2. Оберіть ваш проєкт
+3. У меню: **APIs & Services** → **Credentials**
+4. Знайдіть ваш **OAuth 2.0 Client ID** → натисніть на нього (значок олівця)
+5. У розділі **Authorized redirect URIs** натисніть **+ ADD URI**
+6. Додайте **ТОЧНИЙ** URI:
+
+**Для Vercel (amaterasu-gamma.vercel.app):**
+```
+https://amaterasu-gamma.vercel.app/api/auth/google/callback
+```
+
+**Для localhost (розробка):**
+```
+http://localhost:3000/api/auth/google/callback
+```
+
+**Для production домену:**
+```
+https://amaterasu.shop/api/auth/google/callback
+```
+
+7. Натисніть **SAVE** внизу сторінки
+8. Зачекайте 1-2 хвилини (Google потребує часу для оновлення)
+9. Спробуйте увійти знову
+
+⚠️ **ВАЖЛИВО:**
+- URI має ТОЧНО збігатися з доменом вашого сайту
+- `https://` для Vercel/production, `http://` для localhost
+- Обов'язково `/api/auth/google/callback` в кінці
+- БЕЗ слеша `/` в самому кінці
+
+**Інші помилки:**
+- **invalid_client**: перевірте GOOGLE_CLIENT_ID і GOOGLE_CLIENT_SECRET у .env
 - **access_denied**: користувач відмовився від авторизації (нормальна поведінка)
 
 ### Telegram помилки
@@ -259,6 +319,47 @@ LIQPAY_PRIVATE_KEY=sandbox_...
 - Telegram Login Widget НЕ працює на localhost
 - Використайте **ngrok**: `ngrok http 3000` → скопіюйте URL → встановіть в `/setdomain`
 - Або тестуйте на реальному домені
+
+**"Повідомлення не приходить в Telegram":**
+
+⚠️ **Повідомлення приходить В ДОДАТОК TELEGRAM, а не як SMS!**
+
+**Крок 1: Перевірте правильність домену в BotFather**
+
+КРИТИЧНО: Домен у BotFather має ТОЧНО збігатися з доменом сайту!
+
+У вашому випадку (з скріншота) сайт на `amaterasu-gamma.vercel.app`.
+
+1. Відкрийте [@BotFather](https://t.me/BotFather) в Telegram
+2. Надішліть: `/mybots`
+3. Виберіть вашого бота
+4. Натисніть **Bot Settings** → **Domain**
+5. Переконайтесь що там написано **ТОЧНО**: `amaterasu-gamma.vercel.app`
+
+**Якщо домен не збігається або показує "not set":**
+1. Надішліть BotFather: `/setdomain`
+2. Виберіть бота
+3. Надішліть **ТОЧНО**: `amaterasu-gamma.vercel.app` (без https://, без www, без слеша)
+
+**Крок 2: Якщо домен правильний, але повідомлення НЕ приходить**
+
+⚠️ **Telegram може НЕ підтримувати деякі Vercel піддомени!**
+
+**Рішення: Використовуйте власний домен**
+- Налаштуйте власний домен в Vercel (наприклад, `amaterasu.shop`)
+- Встановіть цей домен в BotFather через `/setdomain`
+- Telegram краще працює з власними доменами ніж з `*.vercel.app`
+
+**Крок 3: Альтернативні кроки для перевірки**
+1. Відкрийте додаток Telegram на телефоні/комп'ютері
+2. Прокрутіть всі чати вгору - шукайте від **Telegram** (галочка)
+3. Перевірте **"Service notifications"** / **"Системні повідомлення"**
+4. Спробуйте видалити сесію і увійти заново
+5. Перезапустіть додаток Telegram
+
+**Крок 4: Якщо нічого не допомагає**
+- Використовуйте тільки **Google OAuth** для авторизації (він точно працює)
+- Telegram Login додайте пізніше коли буде налаштований власний домен
 
 **Інші помилки:**
 - **Invalid signature**: неправильний TELEGRAM_BOT_TOKEN у .env

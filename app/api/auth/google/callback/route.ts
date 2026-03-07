@@ -14,9 +14,10 @@ export async function GET(req: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const wpUrl = process.env.WP_URL;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const requestOrigin = new URL(req.url).origin;
+  const baseUrl = requestOrigin;
 
-  if (!jwtSecret || !clientId || !clientSecret || !wpUrl || !siteUrl) {
+  if (!jwtSecret || !clientId || !clientSecret || !wpUrl) {
     return NextResponse.json({ error: "Google auth is not configured" }, { status: 500 });
   }
 
@@ -25,17 +26,17 @@ export async function GET(req: NextRequest) {
   const state = requestUrl.searchParams.get("state") || "";
 
   if (!code || !state.includes("|")) {
-    return NextResponse.redirect(`${siteUrl}/uk/auth/login?error=google_auth_failed`);
+    return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_auth_failed`);
   }
 
   const [nonceFromState, returnToRaw] = state.split("|", 2);
   const nonceFromCookie = req.cookies.get(OAUTH_STATE_COOKIE)?.value || "";
 
   if (!nonceFromState || !nonceFromCookie || nonceFromState !== nonceFromCookie) {
-    return NextResponse.redirect(`${siteUrl}/uk/auth/login?error=google_state_mismatch`);
+    return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_state_mismatch`);
   }
 
-  const redirectUri = `${siteUrl}/api/auth/google/callback`;
+  const redirectUri = new URL("/api/auth/google/callback", requestOrigin).toString();
 
   try {
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest) {
 
     const tokenData = await tokenRes.json();
     if (!tokenRes.ok || !tokenData.access_token) {
-      return NextResponse.redirect(`${siteUrl}/uk/auth/login?error=google_token_failed`);
+      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_token_failed`);
     }
 
     const profileRes = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
 
     const profile = await profileRes.json();
     if (!profileRes.ok || !profile?.sub) {
-      return NextResponse.redirect(`${siteUrl}/uk/auth/login?error=google_profile_failed`);
+      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_profile_failed`);
     }
 
     const socialRes = await fetch(`${wpUrl}/wp-json/custom/v1/social-auth`, {
@@ -79,7 +80,7 @@ export async function GET(req: NextRequest) {
 
     const socialData = await socialRes.json();
     if (!socialRes.ok || !socialData?.user?.ID) {
-      return NextResponse.redirect(`${siteUrl}/uk/auth/login?error=social_auth_failed`);
+      return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=social_auth_failed`);
     }
 
     const user = socialData.user;
@@ -93,7 +94,7 @@ export async function GET(req: NextRequest) {
 
     const isSafeReturnTo = returnToRaw.startsWith("/");
     const returnTo = isSafeReturnTo ? returnToRaw : "/uk/account";
-    const response = NextResponse.redirect(`${siteUrl}${returnTo}`);
+    const response = NextResponse.redirect(`${baseUrl}${returnTo}`);
 
     response.cookies.set("token", token, {
       httpOnly: true,
@@ -114,6 +115,6 @@ export async function GET(req: NextRequest) {
     return response;
   } catch (error) {
     console.error("Google callback error:", error);
-    return NextResponse.redirect(`${siteUrl}/uk/auth/login?error=google_unexpected_error`);
+    return NextResponse.redirect(`${baseUrl}/uk/auth/login?error=google_unexpected_error`);
   }
 }
