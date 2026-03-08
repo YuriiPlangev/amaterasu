@@ -8,7 +8,7 @@ import html2canvas from 'html2canvas';
 
 interface CustomDesignPreviewProps {
   categoryName: string;
-  productType?: 'cup' | 'badge' | 'keychain';
+  productType?: 'cup' | 'badge' | 'keychain' | 'magnet';
 }
 
 export default function CustomDesignPreview({ categoryName, productType = 'cup' }: CustomDesignPreviewProps) {
@@ -198,20 +198,29 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
   };
 
   const productBgImage = productType === 'badge' ? '/images/badge.jpg' 
+    : productType === 'magnet' ? '/images/magnet.png'
     : productType === 'keychain' ? '/images/keychain.png' 
     : '/images/cup.jpg';
-  const productAspectRatio = (productType === 'badge' || productType === 'keychain') ? '2/1' : '16/9';
-  const previewMinHeightClass = (productType === 'badge' || productType === 'keychain')
+  const productAspectRatio = (productType === 'badge' || productType === 'magnet' || productType === 'keychain') ? '2/1' : '16/9';
+  const previewMinHeightClass = (productType === 'badge' || productType === 'magnet' || productType === 'keychain')
     ? 'min-h-[170px] sm:min-h-[260px] md:min-h-[400px]'
     : 'min-h-[210px] sm:min-h-[300px] md:min-h-[400px]';
   
-  const designAreaStyle = productType === 'badge' 
+  const designAreaStyle = productType === 'badge'
     ? {
         left: '19%',
         top: '18%',
         width: '43.6%',
         height: '61%',
         borderRadius: '50%',
+      }
+    : productType === 'magnet'
+    ? {
+        left: '16.3%',
+        top: '22%',
+        width: '40%',
+        height: '39.1%',
+        borderRadius: '0%',
       }
     : {
         left: '27%',
@@ -285,8 +294,9 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
             className="relative w-full bg-[#F3F4F6]"
             style={{
               // 120% дает идеальную пропорцию для брелков и значков (не растягивается)
+              // 70% дает пропорцию для значков и магнитов
               // 56.25% дает пропорцию 16:9 (чашки)
-              paddingBottom: productType === 'keychain' ? '90%' : productType === 'badge' ? '70%' : '56.25%',
+              paddingBottom: productType === 'keychain' ? '90%' : productType === 'badge' || productType === 'magnet' ? '100%' : '56.25%',
             }}
         >
           <div className="absolute inset-0 w-full h-full">
@@ -351,9 +361,9 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
               </div>
             </>
           ) : (
-            /* Single Design Area for cup and badge */
+            /* Single Design Area for cup, badge and magnet */
             <div 
-              className="absolute overflow-hidden bg-white border-2 border-[#333]"
+              className="absolute overflow-hidden bg-white"
               style={designAreaStyle}
             >
               {uploadedImage ? (

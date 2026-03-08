@@ -20,6 +20,8 @@ export default async function CustomOrderPage({
   
   const productType = (slugLower.includes('badge') || slugLower.includes('значк') || categoryLower.includes('значк')) 
     ? 'badge' as const
+    : (slugLower.includes('magnet') || slugLower.includes('магніт') || categoryLower.includes('магніт'))
+    ? 'magnet' as const
     : (slugLower.includes('keychain') || slugLower.includes('брелок') || slugLower.includes('брелки') || 
        categoryLower.includes('брелок') || categoryLower.includes('брелки') || categoryLower.includes('keychain'))
     ? 'keychain' as const

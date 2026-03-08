@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare caption
-    const productTypeLabel = productType === 'badge' ? 'значок' : productType === 'keychain' ? 'брелок' : 'чашка';
+    const productTypeLabel = productType === 'badge' ? 'значок' : productType === 'magnet' ? 'магніт' : productType === 'keychain' ? 'брелок' : 'чашка';
     const caption = `🎨 Нове замовлення на CustomDesign!\n\n📦 Категорія: ${categoryName}\n🎯 Тип: ${productTypeLabel}\n👤 Контакт користувача: ${userName || 'Не вказано'}`;
 
     // Send original image 1 as document to preserve quality

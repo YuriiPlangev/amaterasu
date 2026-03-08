@@ -75,7 +75,7 @@ export default function ProductCard({ product }: { product: any }) {
   return (
     <article className={`relative border border-[#D8D8D8] px-5 py-4 flex flex-col rounded-2xl items-center gap-4 transition-all duration-300 hover:shadow-[0px_12px_28px_0px_#0000001A] h-full ${!isInStock ? 'opacity-50' : ''}`}>
       {productTag && (
-        <span className="absolute top-4 left-4 bg-[#9C0000] text-white font-semibold rounded-[4px] z-10 px-[clamp(8px,1.6vw,16px)] py-[clamp(4px,0.6vw,8px)] text-[clamp(12px,1.2vw,17px)]">
+        <span className="absolute top-4 left-4 right-4 bg-[#9C0000] text-white font-semibold rounded-[4px] z-10 px-[clamp(8px,1.6vw,16px)] py-[clamp(4px,0.6vw,8px)] text-[clamp(12px,1.2vw,17px)] text-center">
           {productTag}
         </span>
       )}
