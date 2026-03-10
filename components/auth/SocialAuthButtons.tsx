@@ -17,12 +17,13 @@ export default function SocialAuthButtons({ returnTo }: SocialAuthButtonsProps) 
   }, [returnTo]);
 
   return (
-    <div className="space-y-4">
-      <div className="relative text-center">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-[#E6E6E6]" />
-        </div>
-        <span className="relative bg-white px-4 text-sm text-[#6D6D6D]">{t("divider")}</span>
+    <div className="pt-4 space-y-4">
+      <div className="flex items-center gap-3" aria-hidden="true">
+        <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#DCDCDC] to-[#DCDCDC]" />
+        <span className="inline-flex items-center justify-center rounded-full border border-[#E3E3E3] bg-[#FAFAFA] px-4 py-1 text-sm font-medium text-[#6D6D6D] shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+          {t("divider")}
+        </span>
+        <span className="h-px flex-1 bg-gradient-to-l from-transparent via-[#DCDCDC] to-[#DCDCDC]" />
       </div>
 
       <a

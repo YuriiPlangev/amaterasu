@@ -24,6 +24,7 @@ export default function CartPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [legalConsent, setLegalConsent] = useState(false);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -181,6 +182,10 @@ export default function CartPage() {
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!legalConsent) {
+      alert(t('consentRequired'));
+      return;
+    }
     if (formData.deliveryMethod === 'nova_poshta') {
       if (!formData.novaPoshtaCityRef || !formData.novaPoshtaWarehouseRef) {
         alert('Оберіть місто та відділення Нової Пошти');
@@ -698,6 +703,31 @@ export default function CartPage() {
                     rows={3}
                     className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
                   />
+
+                  <label className="flex items-start gap-3 text-sm text-[#5A5A5A]">
+                    <input
+                      type="checkbox"
+                      checked={legalConsent}
+                      onChange={(e) => setLegalConsent(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-[#9C0000]"
+                      required
+                    />
+                    <span>
+                      {t('consentStart')}{' '}
+                      <Link href={`${basePath}/public-offer`} className="text-[#9C0000] hover:underline font-medium">
+                        {t('consentOffer')}
+                      </Link>
+                      ,{' '}
+                      <Link href={`${basePath}/privacy-policy`} className="text-[#9C0000] hover:underline font-medium">
+                        {t('consentPrivacy')}
+                      </Link>{' '}
+                      {t('consentAnd')}{' '}
+                      <Link href={`${basePath}/delivery`} className="text-[#9C0000] hover:underline font-medium">
+                        {t('consentDelivery')}
+                      </Link>
+                      .
+                    </span>
+                  </label>
                   
                   <div className="flex gap-2">
                     <button

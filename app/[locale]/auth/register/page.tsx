@@ -17,11 +17,18 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [legalConsent, setLegalConsent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setSuccess(false);
+
+    if (!legalConsent) {
+      setError(t('consentRequired'));
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -51,7 +58,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center py-12 site-padding-x">
+    <div className="min-h-screen bg-white flex items-center justify-center py-12 site-padding-x mt-12">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl border border-[#E6E6E6] shadow-[0px_12px_28px_0px_#0000001A] p-8">
           <div className="text-center mb-8">
@@ -135,6 +142,27 @@ export default function RegisterPage() {
                 {t('successMessage')}
               </div>
             )}
+
+            <label className="flex items-start gap-3 text-sm text-[#5A5A5A]">
+              <input
+                type="checkbox"
+                checked={legalConsent}
+                onChange={(e) => setLegalConsent(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[#9C0000]"
+                required
+              />
+              <span>
+                {t('consentStart')}{' '}
+                <Link href={`/${locale}/terms-of-use`} className="text-[#9C0000] hover:underline font-medium">
+                  {t('consentTerms')}
+                </Link>{' '}
+                {t('consentAnd')}{' '}
+                <Link href={`/${locale}/privacy-policy`} className="text-[#9C0000] hover:underline font-medium">
+                  {t('consentPrivacy')}
+                </Link>
+                .
+              </span>
+            </label>
 
             <button
               type="submit"

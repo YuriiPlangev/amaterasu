@@ -47,6 +47,46 @@ const TrashIcon = () => (
 
 export type SortOption = 'date' | 'price_asc' | 'price_desc';
 
+function resolveCustomProductType(slug: string, categoryName: string) {
+  const slugLower = slug.toLowerCase();
+  const categoryLower = categoryName.toLowerCase();
+
+  if (slugLower.includes('badge') || slugLower.includes('значк') || categoryLower.includes('значк')) {
+    return 'badge';
+  }
+
+  if (slugLower.includes('magnet') || slugLower.includes('магніт') || categoryLower.includes('магніт')) {
+    return 'magnet';
+  }
+
+  if (
+    slugLower.includes('keychain') ||
+    slugLower.includes('брелок') ||
+    slugLower.includes('брелки') ||
+    categoryLower.includes('брелок') ||
+    categoryLower.includes('брелки') ||
+    categoryLower.includes('keychain')
+  ) {
+    return 'keychain';
+  }
+
+  return 'cup';
+}
+
+function resolveCustomProductImage(slug: string, categoryName: string) {
+  const productType = resolveCustomProductType(slug, categoryName);
+
+  if (productType === 'badge') return '/images/badge_cover.webp';
+  if (productType === 'magnet') return '/images/magnet_cover.webp';
+  if (productType === 'keychain') return '/images/keychain_cover.webp';
+  return '/images/cup_cover.webp';
+}
+
+function resolveCustomProductPrice(slug: string, categoryName: string) {
+  const productType = resolveCustomProductType(slug, categoryName);
+  return productType === 'cup' ? '200' : '40';
+}
+
 export default function CatalogPage() {
   const t = useTranslations('catalog');
   const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -314,6 +354,8 @@ export default function CatalogPage() {
   const selectedCustomCategoryId = filterState.categoryIds.find((id) => customCategoryIds.includes(id));
   const customCategoryName = selectedCustomCategoryId ? categoryNames[selectedCustomCategoryId] : '';
   const customCategorySlug = selectedCustomCategoryId ? categorySlugs[selectedCustomCategoryId] : '';
+  const customProductImage = resolveCustomProductImage(customCategorySlug || '', customCategoryName || '');
+  const customProductPrice = resolveCustomProductPrice(customCategorySlug || '', customCategoryName || '');
 
   const customDesignProduct = selectedCustomCategoryId
     ? {
@@ -321,9 +363,9 @@ export default function CatalogPage() {
         slug: `custom-design-${customCategorySlug || selectedCustomCategoryId}`,
         name: customCategoryName ? `${customCategoryName} з вашим дизайном` : 'З вашим дизайном',
         short_description: 'Індивідуальне виготовлення під ваш макет. Натисніть, щоб дізнатися деталі замовлення.',
-        price: '0',
+        price: customProductPrice,
         stock_status: 'instock',
-        images: [{ src: '/images/placeholder.jpg' }],
+        images: [{ src: customProductImage }],
         isCustomDesign: true,
         customUrl: `/${locale}/custom-order/${customCategorySlug || selectedCustomCategoryId}?category=${encodeURIComponent(customCategoryName || '')}`,
       }
@@ -340,7 +382,7 @@ export default function CatalogPage() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: fadeInStyles }} />
-      <div className="max-w-[1920px] w-full mx-auto site-padding-x pb-10 mt-20 min-h-[calc(100vh-5rem)]">
+      <div className="max-w-[1920px] w-full mx-auto site-padding-x pb-10 mt-24 min-h-[calc(100vh-5rem)]">
       {/* Mobile: при открытых фильтрах — только фильтры, header и footer видны, контент скрыт */}
       {isMobileFiltersOpen ? (
         <div className="md:hidden flex flex-col min-h-[60vh]">

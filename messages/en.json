@@ -48,7 +48,12 @@
       "login": "Sign In",
       "error": "Registration error",
       "generalError": "An error occurred. Please try again later.",
-      "successMessage": "Registration successful! Redirecting to login page..."
+      "successMessage": "Registration successful! Redirecting to login page...",
+      "consentStart": "I agree with the",
+      "consentTerms": "Terms of Use",
+      "consentAnd": "and",
+      "consentPrivacy": "Privacy Policy",
+      "consentRequired": "Please accept the legal documents"
     },
     "social": {
       "divider": "or",
@@ -97,7 +102,13 @@
     "branchNumberPlaceholder": "e.g. branch #1 or 01001",
     "error": "Error",
     "minCharsCity": "Enter at least 2 characters",
-    "nothingFoundCity": "Nothing found"
+    "nothingFoundCity": "Nothing found",
+    "consentStart": "I agree with the",
+    "consentOffer": "Public Offer",
+    "consentPrivacy": "Privacy Policy",
+    "consentAnd": "and",
+    "consentDelivery": "Delivery and Payment terms",
+    "consentRequired": "Please accept the legal documents"
   },
   "favorites": {
     "title": "Favorites",

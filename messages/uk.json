@@ -48,7 +48,12 @@
       "login": "Увійти",
       "error": "Помилка реєстрації",
       "generalError": "Произошла ошибка. Попробуйте позже.",
-      "successMessage": "Реєстрація успішна! Перенаправлення на сторінку входу..."
+      "successMessage": "Реєстрація успішна! Перенаправлення на сторінку входу...",
+      "consentStart": "Погоджуюсь з",
+      "consentTerms": "Умовами користування",
+      "consentAnd": "та",
+      "consentPrivacy": "Політикою конфіденційності",
+      "consentRequired": "Підтвердіть згоду з юридичними документами"
     },
     "social": {
       "divider": "або",
@@ -97,7 +102,13 @@
     "branchNumberPlaceholder": "Наприклад: відділення №1 або 01001",
     "error": "Помилка",
     "minCharsCity": "Введіть мінімум 2 символи",
-    "nothingFoundCity": "Нічого не знайдено"
+    "nothingFoundCity": "Нічого не знайдено",
+    "consentStart": "Погоджуюсь з",
+    "consentOffer": "Публічною офертою",
+    "consentPrivacy": "Політикою конфіденційності",
+    "consentAnd": "та",
+    "consentDelivery": "умовами доставки й оплати",
+    "consentRequired": "Підтвердіть згоду з юридичними документами"
   },
   "favorites": {
     "title": "Обране",
