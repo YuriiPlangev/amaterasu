@@ -208,9 +208,9 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
   
   const designAreaStyle = productType === 'badge'
     ? {
-        left: '19%',
+        left: '8%',
         top: '18%',
-        width: '43.6%',
+        width: '58.6%',
         height: '61%',
         borderRadius: '50%',
       }
