@@ -11,7 +11,7 @@ const CONTENT: Record<Locale, {
 }> = {
   uk: {
     title: 'Повернення та обмін',
-    updated: 'Оновлено: 10 березня 2026 року',
+    updated: 'Оновлено: 11 березня 2026 року',
     intro:
       'Повернення і обмін товарів здійснюються відповідно до Закону України "Про захист прав споживачів". Нижче наведено базові правила для замовлень, оформлених на сайті Amaterasu.',
     sections: [
@@ -60,11 +60,11 @@ const CONTENT: Record<Locale, {
       },
     ],
     contact:
-      'Щоб оформити повернення, зверніться до підтримки: amaterasuanimeshop@gmail.com або Telegram: @amaterasu1shop.',
+      'Щоб оформити повернення або подати претензію, зверніться: +38 (068) 549-96-90 або Telegram: @amaterasu1shop.',
   },
   en: {
     title: 'Returns & Exchange Policy',
-    updated: 'Last updated: March 10, 2026',
+    updated: 'Last updated: March 11, 2026',
     intro:
       'Returns and exchanges are processed in accordance with the Law of Ukraine "On Consumer Rights Protection". The rules below apply to orders placed on the Amaterasu website.',
     sections: [
@@ -113,7 +113,7 @@ const CONTENT: Record<Locale, {
       },
     ],
     contact:
-      'To request a return, contact support: amaterasuanimeshop@gmail.com or Telegram: @amaterasu1shop.',
+      'To request a return or file a complaint, contact: +38 (068) 549-96-90 or Telegram: @amaterasu1shop.',
   },
 };
 

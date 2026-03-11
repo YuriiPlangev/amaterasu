@@ -7,11 +7,13 @@ const CONTENT: Record<Locale, {
   updated: string;
   intro: string;
   sections: { heading: string; points: string[] }[];
+  sellerDetailsHeading: string;
+  sellerDetails: string[];
   note: string;
 }> = {
   uk: {
     title: 'Публічна оферта',
-    updated: 'Оновлено: 10 березня 2026 року',
+    updated: 'Оновлено: 11 березня 2026 року',
     intro:
       'Цей документ є публічною офертою відповідно до ст. 633, 641, 642 Цивільного кодексу України і визначає умови дистанційного продажу товарів через сайт Amaterasu.',
     sections: [
@@ -41,7 +43,7 @@ const CONTENT: Record<Locale, {
       {
         heading: '4. Доставка',
         points: [
-          'Доставка здійснюється по Україні службами доставки, вказаними на сайті.',
+          'Доставка здійснюється виключно по території України службами доставки, вказаними на сайті.',
           'Строки доставки залежать від оператора доставки та населеного пункту.',
           'Ризик випадкового пошкодження або втрати товару переходить до покупця з моменту передачі відправлення перевізнику, якщо інше не встановлено законом.',
         ],
@@ -75,12 +77,21 @@ const CONTENT: Record<Locale, {
         ],
       },
     ],
+    sellerDetailsHeading: '9. Реквізити продавця',
+    sellerDetails: [
+      'Отримувач: ФОП Бабіч Максим Олегович.',
+      'Код / ЄДРПОУ: 3670706238.',
+      'Рахунок IBAN: UA823052990000026000014924506.',
+      'Банк: АТ КБ "ПРИВАТБАНК".',
+      'Контакти для претензій: +38 (068) 549-96-90, Telegram: @amaterasu1shop.',
+      'Географія продажу та доставки: Україна.',
+    ],
     note:
-      'Для повної юридичної ідентифікації продавця (ФОП/ТОВ, код ЄДРПОУ/РНОКПП, адреса, банківські реквізити) рекомендується додати окремий блок реквізитів після надання актуальних даних.',
+      'Після отримання повних даних буде додано юридичну адресу, остаточний блок для претензій та інші відомості, необхідні для фінальної редакції документів.',
   },
   en: {
     title: 'Public Offer',
-    updated: 'Last updated: March 10, 2026',
+    updated: 'Last updated: March 11, 2026',
     intro:
       'This document is a public offer under Articles 633, 641, and 642 of the Civil Code of Ukraine and defines distance sales terms for goods sold via the Amaterasu website.',
     sections: [
@@ -110,7 +121,7 @@ const CONTENT: Record<Locale, {
       {
         heading: '4. Delivery',
         points: [
-          'Delivery is available across Ukraine via shipping providers listed on the website.',
+          'Delivery is available only within Ukraine via shipping providers listed on the website.',
           'Delivery times depend on the shipping provider and destination.',
           'Risk of accidental loss or damage may pass to the buyer upon handover to the carrier unless otherwise required by law.',
         ],
@@ -144,8 +155,17 @@ const CONTENT: Record<Locale, {
         ],
       },
     ],
+    sellerDetailsHeading: '9. Seller details',
+    sellerDetails: [
+      'Recipient: Sole Proprietor Babich Maksym Olehovych.',
+      'Registration code: 3670706238.',
+      'IBAN: UA823052990000026000014924506.',
+      'Bank: JSC CB "PRIVATBANK".',
+      'Complaint contacts: +38 (068) 549-96-90, Telegram: @amaterasu1shop.',
+      'Sales and delivery geography: Ukraine.',
+    ],
     note:
-      'For full legal identification of the seller (sole proprietor/company details, registration code, address, bank details), add a dedicated legal entity block once final details are approved.',
+      'Once the remaining details are provided, we will add the legal address, final complaint handling block, and other information required for the final legal version.',
   },
 };
 
@@ -195,6 +215,18 @@ export default async function PublicOfferPage({
               </ul>
             </section>
           ))}
+
+          <section className="rounded-2xl border border-[#E5E7EB] p-6 md:p-8 bg-white">
+            <h2 className="text-[clamp(18px,2vw,26px)] font-bold text-[#1C1C1C] mb-4">{content.sellerDetailsHeading}</h2>
+            <ul className="space-y-2 text-[#374151] text-[15px] leading-relaxed">
+              {content.sellerDetails.map((point) => (
+                <li key={point} className="flex gap-2">
+                  <span className="text-[#9C0000] font-bold">•</span>
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
 
         <p className="mt-8 rounded-xl bg-[#FFF7ED] border border-[#FED7AA] p-4 text-[#7C2D12] text-[15px]">

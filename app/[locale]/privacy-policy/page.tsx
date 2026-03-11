@@ -11,7 +11,7 @@ const CONTENT: Record<Locale, {
 }> = {
   uk: {
     title: 'Політика конфіденційності',
-    updated: 'Оновлено: 10 березня 2026 року',
+    updated: 'Оновлено: 11 березня 2026 року',
     intro:
       'Ця Політика конфіденційності описує, як магазин Amaterasu обробляє персональні дані користувачів відповідно до Закону України "Про захист персональних даних" та Закону України "Про електронну комерцію".',
     sections: [
@@ -78,11 +78,11 @@ const CONTENT: Record<Locale, {
       },
     ],
     contact:
-      'З питань обробки персональних даних звертайтесь: amaterasuanimeshop@gmail.com або Telegram: @amaterasu1shop.',
+      'З питань обробки персональних даних і претензій звертайтесь: +38 (068) 549-96-90 або Telegram: @amaterasu1shop.',
   },
   en: {
     title: 'Privacy Policy',
-    updated: 'Last updated: March 10, 2026',
+    updated: 'Last updated: March 11, 2026',
     intro:
       'This Privacy Policy describes how Amaterasu processes personal data in accordance with Ukrainian data protection and e-commerce laws.',
     sections: [
@@ -149,7 +149,7 @@ const CONTENT: Record<Locale, {
       },
     ],
     contact:
-      'For personal data requests contact: amaterasuanimeshop@gmail.com or Telegram: @amaterasu1shop.',
+      'For personal data requests and complaints contact: +38 (068) 549-96-90 or Telegram: @amaterasu1shop.',
   },
 };
 
