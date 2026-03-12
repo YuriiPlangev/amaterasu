@@ -97,7 +97,7 @@ textarea:focus-visible {
   /* Чуть уменьшил максимальную высоту огня (с 233px до 180px), 
      так как на широких экранах 233px слишком сильно "съедают" место.
   */
-  --flame-height: clamp(25px, 4vw, 90px);
+  --flame-height: clamp(25px, 4vw, 117px);
   
   -webkit-mask-size: 100% calc(100% - var(--flame-height) + 1px), 50% var(--flame-height);
   mask-size: 100% calc(100% - var(--flame-height) + 1px), 50% var(--flame-height);
@@ -106,7 +106,7 @@ textarea:focus-visible {
 /* Медиа-запрос для очень широких экранов, чтобы огонь не становился гигантским */
 @media (min-width: 1920px) {
   .flame-boundary {
-     --flame-height: 120px; /* Фиксируем на максимуме */
+     --flame-height: 117px; /* Матчим высоту футерного огня */
   }
 }
 .header-flame-mask {
@@ -120,7 +120,7 @@ textarea:focus-visible {
   mask-composite: add;
 
   /* Те же параметры, что у .flame-boundary в Hero */
-  --header-flame-height: clamp(25px, 4vw, 90px);
+  --header-flame-height: clamp(25px, 4vw, 117px);
 
   -webkit-mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 50% var(--header-flame-height);
   mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 50% var(--header-flame-height);
@@ -130,7 +130,7 @@ textarea:focus-visible {
 
 @media (min-width: 1920px) {
   .header-flame-mask {
-    --header-flame-height: 120px;
+    --header-flame-height: 117px; /* Матчим высоту футерного огня */
   }
 }
 
