@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useProducts } from '../../../hooks/useProducts';
@@ -89,11 +89,14 @@ function resolveCustomProductPrice(slug: string, categoryName: string) {
 
 export default function CatalogPage() {
   const t = useTranslations('catalog');
-  const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-    { value: 'date', label: t('sortDate') },
-    { value: 'price_asc', label: t('sortPriceAsc') },
-    { value: 'price_desc', label: t('sortPriceDesc') },
-  ];
+  const SORT_OPTIONS: { value: SortOption; label: string }[] = useMemo(
+    () => [
+      { value: 'date', label: t('sortDate') },
+      { value: 'price_asc', label: t('sortPriceAsc') },
+      { value: 'price_desc', label: t('sortPriceDesc') },
+    ],
+    [t]
+  );
   const locale = useLocale();
   const searchParams = useSearchParams();
   const [filterState, setFilterState] = useState<CatalogFilterState>(initialFilterState);
@@ -264,23 +267,36 @@ export default function CatalogPage() {
     });
   };
 
-  const productParams: Record<string, string | undefined> = {
-    per_page: '16',
-    page: String(currentPage),
-    sort: sortBy,
-  };
-  if (searchApplied.trim()) {
-    productParams.search = searchApplied.trim();
-  }
-  if (filterState.categoryIds.length > 0) {
-    productParams.categories = filterState.categoryIds.join(',');
-  }
-  if (filterState.priceFrom) productParams.price_min = filterState.priceFrom;
-  if (filterState.priceTo) productParams.price_max = filterState.priceTo;
-  if (filterState.titles.length) productParams.attribute_title = filterState.titles.join(',');
-  if (filterState.characters.length) productParams.attribute_character = filterState.characters.join(',');
-  if (filterState.genres.length) productParams.attribute_genre = filterState.genres.join(',');
-  if (filterState.games.length) productParams.attribute_games = filterState.games.join(',');
+  const productParams: Record<string, string | undefined> = useMemo(() => {
+    const params: Record<string, string | undefined> = {
+      per_page: '16',
+      page: String(currentPage),
+      sort: sortBy,
+    };
+
+    const trimmedSearch = searchApplied.trim();
+    if (trimmedSearch) params.search = trimmedSearch;
+    if (filterState.categoryIds.length > 0) params.categories = filterState.categoryIds.join(',');
+    if (filterState.priceFrom) params.price_min = filterState.priceFrom;
+    if (filterState.priceTo) params.price_max = filterState.priceTo;
+    if (filterState.titles.length) params.attribute_title = filterState.titles.join(',');
+    if (filterState.characters.length) params.attribute_character = filterState.characters.join(',');
+    if (filterState.genres.length) params.attribute_genre = filterState.genres.join(',');
+    if (filterState.games.length) params.attribute_games = filterState.games.join(',');
+
+    return params;
+  }, [
+    currentPage,
+    sortBy,
+    searchApplied,
+    filterState.categoryIds,
+    filterState.priceFrom,
+    filterState.priceTo,
+    filterState.titles,
+    filterState.characters,
+    filterState.genres,
+    filterState.games,
+  ]);
 
   const { data: productsData, isLoading, error } = useProducts(productParams);
 

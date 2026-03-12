@@ -1,10 +1,6 @@
 import { woo } from "../../../lib/woo";
 import { decodeHtmlEntities } from "../../../lib/html";
 
-function normalizeAttrKey(val: string): string {
-  return String(val || "").toLowerCase().replace(/^pa_/, "").trim();
-}
-
 function toBooleanFlag(value: unknown): boolean {
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value === 1;
@@ -143,6 +139,10 @@ function decodeProductFields(product: any): any {
     short_description: decodeHtmlEntities(product.short_description || ''),
     description: decodeHtmlEntities(product.description || ''),
   };
+}
+
+function parseNumericPrice(value: unknown): number {
+  return parseFloat(String(value || "0").replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
 }
 
 /** Проверяет, есть ли подстрока в названии, описании или тегах товара (без учёта регистра, HTML убран) */
@@ -356,73 +356,64 @@ export async function GET(req: Request) {
       })
     );
 
-    // Категории: при нескольких ID фильтруем вручную.
-    // Для одного ID WooCommerce уже фильтрує коректно (з урахуванням дочірніх категорій),
-    // а строгая ручная проверка по точному ID может скрыть валидные товары.
-    if (categoryIds.length > 1) {
-      filteredProducts = filteredProducts.filter((p: any) =>
-        p.categories?.some((c: any) => categoryIds.includes(c.id))
-      );
-    }
-
-    // Теги
-    if (wcParams.tag) {
-      const tagId = Number(wcParams.tag);
-      filteredProducts = filteredProducts.filter((p: any) =>
-        p.tags?.some((t: any) => t.id === tagId)
-      );
-    }
-    
-    // Фильтруем по атрибутам на нашей стороне
-    if (characterVals.length) {
-      filteredProducts = filteredProducts.filter((p: any) =>
-        productMatchesAttribute(p, "character", characterVals)
-      );
-    }
-    if (titleVals.length) {
-      filteredProducts = filteredProducts.filter((p: any) =>
-        productMatchesAttribute(p, "title", titleVals)
-      );
-    }
-    if (genreVals.length) {
-      filteredProducts = filteredProducts.filter((p: any) =>
-        productMatchesAttribute(p, "genre", genreVals)
-      );
-    }
-    if (gameVals.length) {
-      filteredProducts = filteredProducts.filter((p: any) =>
-        productMatchesAttribute(p, "game", gameVals)
-      );
-    }
-
-    // Бестселлеры
-    if (params.bestseller === "true") {
-      filteredProducts = filteredProducts.filter((p: any) => isBestSellerProduct(p));
-    }
-
     // Ціна від/до
     const priceMin = params.price_min ? parseFloat(String(params.price_min)) : null;
     const priceMax = params.price_max ? parseFloat(String(params.price_max)) : null;
-    if (priceMin != null && !isNaN(priceMin)) {
-      filteredProducts = filteredProducts.filter((p: any) => {
-        const price = parseFloat(String(p.price || "0").replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
-        return price >= priceMin;
-      });
-    }
-    if (priceMax != null && !isNaN(priceMax)) {
-      filteredProducts = filteredProducts.filter((p: any) => {
-        const price = parseFloat(String(p.price || "0").replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
-        return price <= priceMax;
-      });
-    }
+    const hasPriceMin = priceMin != null && !isNaN(priceMin);
+    const hasPriceMax = priceMax != null && !isNaN(priceMax);
+    const requiresCategoryFilter = categoryIds.length > 1;
+    const tagId = wcParams.tag ? Number(wcParams.tag) : null;
+    const requiresBestSeller = params.bestseller === "true";
+
+    filteredProducts = filteredProducts.filter((p: any) => {
+      // Категории: при нескольких ID фильтруем вручную.
+      // Для одного ID WooCommerce уже фильтрує коректно (з урахуванням дочірніх категорій),
+      // а строгая ручная проверка по точному ID может скрыть валидные товары.
+      if (requiresCategoryFilter && !p.categories?.some((c: any) => categoryIds.includes(c.id))) {
+        return false;
+      }
+
+      // Теги
+      if (tagId != null && !p.tags?.some((t: any) => t.id === tagId)) {
+        return false;
+      }
+
+      // Фильтруем по атрибутам на нашей стороне
+      if (characterVals.length && !productMatchesAttribute(p, "character", characterVals)) {
+        return false;
+      }
+      if (titleVals.length && !productMatchesAttribute(p, "title", titleVals)) {
+        return false;
+      }
+      if (genreVals.length && !productMatchesAttribute(p, "genre", genreVals)) {
+        return false;
+      }
+      if (gameVals.length && !productMatchesAttribute(p, "game", gameVals)) {
+        return false;
+      }
+
+      // Бестселлеры
+      if (requiresBestSeller && !isBestSellerProduct(p)) {
+        return false;
+      }
+
+      // Ціна від/до
+      if (hasPriceMin || hasPriceMax) {
+        const price = parseNumericPrice(p.price);
+        if (hasPriceMin && price < (priceMin as number)) return false;
+        if (hasPriceMax && price > (priceMax as number)) return false;
+      }
+
+      return true;
+    });
 
     // Сортировка (при complex-фильтрах WC не сортирует — сортируем вручную)
     const sortParam = params.sort || "date";
     if (sortParam === "price_asc" || sortParam === "price_desc") {
       const sign = sortParam === "price_asc" ? 1 : -1;
       filteredProducts = [...filteredProducts].sort((a: any, b: any) => {
-        const pa = parseFloat(String(a.price || "0").replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
-        const pb = parseFloat(String(b.price || "0").replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+        const pa = parseNumericPrice(a.price);
+        const pb = parseNumericPrice(b.price);
         return sign * (pa - pb);
       });
     } else {

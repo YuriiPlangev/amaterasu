@@ -11,9 +11,7 @@ export function useProducts(params: any = {}) {
         }
       });
       const url = `/api/products${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-      
-      console.log('Fetching products:', url);
-      
+
       const res = await fetch(url, { cache: 'no-store' });
 
       if (!res.ok) throw new Error('Failed to fetch products');
