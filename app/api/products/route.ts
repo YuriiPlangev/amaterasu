@@ -145,14 +145,26 @@ function decodeProductFields(product: any): any {
   };
 }
 
-/** Проверяет, есть ли подстрока в названии или описании товара (без учёта регистра, HTML убран) */
+/** Проверяет, есть ли подстрока в названии, описании или тегах товара (без учёта регистра, HTML убран) */
 function productMatchesSearch(product: any, searchTerm: string): boolean {
   const term = searchTerm.toLowerCase().trim();
   if (!term) return true;
   const name = String(product.name || "").toLowerCase();
   const shortDesc = String(product.short_description || "").replace(/<[^>]*>/g, " ").toLowerCase();
   const longDesc = String(product.description || "").replace(/<[^>]*>/g, " ").toLowerCase();
-  return name.includes(term) || shortDesc.includes(term) || longDesc.includes(term);
+  const tagsText = Array.isArray(product.tags)
+    ? product.tags
+        .flatMap((tag: any) => [String(tag?.name || ""), String(tag?.slug || "")])
+        .join(" ")
+        .toLowerCase()
+    : "";
+
+  return (
+    name.includes(term) ||
+    shortDesc.includes(term) ||
+    longDesc.includes(term) ||
+    tagsText.includes(term)
+  );
 }
 
 /** Маппинг английских ключей атрибутов на кириллические названия в WooCommerce */
@@ -214,10 +226,6 @@ export async function GET(req: Request) {
     page: params.page ? Number(params.page) : 1  // ВАЖНО: всегда устанавливаем page
   };
   
-  if (params.search && String(params.search).trim()) {
-    wcParams.search = String(params.search).trim();
-  }
-
   // Фильтр по одной категории — передаём в WC
   const categoryIds = params.categories
     ? String(params.categories)

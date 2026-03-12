@@ -57,7 +57,7 @@ export default function Header() {
     <header className='bg-[#1C1C1C] w-full relative z-50'>
       <div className='max-w-[1920px] w-full mx-auto site-padding-x'>
         {/* Контент хедера */}
-        <div className='flex items-center justify-between gap-4 pt-3 md:pt-[clamp(10px,1.6vw,22px)] relative'>
+        <div className='flex items-center justify-between gap-4 pt-3 md:pt-[clamp(10px,1.6vw,22px)] relative z-20'>
           <Logo />
           <nav className='hidden md:flex flex-1 justify-center' aria-label={tA11y('mainNav')}>
             <ul className='flex gap-[clamp(10px,1.8vw,32px)] text-[clamp(12px,1.05vw,17px)] font-medium whitespace-nowrap'>
@@ -108,7 +108,7 @@ export default function Header() {
 
         {/* Mobile: search panel when open */}
         {isSearchOpen && (
-          <div className='md:hidden pb-3'>
+          <div className='md:hidden pb-3 relative z-20'>
             <HeaderSearch
               isOpen={true}
               onClose={() => setIsSearchOpen(false)}
@@ -122,7 +122,7 @@ export default function Header() {
       {/* ОГОНЬ (как в футере): показываем только если это НЕ главная; -1px чтобы не было белой полоски */}
       {!isHomePage && (
         <div
-          className='header-flame-mask [--header-flame-height:78px] bg-[#1C1C1C] w-full absolute left-0 pointer-events-none'
+          className='header-flame-mask [--header-flame-height:78px] bg-[#1C1C1C] w-full absolute left-0 z-0 pointer-events-none'
           style={{ top: 'calc(100% - 1px)' }}
         />
       )}

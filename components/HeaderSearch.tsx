@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 
 const MIN_CHARS = 3;
@@ -22,6 +23,7 @@ export default function HeaderSearch({
   className = '',
   placeholder,
 }: HeaderSearchProps) {
+  const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('search');
   const placeholderText = placeholder ?? t('placeholder');
@@ -44,15 +46,18 @@ export default function HeaderSearch({
         `/api/products?search=${encodeURIComponent(q.trim())}&per_page=${RESULTS_LIMIT}`
       );
       const data = await res.json();
+      const products = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.products)
+        ? data.products
+        : [];
       setResults(
-        Array.isArray(data)
-          ? data.map((p: any) => ({
+        products.map((p: any) => ({
               id: p.id,
               name: p.name || '',
               slug: p.slug || '',
               price: p.price || '',
             }))
-          : []
       );
     } catch {
       setResults([]);
@@ -82,7 +87,9 @@ export default function HeaderSearch({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+      // In Header there are desktop+mobile instances; skip hidden one to avoid false outside-click closes.
+      if (!wrapRef.current || wrapRef.current.offsetParent === null) return;
+      if (!wrapRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
@@ -96,9 +103,17 @@ export default function HeaderSearch({
 
   const showDropdown = query.trim().length >= MIN_CHARS && touched;
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    router.push(`${basePath}/catalog?search=${encodeURIComponent(trimmed)}`);
+    onClose();
+  };
+
   return (
-    <div ref={wrapRef} className={`relative header-search-animate ${className}`}>
-      <div className="rounded-lg border border-[#BCBCBC] px-3 py-2 bg-[#111111] flex items-center gap-3 min-w-[180px] md:min-w-[240px]">
+    <div ref={wrapRef} className={`relative z-[120] header-search-animate ${className}`}>
+      <form onSubmit={handleSubmit} className="rounded-lg border border-[#BCBCBC] px-3 py-2 bg-[#111111] flex items-center gap-3 min-w-[180px] md:min-w-[240px]">
         <input
           ref={inputRef}
           type="text"
@@ -108,12 +123,15 @@ export default function HeaderSearch({
           aria-label={t('ariaSearch')}
           className="bg-transparent outline-none flex-1 text-white placeholder-[#BCBCBC] text-sm md:text-base"
         />
+        <button type="submit" aria-label={t('ariaSearch')} className="shrink-0 text-[#BCBCBC] hover:text-white">
+          <Image src="/svg/search.svg" alt="search" width={18} height={18} />
+        </button>
         <button type="button" aria-label={t('close')} onClick={onClose} className="shrink-0 text-[#BCBCBC] hover:text-white">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
-      </div>
+      </form>
 
       {showDropdown && (
         <div className="absolute top-full left-0 right-0 mt-1 rounded-lg border border-[#333] bg-[#1C1C1C] shadow-xl max-h-[70vh] overflow-y-auto z-[100]">
