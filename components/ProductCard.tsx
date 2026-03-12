@@ -83,17 +83,26 @@ export default function ProductCard({ product }: { product: any }) {
       <Link href={productHref} className="flex flex-col w-full cursor-pointer flex-1" onClick={handleProductClick}>
         <Image src={getProxiedImageUrl(product?.images?.[0]?.src)} alt={product?.name} width={300} height={260} className="w-full h-[260px] object-contain" />
         <div className="flex flex-col items-center w-full gap-[10px] flex-1">
-          <div className="flex justify-between items-center gap-2 w-full">
-            <div className="flex flex-col items-center gap-0">
-              <p className={`text-[#9C0000] font-semibold text-sm line-through opacity-60 min-h-[21px] ${hasDiscount ? 'visible' : 'invisible'}`}>
-                {hasDiscount ? `${regularPrice.toFixed(2)} ₴` : '0 ₴'}
-              </p>
+          {!hasDiscount ? (
+            // Без скидки: цена и наличие на одной строке (по горизонтали)
+            <div className="flex justify-between items-center gap-2 w-full">
               <p className="text-[#9C0000] font-semibold text-[25px] whitespace-nowrap shrink-0">{product?.price} ₴</p>
+              <p className={`font-semibold text-[14px] ${isInStock ? 'text-[#2E7900]' : 'text-[#9C0000]'}`}>
+                {isInStock ? tCard('inStock') : tCard('outOfStock')}
+              </p>
             </div>
-            <p className={`font-semibold text-[14px] ${isInStock ? 'text-[#2E7900]' : 'text-[#9C0000]'}`}>
-              {isInStock ? tCard('inStock') : tCard('outOfStock')}
-            </p>
-          </div>
+          ) : (
+            // Со скидкой: старая цена → наличие → новая цена (в колонке)
+            <div className="flex flex-col items-center gap-0 w-full">
+              <p className="text-[#9C0000] font-semibold text-sm line-through opacity-60">
+                {regularPrice.toFixed(2)} ₴
+              </p>
+              <p className={`font-semibold text-[14px] ${isInStock ? 'text-[#2E7900]' : 'text-[#9C0000]'}`}>
+                {isInStock ? tCard('inStock') : tCard('outOfStock')}
+              </p>
+              <p className="text-[#9C0000] font-semibold text-[25px]">{product?.price} ₴</p>
+            </div>
+          )}
           <div className="self-start w-full min-w-0">
             <h3 className="text-black font-medium text-[16px] truncate" title={product?.name}>{product?.name}</h3>
             <p className="text-black font-medium text-[15px] truncate">{productDescription}</p>
