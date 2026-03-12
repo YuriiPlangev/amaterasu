@@ -122,7 +122,7 @@ export default function Header() {
       {/* ОГОНЬ (как в футере): показываем только если это НЕ главная; -1px чтобы не было белой полоски */}
       {!isHomePage && (
         <div
-          className='header-flame-mask [--header-flame-height:78px] bg-[#1C1C1C] w-full absolute left-0 z-0 pointer-events-none'
+          className='header-flame-mask bg-[#1C1C1C] w-full absolute left-0 z-0 pointer-events-none'
           style={{ top: 'calc(100% - 1px)' }}
         />
       )}

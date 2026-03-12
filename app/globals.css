@@ -97,21 +97,21 @@ textarea:focus-visible {
   /* Чуть уменьшил максимальную высоту огня (с 233px до 180px), 
      так как на широких экранах 233px слишком сильно "съедают" место.
   */
-  --flame-height: clamp(50px, 8vw, 180px);
+  --flame-height: clamp(25px, 4vw, 90px);
   
-  -webkit-mask-size: 100% calc(100% - var(--flame-height) + 1px), 100% var(--flame-height);
-  mask-size: 100% calc(100% - var(--flame-height) + 1px), 100% var(--flame-height);
+  -webkit-mask-size: 100% calc(100% - var(--flame-height) + 1px), 50% var(--flame-height);
+  mask-size: 100% calc(100% - var(--flame-height) + 1px), 50% var(--flame-height);
 }
 
 /* Медиа-запрос для очень широких экранов, чтобы огонь не становился гигантским */
 @media (min-width: 1920px) {
   .flame-boundary {
-     --flame-height: 240px; /* Фиксируем на максимуме */
+     --flame-height: 120px; /* Фиксируем на максимуме */
   }
 }
 .header-flame-mask {
-  -webkit-mask-image: linear-gradient(to bottom, black, black), url('/images/flamemask.png');
-  mask-image: linear-gradient(to bottom, black, black), url('/images/flamemask.png');
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, black), url('/images/flamemask.png');
+  mask-image: linear-gradient(to bottom, black 60%, black), url('/images/flamemask.png');
   -webkit-mask-position: top center, bottom center;
   mask-position: top center, bottom center;
   -webkit-mask-repeat: no-repeat, repeat-x;
@@ -119,17 +119,19 @@ textarea:focus-visible {
   -webkit-mask-composite: source-over;
   mask-composite: add;
 
-  /* УВЕЛИЧЕННАЯ ВЫСОТА: 
-     Было: clamp(30px, 4vw, 60px)
-     Стало: clamp(50px, 7vw, 100px) 
-  */
-  --header-flame-height: clamp(50px, 7vw, 200px);
+  /* Те же параметры, что у .flame-boundary в Hero */
+  --header-flame-height: clamp(25px, 4vw, 90px);
 
-  -webkit-mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 100% var(--header-flame-height);
-  mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 100% var(--header-flame-height);
+  -webkit-mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 50% var(--header-flame-height);
+  mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 50% var(--header-flame-height);
 
-  /* Отступ автоматически подстроится под новую высоту огня */
   padding-bottom: var(--header-flame-height);
+}
+
+@media (min-width: 1920px) {
+  .header-flame-mask {
+    --header-flame-height: 120px;
+  }
 }
 
 
