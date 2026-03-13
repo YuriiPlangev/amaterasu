@@ -43,7 +43,7 @@ export default function Footer() {
         <Image src={'/svg/flamefooter.svg'} alt='' width={100} height={100} className='w-full h-auto -ml-3' />  
       </div>
       <div className='bg-[#1C1C1C] w-full'>
-        <div className='max-w-[1920px] mx-auto site-padding-x pb-6 flex flex-row flex-wrap justify-between items-start items-center gap-6'>
+        <div className='max-w-[1920px] mx-auto site-padding-x  flex flex-row flex-wrap justify-between items-start items-center gap-6'>
           <Logo />
           <div className='flex flex-col md:flex-row gap-4 md:gap-6'>
             <a href="https://t.me/amaterasuAnimeShopBot" target="_blank" rel="noopener noreferrer" className='footer-link-hover flex gap-2 items-center transition-opacity duration-200 hover:opacity-90' aria-label="Telegram: @amaterasu1shop">

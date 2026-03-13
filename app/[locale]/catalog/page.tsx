@@ -398,7 +398,7 @@ export default function CatalogPage() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: fadeInStyles }} />
-      <div className="max-w-[1920px] w-full mx-auto site-padding-x pb-10 mt-24 min-h-[calc(100vh-5rem)]">
+      <div className="max-w-[1920px] w-full mx-auto site-padding-x pb-10 mt-24 flex-1">
       {/* Mobile: при открытых фильтрах — только фильтры, header и footer видны, контент скрыт */}
       {isMobileFiltersOpen ? (
         <div className="md:hidden flex flex-col min-h-[60vh]">
