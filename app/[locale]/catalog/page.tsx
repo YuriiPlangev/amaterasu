@@ -501,13 +501,15 @@ export default function CatalogPage() {
 
       <h2 className='text-[#000000] mb-5 mt-7 text-[32px] text-medium hidden md:block'>{t('filters')}</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-[clamp(260px,24vw,420px)_minmax(0,1fr)] gap-8">
+      <div className="grid grid-cols-1 items-start md:grid-cols-[clamp(260px,24vw,420px)_minmax(0,1fr)] gap-8">
         {/* Sidebar: desktop only */}
-        <aside className="hidden md:block">
-          <CatalogFilters
-            value={filterState}
-            onChange={setFilterState}
-          />
+        <aside className="hidden md:block self-start">
+          <div className="sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto pr-2">
+            <CatalogFilters
+              value={filterState}
+              onChange={setFilterState}
+            />
+          </div>
         </aside>
 
         {/* Content */}
