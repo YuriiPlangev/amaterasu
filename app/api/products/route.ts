@@ -456,7 +456,7 @@ export async function GET(req: Request) {
 
         const collected: any[] = [];
         const seen = new Set<number>();
-        const MAX_SCAN_PAGES = 8;
+        const MAX_SCAN_PAGES = 2;
 
         for (let scanPage = 1; scanPage <= MAX_SCAN_PAGES && collected.length < perPage; scanPage++) {
           scanParams.page = scanPage;
