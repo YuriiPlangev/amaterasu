@@ -254,63 +254,10 @@ function productHasAnyAttrValue(product: any, expectedValues: string[]): boolean
   return false;
 }
 
-function productMatchesBestSellerMetaKey(product: any, metaKey: string): boolean {
-  const direct = readMetaValue(product?.meta_data, metaKey);
-  if (toBooleanFlag(direct)) return true;
-
-  // Часто ACF значение хранится как _key и key одновременно.
-  if (!metaKey.startsWith("_")) {
-    const underscored = readMetaValue(product?.meta_data, `_${metaKey}`);
-    if (toBooleanFlag(underscored)) return true;
-  }
-
-  return false;
-}
-
-function isBestSellerProduct(product: any, acf: any): boolean {
-  return (
-    toBooleanFlag(acf?.is_bestseller) ||
-    toBooleanFlag(readMetaValue(product?.meta_data, "is_bestseller")) ||
-    toBooleanFlag(readMetaValue(product?.meta_data, "_is_bestseller")) ||
-    toBooleanFlag(readMetaValue(product?.meta_data, "acf_is_bestseller")) ||
-    toBooleanFlag(product?.featured)
-  );
-}
-
 async function fetchBestsellersPage(
   wcParams: Record<string, string | number | undefined>
 ): Promise<WooListResponse<any>> {
-  // DB-side filter strategy: try dedicated meta keys first, then Woo built-in featured.
-  const attempts: Record<string, string | number | undefined>[] = [
-    { ...wcParams, meta_key: "is_bestseller", meta_value: "1" },
-    { ...wcParams, meta_key: "_is_bestseller", meta_value: "1" },
-    { ...wcParams, meta_key: "acf_is_bestseller", meta_value: "1" },
-    { ...wcParams, featured: "true" },
-  ];
-
-  for (let i = 0; i < attempts.length; i++) {
-    const attempt = attempts[i];
-    const result = await wooList<any>("products", attempt);
-    if (result.total <= 0 && result.data.length <= 0) {
-      continue;
-    }
-
-    // Для meta_key-запросов убеждаемся, что Woo реально применил фильтр,
-    // иначе мы можем получить обычный список всех товаров.
-    if (i <= 2) {
-      const metaKey = String(attempt.meta_key || "");
-      const allMatchMeta = result.data.every((p: any) => productMatchesBestSellerMetaKey(p, metaKey));
-      if (!allMatchMeta) {
-        continue;
-      }
-    }
-
-    if (result.total > 0 || result.data.length > 0) {
-      return result;
-    }
-  }
-
-  return { data: [], total: 0, totalPages: 0 };
+  return wooList<any>("products", { ...wcParams, featured: "true" });
 }
 
 function minimizeProductPayload(product: any, acf: any) {
@@ -436,53 +383,7 @@ export async function GET(req: Request) {
     const acfById = await wpAcfByProductIds(productIds);
 
     if (isBestseller) {
-      pageProducts = pageProducts.filter((product: any) => {
-        const id = Number(product?.id);
-        const acf = acfById.get(id) || {};
-        return isBestSellerProduct(product, acf);
-      });
-
-      // Fallback: если Woo не отфильтровал по meta/featured корректно,
-      // делаем ограниченный скан первых страниц и собираем только bestsellers.
-      if (pageProducts.length === 0) {
-        const scanParams: Record<string, string | number | undefined> = {
-          ...wcParams,
-          page: 1,
-          per_page: 50,
-        };
-        delete scanParams.meta_key;
-        delete scanParams.meta_value;
-        delete scanParams.featured;
-
-        const collected: any[] = [];
-        const seen = new Set<number>();
-        const MAX_SCAN_PAGES = 2;
-
-        for (let scanPage = 1; scanPage <= MAX_SCAN_PAGES && collected.length < perPage; scanPage++) {
-          scanParams.page = scanPage;
-          const scan = await wooList<any>("products", scanParams);
-          if (!scan.data.length) break;
-
-          const scanIds = scan.data
-            .map((p: any) => Number(p?.id))
-            .filter((id: number) => Number.isFinite(id));
-          const scanAcfById = await wpAcfByProductIds(scanIds);
-
-          for (const product of scan.data) {
-            const id = Number(product?.id);
-            if (!Number.isFinite(id) || seen.has(id)) continue;
-            if (isBestSellerProduct(product, scanAcfById.get(id) || {})) {
-              collected.push(product);
-              seen.add(id);
-              if (collected.length >= perPage) break;
-            }
-          }
-
-          if (scanPage >= scan.totalPages) break;
-        }
-
-        pageProducts = collected;
-      }
+      pageProducts = pageProducts.filter((product: any) => toBooleanFlag(product?.featured));
     }
 
     const products = pageProducts.map((product: any) =>
