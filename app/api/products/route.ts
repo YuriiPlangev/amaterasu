@@ -62,6 +62,21 @@ function normalizeText(value: unknown): string {
   return String(value || "").trim().toLowerCase();
 }
 
+function toWooTaxonomy(slug: string): string {
+  const normalized = normalizeText(slug);
+  if (!normalized) return "";
+  return normalized.startsWith("pa_") ? normalized : `pa_${normalized}`;
+}
+
+function getAttributeParamCandidates(value: string): string[] {
+  const normalized = normalizeText(value);
+  if (!normalized) return [];
+  if (normalized.startsWith("pa_")) {
+    return Array.from(new Set([normalized, normalized.slice(3)]));
+  }
+  return Array.from(new Set([normalized, toWooTaxonomy(normalized)]));
+}
+
 async function wooList<T = any>(
   path: string,
   params: Record<string, string | number | undefined>
@@ -92,12 +107,34 @@ async function wooList<T = any>(
           totalPages,
         };
       }
+
+      if (res.status === 400) {
+        return {
+          data: [],
+          total: 0,
+          totalPages: 0,
+        };
+      }
     } catch {
       // fallback to Woo REST client
     }
   }
 
-  const response = await woo.get(path, params);
+  let response: any;
+  try {
+    response = await woo.get(path, params);
+  } catch (err: any) {
+    const status = Number(err?.response?.status || err?.status || 0);
+    if (status === 400) {
+      return {
+        data: [],
+        total: 0,
+        totalPages: 0,
+      };
+    }
+    throw err;
+  }
+
   const data = (response.data || []) as T[];
   const headers = response.headers || {};
   const total = Number(headers["x-wp-total"] || data.length || 0);
@@ -305,6 +342,31 @@ async function resolveAttrRequestLabels(req: AttrRequest): Promise<string[]> {
   return Array.from(new Set([...requested.names, ...labelsFromIds]));
 }
 
+async function fetchByPrimaryAttribute(
+  wcParams: Record<string, string | number | undefined>,
+  resolved: { taxonomy: string; termIds: number[] },
+  isBestseller: boolean
+): Promise<WooListResponse<any>> {
+  const attrCandidates = getAttributeParamCandidates(resolved.taxonomy);
+
+  for (const attrName of attrCandidates) {
+    const params = {
+      ...wcParams,
+      attribute: attrName,
+      attribute_term: resolved.termIds.join(","),
+    };
+    const result = isBestseller
+      ? await fetchBestsellersPage(params)
+      : await wooList<any>("products", params);
+
+    if (result.total > 0 || result.data.length > 0) {
+      return result;
+    }
+  }
+
+  return { data: [], total: 0, totalPages: 0 };
+}
+
 async function fetchBestsellersPage(
   wcParams: Record<string, string | number | undefined>
 ): Promise<WooListResponse<any>> {
@@ -403,28 +465,29 @@ export async function GET(req: Request) {
       { key: "game" as const, values: parseStringList(params.get("attribute_games") || undefined) },
     ] satisfies AttrRequest[]).filter((x) => x.values.length > 0);
 
-    // DB-side attribute filtering (when possible): attribute + attribute_term.
-    // WooCommerce REST supports a single pair directly; we apply the first pair in DB
-    // and keep additional pairs as lightweight in-page refinement.
-    const firstAttrResolved = attrRequests.length ? await resolveAttrTermIds(attrRequests[0]) : null;
-    if (firstAttrResolved) {
-      wcParams.attribute = firstAttrResolved.taxonomy;
-      wcParams.attribute_term = firstAttrResolved.termIds.join(",");
-    }
-
     const isBestseller = params.get("bestseller") === "true";
-    const list = isBestseller
-      ? await fetchBestsellersPage(wcParams)
-      : await wooList<any>("products", wcParams);
+    let list: WooListResponse<any>;
+
+    if (attrRequests.length > 0) {
+      const primaryResolved = await resolveAttrTermIds(attrRequests[0]);
+      if (!primaryResolved) {
+        list = { data: [], total: 0, totalPages: 0 };
+      } else {
+        list = await fetchByPrimaryAttribute(wcParams, primaryResolved, isBestseller);
+      }
+    } else {
+      list = isBestseller
+        ? await fetchBestsellersPage(wcParams)
+        : await wooList<any>("products", wcParams);
+    }
 
     let pageProducts = list.data;
 
-    // Lightweight refinement for remaining attributes on already-paginated items.
-    if (attrRequests.length > 1) {
+    // Fast refinement for additional attributes on already paginated products.
+    if (attrRequests.length > 1 && pageProducts.length > 0) {
       const remaining = attrRequests.slice(1);
       const remainingResolved = await Promise.all(
         remaining.map(async (req) => ({
-          req,
           values: await resolveAttrRequestLabels(req),
         }))
       );
@@ -451,8 +514,8 @@ export async function GET(req: Request) {
     return new Response(
       JSON.stringify({
         products,
-        hasMore: isBestseller ? false : page < list.totalPages,
-        total: isBestseller ? products.length : list.total,
+        hasMore: page < list.totalPages,
+        total: list.total,
         page,
         perPage,
         totalPages: list.totalPages,
