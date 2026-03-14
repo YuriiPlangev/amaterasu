@@ -15,6 +15,9 @@ import JsonLdBreadcrumb from '../../../../components/seo/JsonLdBreadcrumb';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+const ATTR_TERM_ID_CACHE_TTL_MS = 10 * 60 * 1000;
+const attrTermIdCache = new Map<string, { id: number | null; expiresAt: number }>();
+
 function toBooleanFlag(value: unknown): boolean {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'number') return value === 1;
@@ -29,6 +32,46 @@ function readMetaValue(metaData: any[] | undefined, key: string): unknown {
   if (!Array.isArray(metaData)) return undefined;
   const entry = metaData.find((m: any) => m?.key === key);
   return entry?.value;
+}
+
+function normalizeTermLabel(value: unknown): string {
+  return String(value || '').trim().toLowerCase();
+}
+
+async function resolveAttributeTermId(attribute: any): Promise<number | null> {
+  const attrId = Number(attribute?.id);
+  const rawValue = Array.isArray(attribute?.options) ? attribute.options[0] : attribute?.option;
+  const normalizedValue = normalizeTermLabel(rawValue);
+
+  if (!Number.isInteger(attrId) || attrId <= 0 || !normalizedValue) {
+    return null;
+  }
+
+  const cacheKey = `${attrId}:${normalizedValue}`;
+  const cached = attrTermIdCache.get(cacheKey);
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) {
+    return cached.id;
+  }
+
+  try {
+    const res = await woo.get(
+      `products/attributes/${attrId}/terms?search=${encodeURIComponent(String(rawValue))}&per_page=20`
+    );
+    const terms = Array.isArray(res.data) ? res.data : [];
+    const match = terms.find((term: any) => {
+      const termName = normalizeTermLabel(term?.name);
+      const termSlug = normalizeTermLabel(term?.slug);
+      return termName === normalizedValue || termSlug === normalizedValue;
+    });
+
+    const id = match?.id ? Number(match.id) : null;
+    attrTermIdCache.set(cacheKey, { id, expiresAt: now + ATTR_TERM_ID_CACHE_TTL_MS });
+    return id;
+  } catch {
+    attrTermIdCache.set(cacheKey, { id: null, expiresAt: now + ATTR_TERM_ID_CACHE_TTL_MS });
+    return null;
+  }
 }
 
 async function mergeWpAcfForProduct(product: any): Promise<any> {
@@ -311,6 +354,10 @@ export default async function ProductPage({
     
     const productTitle = titleAttr?.options?.[0] || titleAttr?.option || '';
     const productCharacter = characterAttr?.options?.[0] || characterAttr?.option || '';
+    const [productTitleId, productCharacterId] = await Promise.all([
+      resolveAttributeTermId(titleAttr),
+      resolveAttributeTermId(characterAttr),
+    ]);
 
     const attributes = (product?.attributes || [])
       .filter((attr: any) => attr?.name && (attr?.options?.length || attr?.option))
@@ -334,14 +381,14 @@ export default async function ProductPage({
     if (productTitle) {
       breadcrumbItems.push({ 
         name: productTitle, 
-        path: `/catalog?attribute_title=${encodeURIComponent(productTitle)}` 
+        path: `/catalog?attribute_title=${productTitleId || encodeURIComponent(productTitle)}` 
       });
     }
     
     if (productCharacter) {
       breadcrumbItems.push({ 
         name: productCharacter, 
-        path: `/catalog?attribute_character=${encodeURIComponent(productCharacter)}` 
+        path: `/catalog?attribute_character=${productCharacterId || encodeURIComponent(productCharacter)}` 
       });
     }
     

@@ -47,6 +47,48 @@ const TrashIcon = () => (
 
 export type SortOption = 'date' | 'price_asc' | 'price_desc';
 
+function normalizeFilterLabel(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function parseNumericList(value: string | null): number[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((item) => Number(decodeURIComponent(item)))
+    .filter((item) => Number.isInteger(item) && item > 0);
+}
+
+function buildIdToLabelMap(options: Array<{ id: number; label: string }> | undefined) {
+  const map: Record<number, string> = {};
+  for (const option of options ?? []) {
+    map[option.id] = option.label;
+  }
+  return map;
+}
+
+function buildLabelToIdMap(options: Array<{ id: number; label: string }> | undefined) {
+  const map = new Map<string, number>();
+  for (const option of options ?? []) {
+    map.set(normalizeFilterLabel(option.label), option.id);
+  }
+  return map;
+}
+
+function resolveLegacyAttrIds(rawValue: string | null, labelToId: Map<string, number>): number[] {
+  if (!rawValue || labelToId.size === 0) return [];
+
+  return rawValue
+    .split(',')
+    .map((item) => {
+      const decoded = decodeURIComponent(item);
+      const numeric = Number(decoded);
+      if (Number.isInteger(numeric) && numeric > 0) return numeric;
+      return labelToId.get(normalizeFilterLabel(decoded));
+    })
+    .filter((item): item is number => typeof item === 'number' && Number.isInteger(item) && item > 0);
+}
+
 function resolveCustomProductType(slug: string, categoryName: string) {
   const slugLower = slug.toLowerCase();
   const categoryLower = categoryName.toLowerCase();
@@ -107,13 +149,13 @@ export default function CatalogPage() {
     const cats = searchParams.get('category') || searchParams.get('categories');
     if (cats) s.categoryIds = cats.split(',').map(Number).filter(id => !isNaN(id));
     const title = searchParams.get('attribute_title');
-    if (title) s.titles = title.split(',').map(decodeURIComponent).filter(Boolean);
+    if (title) s.titles = parseNumericList(title);
     const char = searchParams.get('attribute_character');
-    if (char) s.characters = char.split(',').map(decodeURIComponent).filter(Boolean);
+    if (char) s.characters = parseNumericList(char);
     const genre = searchParams.get('attribute_genre');
-    if (genre) s.genres = genre.split(',').map(decodeURIComponent).filter(Boolean);
+    if (genre) s.genres = parseNumericList(genre);
     const games = searchParams.get('attribute_games');
-    if (games) s.games = games.split(',').map(decodeURIComponent).filter(Boolean);
+    if (games) s.games = parseNumericList(games);
     const priceMin = searchParams.get('price_min');
     if (priceMin) s.priceFrom = priceMin;
     const priceMax = searchParams.get('price_max');
@@ -134,6 +176,21 @@ export default function CatalogPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [newProductIds, setNewProductIds] = useState<Set<number>>(new Set());
+
+  const titleIdToLabel = useMemo(() => {
+    return buildIdToLabelMap(filterOptions?.titles);
+  }, [filterOptions]);
+
+  const titleLabelToId = useMemo(() => {
+    return buildLabelToIdMap(filterOptions?.titles);
+  }, [filterOptions]);
+
+  const characterIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.characters), [filterOptions]);
+  const characterLabelToId = useMemo(() => buildLabelToIdMap(filterOptions?.characters), [filterOptions]);
+  const genreIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.genres), [filterOptions]);
+  const genreLabelToId = useMemo(() => buildLabelToIdMap(filterOptions?.genres), [filterOptions]);
+  const gameIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.games), [filterOptions]);
+  const gameLabelToId = useMemo(() => buildLabelToIdMap(filterOptions?.games), [filterOptions]);
 
   // Sync state → URL so filters survive page refresh
   useEffect(() => {
@@ -176,6 +233,38 @@ export default function CatalogPage() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    const nextTitles = resolveLegacyAttrIds(searchParams.get('attribute_title'), titleLabelToId);
+    const nextCharacters = resolveLegacyAttrIds(searchParams.get('attribute_character'), characterLabelToId);
+    const nextGenres = resolveLegacyAttrIds(searchParams.get('attribute_genre'), genreLabelToId);
+    const nextGames = resolveLegacyAttrIds(searchParams.get('attribute_games'), gameLabelToId);
+
+    if (!nextTitles.length && !nextCharacters.length && !nextGenres.length && !nextGames.length) return;
+
+    setFilterState((current) => {
+      const titles = nextTitles.length ? Array.from(new Set(nextTitles)) : current.titles;
+      const characters = nextCharacters.length ? Array.from(new Set(nextCharacters)) : current.characters;
+      const genres = nextGenres.length ? Array.from(new Set(nextGenres)) : current.genres;
+      const games = nextGames.length ? Array.from(new Set(nextGames)) : current.games;
+
+      const hasChanged =
+        current.titles.join(',') !== titles.join(',') ||
+        current.characters.join(',') !== characters.join(',') ||
+        current.genres.join(',') !== genres.join(',') ||
+        current.games.join(',') !== games.join(',');
+
+      if (!hasChanged) return current;
+
+      return {
+        ...current,
+        titles,
+        characters,
+        genres,
+        games,
+      };
+    });
+  }, [searchParams, titleLabelToId, characterLabelToId, genreLabelToId, gameLabelToId]);
+
   
   const hasActiveFilters =
     filterState.priceFrom !== '' ||
@@ -190,10 +279,10 @@ export default function CatalogPage() {
   const activeFilterTags: { key: string; label: string }[] = [
     ...(searchApplied.trim() ? [{ key: 'search', label: `${t('searchTag')} ${searchApplied.trim()}` }] : []),
     ...filterState.categoryIds.map((id) => ({ key: `cat-${id}`, label: categoryNames[id] || `${t('categoryTag')}${id}` })),
-    ...filterState.titles.map((t) => ({ key: `title-${t}`, label: t })),
-    ...filterState.characters.map((c) => ({ key: `char-${c}`, label: c })),
-    ...filterState.genres.map((g) => ({ key: `genre-${g}`, label: g })),
-    ...filterState.games.map((game) => ({ key: `game-${game}`, label: game })),
+    ...filterState.titles.map((id) => ({ key: `title-${id}`, label: titleIdToLabel[id] || String(id) })),
+    ...filterState.characters.map((id) => ({ key: `char-${id}`, label: characterIdToLabel[id] || String(id) })),
+    ...filterState.genres.map((id) => ({ key: `genre-${id}`, label: genreIdToLabel[id] || String(id) })),
+    ...filterState.games.map((id) => ({ key: `game-${id}`, label: gameIdToLabel[id] || String(id) })),
   ];
 
   const clearFilters = () => {
@@ -211,16 +300,16 @@ export default function CatalogPage() {
       const id = Number(key.replace('cat-', ''));
       setFilterState((s) => ({ ...s, categoryIds: s.categoryIds.filter((x) => x !== id) }));
     } else if (key.startsWith('title-')) {
-      const v = key.replace('title-', '');
+      const v = Number(key.replace('title-', ''));
       setFilterState((s) => ({ ...s, titles: s.titles.filter((x) => x !== v) }));
     } else if (key.startsWith('char-')) {
-      const v = key.replace('char-', '');
+      const v = Number(key.replace('char-', ''));
       setFilterState((s) => ({ ...s, characters: s.characters.filter((x) => x !== v) }));
     } else if (key.startsWith('genre-')) {
-      const v = key.replace('genre-', '');
+      const v = Number(key.replace('genre-', ''));
       setFilterState((s) => ({ ...s, genres: s.genres.filter((x) => x !== v) }));
     } else if (key.startsWith('game-')) {
-      const v = key.replace('game-', '');
+      const v = Number(key.replace('game-', ''));
       setFilterState((s) => ({ ...s, games: s.games.filter((x) => x !== v) }));
     }
   };
@@ -238,10 +327,13 @@ export default function CatalogPage() {
   ];
 
   const setTitleFilter = (titleValue: string) => {
+    const titleId = titleLabelToId.get(normalizeFilterLabel(titleValue));
+    if (!titleId) return;
+
     setFilterState((s) => {
-      const has = s.titles.includes(titleValue);
-      if (has) return { ...s, titles: s.titles.filter((t) => t !== titleValue) };
-      return { ...s, titles: [...s.titles, titleValue] };
+      const has = s.titles.includes(titleId);
+      if (has) return { ...s, titles: s.titles.filter((t) => t !== titleId) };
+      return { ...s, titles: [...s.titles, titleId] };
     });
   };
 
@@ -461,7 +553,10 @@ export default function CatalogPage() {
                   type="button"
                   onClick={() => setTitleFilter(logo.titleFilter)}
                   className={`h-14 sm:h-16 md:h-20 w-[140px] sm:w-[160px] md:w-[200px] relative shrink-0 block transition-opacity hover:opacity-90 ${
-                    filterState.titles.includes(logo.titleFilter)
+                    (() => {
+                      const titleId = titleLabelToId.get(normalizeFilterLabel(logo.titleFilter));
+                      return titleId ? filterState.titles.includes(titleId) : false;
+                    })()
                       ? 'ring-2 ring-[#9C0000] rounded-lg'
                       : ''
                   }`}

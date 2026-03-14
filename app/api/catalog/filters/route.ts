@@ -6,6 +6,13 @@ const WP_URL = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
 // Кэшируем результат на 1 час
 export const revalidate = 3600; 
 
+function toTermOptions(items: any[]) {
+  return items
+    .map((item: any) => ({ id: Number(item.id), label: item.name }))
+    .filter((item: any) => Number.isFinite(item.id) && item.label)
+    .sort((a: any, b: any) => a.label.localeCompare(b.label, 'uk'));
+}
+
 export async function GET() {
   try {
     // 1) Используем старый проверенный способ записи параметров в строку, 
@@ -58,10 +65,10 @@ export async function GET() {
     return NextResponse.json({
         categories,
         customProductionCategories,
-        titles: titlesData.data.map((t: any) => t.name).sort(),
-        characters: charactersData.data.map((t: any) => t.name).sort(),
-        genres: genresData.data.map((t: any) => t.name).sort(),
-        games: gamesData.data.map((t: any) => t.name).sort(),
+        titles: toTermOptions(titlesData.data),
+        characters: toTermOptions(charactersData.data),
+        genres: toTermOptions(genresData.data),
+        games: toTermOptions(gamesData.data),
       },
       {
         headers: { "Cache-Control": "public, s-maxage=3600" }

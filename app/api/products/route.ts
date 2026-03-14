@@ -210,12 +210,43 @@ async function getAttrTerms(attrId: number): Promise<any[]> {
   return terms.data;
 }
 
+function splitRequestedTermValues(values: string[]): { ids: number[]; names: string[] } {
+  const ids: number[] = [];
+  const names: string[] = [];
+
+  for (const value of values) {
+    const normalized = String(value || "").trim();
+    if (!normalized) continue;
+
+    const parsed = Number(normalized);
+    if (Number.isInteger(parsed) && parsed > 0) {
+      ids.push(parsed);
+      continue;
+    }
+
+    names.push(normalized);
+  }
+
+  return {
+    ids: Array.from(new Set(ids)),
+    names,
+  };
+}
+
 async function resolveAttrTermIds(req: AttrRequest): Promise<{ taxonomy: string; termIds: number[] } | null> {
   const info = await getAttrInfo(req.key);
   if (!info) return null;
 
+  const requested = splitRequestedTermValues(req.values);
+  if (requested.names.length === 0 && requested.ids.length > 0) {
+    return {
+      taxonomy: info.slug,
+      termIds: requested.ids,
+    };
+  }
+
   const terms = await getAttrTerms(info.id);
-  const wanted = req.values.map(normalizeText);
+  const wanted = requested.names.map(normalizeText);
 
   const ids = terms
     .filter((term: any) => {
@@ -230,7 +261,7 @@ async function resolveAttrTermIds(req: AttrRequest): Promise<{ taxonomy: string;
 
   return {
     taxonomy: info.slug,
-    termIds: Array.from(new Set(ids)),
+    termIds: Array.from(new Set([...requested.ids, ...ids])),
   };
 }
 
@@ -252,6 +283,26 @@ function productHasAnyAttrValue(product: any, expectedValues: string[]): boolean
   }
 
   return false;
+}
+
+async function resolveAttrRequestLabels(req: AttrRequest): Promise<string[]> {
+  const requested = splitRequestedTermValues(req.values);
+  if (requested.ids.length === 0) {
+    return requested.names;
+  }
+
+  const info = await getAttrInfo(req.key);
+  if (!info) {
+    return requested.names;
+  }
+
+  const terms = await getAttrTerms(info.id);
+  const labelsFromIds = terms
+    .filter((term: any) => requested.ids.includes(Number(term?.id)))
+    .map((term: any) => String(term?.name || term?.slug || "").trim())
+    .filter(Boolean);
+
+  return Array.from(new Set([...requested.names, ...labelsFromIds]));
 }
 
 async function fetchBestsellersPage(
@@ -371,8 +422,15 @@ export async function GET(req: Request) {
     // Lightweight refinement for remaining attributes on already-paginated items.
     if (attrRequests.length > 1) {
       const remaining = attrRequests.slice(1);
+      const remainingResolved = await Promise.all(
+        remaining.map(async (req) => ({
+          req,
+          values: await resolveAttrRequestLabels(req),
+        }))
+      );
+
       pageProducts = pageProducts.filter((product: any) =>
-        remaining.every((req) => productHasAnyAttrValue(product, req.values))
+        remainingResolved.every(({ values }) => productHasAnyAttrValue(product, values))
       );
     }
 

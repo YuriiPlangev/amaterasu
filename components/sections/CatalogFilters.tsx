@@ -8,11 +8,16 @@ export interface CatalogFilterState {
   priceFrom: string;
   priceTo: string;
   categoryIds: number[];
-  titles: string[];
-  characters: string[];
-  genres: string[];
-  games: string[];
+  titles: number[];
+  characters: number[];
+  genres: number[];
+  games: number[];
 }
+
+type TermOption = {
+  id: number;
+  label: string;
+};
 
 const initialFilterState: CatalogFilterState = {
   priceFrom: '',
@@ -27,10 +32,10 @@ const initialFilterState: CatalogFilterState = {
 export interface FilterOptions {
   categories: Array<{ id: number; name: string; slug: string }>;
   customProductionCategories: Array<{ id: number; name: string; slug: string }>;
-  titles: string[];
-  characters: string[];
-  genres: string[];
-  games: string[];
+  titles: TermOption[];
+  characters: TermOption[];
+  genres: TermOption[];
+  games: TermOption[];
 }
 
 interface FilterSectionProps {
@@ -192,28 +197,28 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
     update({ categoryIds: next });
   };
 
-  const toggleTitle = (v: string) => {
+  const toggleTitle = (v: number) => {
     const next = value.titles.includes(v)
       ? value.titles.filter((x) => x !== v)
       : [...value.titles, v];
     update({ titles: next });
   };
 
-  const toggleCharacter = (v: string) => {
+  const toggleCharacter = (v: number) => {
     const next = value.characters.includes(v)
       ? value.characters.filter((x) => x !== v)
       : [...value.characters, v];
     update({ characters: next });
   };
 
-  const toggleGenre = (v: string) => {
+  const toggleGenre = (v: number) => {
     const next = value.genres.includes(v)
       ? value.genres.filter((x) => x !== v)
       : [...value.genres, v];
     update({ genres: next });
   };
 
-  const toggleGames = (v: string) => {
+  const toggleGames = (v: number) => {
     const next = value.games.includes(v)
       ? value.games.filter((x) => x !== v)
       : [...value.games, v];
@@ -222,10 +227,10 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
 
   const categories = (data?.categories ?? []).map((c) => ({ id: c.id, label: c.name }));
   const customProductionCategories = (data?.customProductionCategories ?? []).map((c) => ({ id: c.id, label: c.name }));
-  const titles = (data?.titles ?? []).map((v) => ({ label: v }));
-  const characters = (data?.characters ?? []).map((v) => ({ label: v }));
-  const genres = (data?.genres ?? []).map((v) => ({ label: v }));
-  const games = (data?.games ?? []).map((v) => ({ label: v }));
+  const titles = data?.titles ?? [];
+  const characters = data?.characters ?? [];
+  const genres = data?.genres ?? [];
+  const games = data?.games ?? [];
 
   return (
     <div
@@ -307,7 +312,7 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
         title={t('titles')}
         items={titles}
         selected={value.titles}
-        onToggle={(v) => toggleTitle(String(v))}
+        onToggle={(v) => toggleTitle(Number(v))}
         isLoading={isLoading}
         placeholder={t('searchPlaceholder')}
         loadingText={t('loading')}
@@ -317,7 +322,7 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
         title={t('games')}
         items={games}
         selected={value.games}
-        onToggle={(v) => toggleGames(String(v))}
+        onToggle={(v) => toggleGames(Number(v))}
         isLoading={isLoading}
         placeholder={t('searchPlaceholder')}
         loadingText={t('loading')}
@@ -327,7 +332,7 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
         title={t('character')}
         items={characters}
         selected={value.characters}
-        onToggle={(v) => toggleCharacter(String(v))}
+        onToggle={(v) => toggleCharacter(Number(v))}
         isLoading={isLoading}
         placeholder={t('searchPlaceholder')}
         loadingText={t('loading')}
@@ -337,7 +342,7 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
         title={t('genre')}
         items={genres}
         selected={value.genres}
-        onToggle={(v) => toggleGenre(String(v))}
+        onToggle={(v) => toggleGenre(Number(v))}
         isLoading={isLoading}
         placeholder={t('searchPlaceholder')}
         loadingText={t('loading')}
