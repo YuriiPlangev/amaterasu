@@ -24,7 +24,7 @@ const initialFilterState: CatalogFilterState = {
   games: [],
 };
 
-interface FilterOptions {
+export interface FilterOptions {
   categories: Array<{ id: number; name: string; slug: string }>;
   customProductionCategories: Array<{ id: number; name: string; slug: string }>;
   titles: string[];
@@ -148,18 +148,26 @@ interface CatalogFiltersProps {
   variant?: 'sidebar' | 'drawer';
   value: CatalogFilterState;
   onChange: (state: CatalogFilterState) => void;
+  options?: FilterOptions | null;
 }
 
 const CatalogFilters: React.FC<CatalogFiltersProps> = ({
   variant = 'sidebar',
   value,
   onChange,
+  options = null,
 }) => {
   const t = useTranslations('catalogFilters');
-  const [data, setData] = useState<FilterOptions | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<FilterOptions | null>(options);
+  const [isLoading, setIsLoading] = useState(!options);
 
   useEffect(() => {
+    setData(options);
+    setIsLoading(!options);
+  }, [options]);
+
+  useEffect(() => {
+    if (options) return;
     let cancelled = false;
     setIsLoading(true);
     fetch('/api/catalog/filters')
@@ -171,7 +179,7 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
         if (!cancelled) setIsLoading(false);
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [options]);
 
   const update = (patch: Partial<CatalogFilterState>) => {
     onChange({ ...value, ...patch });

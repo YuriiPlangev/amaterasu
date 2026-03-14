@@ -15,6 +15,48 @@ import JsonLdBreadcrumb from '../../../../components/seo/JsonLdBreadcrumb';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+function toBooleanFlag(value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value === 1;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return ['1', 'true', 'yes', 'on'].includes(normalized);
+  }
+  return false;
+}
+
+function readMetaValue(metaData: any[] | undefined, key: string): unknown {
+  if (!Array.isArray(metaData)) return undefined;
+  const entry = metaData.find((m: any) => m?.key === key);
+  return entry?.value;
+}
+
+async function mergeWpAcfForProduct(product: any): Promise<any> {
+  const wpUrl = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
+  const productId = Number(product?.id);
+  if (!wpUrl || !Number.isFinite(productId)) return product;
+
+  try {
+    const wpRes = await fetch(`${wpUrl}/wp-json/wp/v2/product/${productId}?_fields=id,acf`, {
+      cache: 'no-store',
+    });
+    if (!wpRes.ok) return product;
+
+    const data = await wpRes.json();
+    if (!data?.acf) return product;
+
+    return {
+      ...product,
+      acf: {
+        ...(product?.acf || {}),
+        ...data.acf,
+      },
+    };
+  } catch {
+    return product;
+  }
+}
+
 async function getProductById(productId: number) {
   try {
     const res = await woo.get(`products/${productId}`);
@@ -234,6 +276,10 @@ export default async function ProductPage({
       );
     }
 
+    if (!product?.acf) {
+      product = await mergeWpAcfForProduct(product);
+    }
+
     // Получаем теги товара для поиска похожих товаров
     const productTags = product.tags?.map((tag: any) => tag.id) || [];
     const firstTagId = productTags.length > 0 ? productTags[0] : undefined;
@@ -242,6 +288,11 @@ export default async function ProductPage({
 
     const locale = resolvedParams.locale || 'uk';
     const isInStock = product?.stock_status === 'instock';
+    const hasLongDelivery =
+      toBooleanFlag(product?.acf?.delivery_status) ||
+      toBooleanFlag(readMetaValue(product?.meta_data, 'delivery_status')) ||
+      toBooleanFlag(readMetaValue(product?.meta_data, '_delivery_status')) ||
+      toBooleanFlag(readMetaValue(product?.meta_data, 'acf_delivery_status'));
     const productTag = product?.tags?.[0]?.name || '';
     const productCategory = product?.categories?.[0]?.name || '';
     const productCategoryId = product?.categories?.[0]?.id || null;
@@ -367,6 +418,28 @@ export default async function ProductPage({
             <div className="border border-[#E6E6E6] rounded-xl p-4 md:p-5">
               <h2 className="text-base font-bold text-[#1C1C1C] mb-4">{tPage('delivery')}</h2>
               <div className="space-y-4">
+                {hasLongDelivery && (
+                  <div className="rounded-xl border border-[#E9E1D3] bg-[#FAF7F2] px-3 py-3">
+                    <div className="flex items-start gap-3">
+                      <span className="w-8 h-8 rounded-lg bg-white border border-[#E9E1D3] flex items-center justify-center shrink-0">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9C0000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <circle cx="12" cy="12" r="9" />
+                          <path d="M12 7v5l3 2" />
+                        </svg>
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[#1C1C1C]">
+                          {locale === 'uk' ? 'Термін доставки: від 14 днів' : 'Delivery time: from 14 days'}
+                        </p>
+                        <p className="text-xs text-[#6B7280] mt-1">
+                          {locale === 'uk'
+                            ? 'Для цього товару потрібно більше часу на виготовлення та відправку.'
+                            : 'This item needs additional time for production and dispatch.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#BCBCBC33]">
                   <div className="flex items-start items-center gap-3 min-w-0">
                     <span className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-[#9C0000]">

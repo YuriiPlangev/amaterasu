@@ -7,7 +7,7 @@ import { useProducts } from '../../../hooks/useProducts';
 import ProductCard from '../../../components/ProductCard';
 import CatalogSearch from '../../../components/ui/CatalogSearch';
 import Image from 'next/image';
-import CatalogFilters, { initialFilterState, type CatalogFilterState } from '../../../components/sections/CatalogFilters';
+import CatalogFilters, { initialFilterState, type CatalogFilterState, type FilterOptions } from '../../../components/sections/CatalogFilters';
 import { Swiper, SwiperSlide,  } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
@@ -108,6 +108,7 @@ export default function CatalogPage() {
   const [categoryNames, setCategoryNames] = useState<Record<number, string>>({});
   const [categorySlugs, setCategorySlugs] = useState<Record<number, string>>({});
   const [customCategoryIds, setCustomCategoryIds] = useState<number[]>([]);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [newProductIds, setNewProductIds] = useState<Set<number>>(new Set());
@@ -181,6 +182,7 @@ export default function CatalogPage() {
     fetch('/api/catalog/filters')
       .then((r) => r.json())
       .then((d) => {
+        setFilterOptions(d);
         const map: Record<number, string> = {};
         const slugMap: Record<number, string> = {};
         for (const c of d?.categories ?? []) {
@@ -430,6 +432,7 @@ export default function CatalogPage() {
               variant="drawer"
               value={filterState}
               onChange={setFilterState}
+              options={filterOptions}
             />
           </div>
         </div>
@@ -508,6 +511,7 @@ export default function CatalogPage() {
             <CatalogFilters
               value={filterState}
               onChange={setFilterState}
+              options={filterOptions}
             />
           </div>
         </aside>

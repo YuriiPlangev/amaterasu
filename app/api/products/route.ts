@@ -74,6 +74,38 @@ async function fetchAllWooProducts(wcParams: any): Promise<{
   };
 }
 
+// ── Server-side in-memory cache for full product listings ────────────────────
+// Живёт на уровне модуля — переживает между запросами в рамках одного процесса Node.
+type AllProductsCacheEntry = {
+  products: any[];
+  totalProducts: number;
+  totalPages: number;
+  expiresAt: number;
+};
+const allProductsCache = new Map<string, AllProductsCacheEntry>();
+const ALL_PRODUCTS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 минут
+
+async function fetchAllWooProductsCached(wcParams: any): Promise<{
+  products: any[];
+  totalProducts: number;
+  totalPages: number;
+}> {
+  // Ключ кеша: только «отборочные» параметры WooCommerce (категория + тег).
+  // Порядок сортировки роли не играет — JS всё равно пересортирует после.
+  const cacheKey = `cat:${wcParams.category ?? 'all'}_tag:${wcParams.tag ?? 'none'}`;
+  const now = Date.now();
+  const cached = allProductsCache.get(cacheKey);
+  if (cached && now < cached.expiresAt) {
+    return { products: cached.products, totalProducts: cached.totalProducts, totalPages: cached.totalPages };
+  }
+  // Фетчим со стабильным порядком чтобы максимизировать попадания в кеш
+  const fetchParams = { ...wcParams, orderby: 'date', order: 'desc' };
+  const result = await fetchAllWooProducts(fetchParams);
+  allProductsCache.set(cacheKey, { ...result, expiresAt: now + ALL_PRODUCTS_CACHE_TTL_MS });
+  return result;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function chunkArray<T>(arr: T[], size: number): T[][] {
   if (size <= 0) return [arr];
   const chunks: T[][] = [];
@@ -175,45 +207,60 @@ const ATTR_NAME_MAP: Record<string, string[]> = {
   game: ['гра', 'game', 'pa_game', 'games', 'pa_games'],
 };
 
+function createProductAttributeLookup(product: any): Record<string, Set<string>> {
+  const attrs = Array.isArray(product?.attributes) ? product.attributes : [];
+  const lookup: Record<string, Set<string>> = {};
+
+  for (const a of attrs) {
+    const attrName = String(a?.name || '').toLowerCase().trim();
+    const attrSlug = String(a?.slug || '').toLowerCase().trim();
+    const opts = Array.isArray(a?.options)
+      ? a.options
+      : a?.option
+      ? [a.option]
+      : [];
+    const values = new Set(opts.map((v: string) => String(v || '').trim().toLowerCase()).filter(Boolean));
+    if (!values.size) continue;
+    if (attrName) lookup[attrName] = values;
+    if (attrSlug) lookup[attrSlug] = values;
+  }
+
+  return lookup;
+}
+
 /** Проверяет, подходит ли товар по атрибуту (title, character, genre, game) */
 function productMatchesAttribute(
   product: any,
   attrName: string,
-  allowedValues: string[]
+  allowedValues: string[],
+  lookupCache?: WeakMap<any, Record<string, Set<string>>>
 ): boolean {
   if (!allowedValues?.length) return true;
-  const attrs = product.attributes || [];
   const targetNorm = attrName.toLowerCase();
   
   // Получаем возможные варианты названий атрибута (включая кириллицу)
   const possibleNames = ATTR_NAME_MAP[targetNorm] || [targetNorm];
-  
-  // Пробуем найти атрибут по всем возможным вариантам названий
-  let attr = attrs.find((a: any) => {
-    const attrName = (a?.name || "").toLowerCase().trim();
-    const attrSlug = (a?.slug || "").toLowerCase().trim();
-    
-    return possibleNames.some(possible => 
-      attrName === possible || 
-      attrSlug === possible ||
-      attrName.includes(possible) ||
-      attrSlug.includes(possible)
-    );
-  });
-  
-  if (!attr) {
-    return false;
-  }
-  
-  const opts = Array.isArray(attr.options)
-    ? attr.options
-    : attr.option
-    ? [attr.option]
-    : [];
-  const productValues = opts.map((v: string) => String(v || "").trim().toLowerCase());
+
+  const lookup = lookupCache
+    ? (lookupCache.get(product) || (() => {
+        const created = createProductAttributeLookup(product);
+        lookupCache.set(product, created);
+        return created;
+      })())
+    : createProductAttributeLookup(product);
+
+  const candidateSets = Object.entries(lookup)
+    .filter(([key]) =>
+      possibleNames.some((possible) => key === possible || key.includes(possible))
+    )
+    .map(([, values]) => values);
+
+  if (!candidateSets.length) return false;
   
   const normalizedAllowed = allowedValues.map((v) => String(v).trim().toLowerCase());
-  return normalizedAllowed.some((allowed) => productValues.includes(allowed));
+  return normalizedAllowed.some((allowed) =>
+    candidateSets.some((set) => set.has(allowed))
+  );
 }
 
 export async function GET(req: Request) {
@@ -323,8 +370,8 @@ export async function GET(req: Request) {
       // Для бестселлерів подтягиваем ACF прямо из WP REST, если Woo его не вернул.
       filteredProducts = await mergeWpAcfForProducts(filteredProducts);
     } else if (hasComplexFilters) {
-      // ВАЖНО: При атрибутных фильтрах загружаем ВСЕ товары
-      const allProductsData = await fetchAllWooProducts(wcParams);
+      // ВАЖНО: При атрибутных фильтрах загружаем ВСЕ товары (с кешем на 5 мин)
+      const allProductsData = await fetchAllWooProductsCached(wcParams);
       filteredProducts = allProductsData.products;
       totalProducts = allProductsData.totalProducts;
       totalPages = allProductsData.totalPages;
@@ -365,6 +412,7 @@ export async function GET(req: Request) {
     const tagId = wcParams.tag ? Number(wcParams.tag) : null;
     const requiresBestSeller = params.bestseller === "true";
 
+    const attrLookupCache = new WeakMap<any, Record<string, Set<string>>>();
     filteredProducts = filteredProducts.filter((p: any) => {
       // Категории: при нескольких ID фильтруем вручную.
       // Для одного ID WooCommerce уже фильтрує коректно (з урахуванням дочірніх категорій),
@@ -379,16 +427,16 @@ export async function GET(req: Request) {
       }
 
       // Фильтруем по атрибутам на нашей стороне
-      if (characterVals.length && !productMatchesAttribute(p, "character", characterVals)) {
+      if (characterVals.length && !productMatchesAttribute(p, "character", characterVals, attrLookupCache)) {
         return false;
       }
-      if (titleVals.length && !productMatchesAttribute(p, "title", titleVals)) {
+      if (titleVals.length && !productMatchesAttribute(p, "title", titleVals, attrLookupCache)) {
         return false;
       }
-      if (genreVals.length && !productMatchesAttribute(p, "genre", genreVals)) {
+      if (genreVals.length && !productMatchesAttribute(p, "genre", genreVals, attrLookupCache)) {
         return false;
       }
-      if (gameVals.length && !productMatchesAttribute(p, "game", gameVals)) {
+      if (gameVals.length && !productMatchesAttribute(p, "game", gameVals, attrLookupCache)) {
         return false;
       }
 
