@@ -106,6 +106,12 @@ async function fetchAllWooProductsCached(wcParams: any): Promise<{
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Bestseller result cache (products + ACF merged + is_bestseller filtered) ─
+type BestsellerCacheEntry = { products: any[]; expiresAt: number };
+const bestsellerCache = new Map<string, BestsellerCacheEntry>();
+const BESTSELLER_CACHE_TTL_MS = 5 * 60 * 1000;
+// ─────────────────────────────────────────────────────────────────────────────
+
 function chunkArray<T>(arr: T[], size: number): T[][] {
   if (size <= 0) return [arr];
   const chunks: T[][] = [];
@@ -348,10 +354,15 @@ export async function GET(req: Request) {
     titleVals.length > 0 ||
     characterVals.length > 0 ||
     genreVals.length > 0 ||
-    gameVals.length > 0 ||
-    params.price_min ||
-    params.price_max ||
-    (params.search && String(params.search).trim());
+    gameVals.length > 0;
+
+  // For simple queries (no attribute filters): let WooCommerce handle search and price natively.
+  // For complex queries we fetch everything cached and filter in JS.
+  if (!hasComplexFilters) {
+    if (params.search) wcParams.search = String(params.search).trim();
+    if (params.price_min) wcParams.min_price = params.price_min;
+    if (params.price_max) wcParams.max_price = params.price_max;
+  }
   
   // При сложных фильтрах загружаем ВСЕ товары (все страницы)
   if (hasComplexFilters) {
@@ -365,13 +376,23 @@ export async function GET(req: Request) {
     let totalPages = 1;
 
     if (params.bestseller === "true") {
-      const allProductsData = await fetchAllWooProducts(wcParams);
-      filteredProducts = allProductsData.products;
-      totalProducts = allProductsData.totalProducts;
-      totalPages = allProductsData.totalPages;
-
-      // Для бестселлерів подтягиваем ACF прямо из WP REST, если Woo его не вернул.
-      filteredProducts = await mergeWpAcfForProducts(filteredProducts);
+      const bsCacheKey = `cat:${wcParams.category ?? 'all'}_tag:${wcParams.tag ?? 'none'}`;
+      const now = Date.now();
+      const bsCached = bestsellerCache.get(bsCacheKey);
+      if (bsCached && now < bsCached.expiresAt) {
+        filteredProducts = bsCached.products;
+        totalProducts = filteredProducts.length;
+        totalPages = 1;
+      } else {
+        const allProductsData = await fetchAllWooProductsCached(wcParams);
+        let all = allProductsData.products;
+        // Для бестселлерів подтягиваем ACF прямо из WP REST, если Woo его не вернул.
+        all = await mergeWpAcfForProducts(all);
+        filteredProducts = all.filter(isBestSellerProduct);
+        totalProducts = filteredProducts.length;
+        totalPages = 1;
+        bestsellerCache.set(bsCacheKey, { products: filteredProducts, expiresAt: now + BESTSELLER_CACHE_TTL_MS });
+      }
     } else if (hasComplexFilters) {
       // ВАЖНО: При атрибутных фильтрах загружаем ВСЕ товары (с кешем на 5 мин)
       const allProductsData = await fetchAllWooProductsCached(wcParams);
@@ -390,9 +411,10 @@ export async function GET(req: Request) {
     }
     
 
-    // Поиск по названию и описанию (гарантированная фильтрация на нашей стороне)
+    // Поиск по названию и описанию — только для сложных фильтров;
+    // для простых запросов WooCommerce уже отфильтровал нативно.
     const searchTerm = params.search ? String(params.search).trim() : "";
-    if (searchTerm) {
+    if (searchTerm && hasComplexFilters) {
       filteredProducts = filteredProducts.filter((p: any) =>
         productMatchesSearch(p, searchTerm)
       );
@@ -448,8 +470,8 @@ export async function GET(req: Request) {
         return false;
       }
 
-      // Ціна від/до
-      if (hasPriceMin || hasPriceMax) {
+      // Ціна від/до — тільки для складних запитів; для простих WooCommerce вже відфільтрував.
+      if ((hasPriceMin || hasPriceMax) && hasComplexFilters) {
         const price = parseNumericPrice(p.price);
         if (hasPriceMin && price < (priceMin as number)) return false;
         if (hasPriceMax && price > (priceMax as number)) return false;

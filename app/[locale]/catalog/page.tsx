@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useProducts } from '../../../hooks/useProducts';
 import ProductCard from '../../../components/ProductCard';
@@ -98,11 +98,33 @@ export default function CatalogPage() {
     [t]
   );
   const locale = useLocale();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [filterState, setFilterState] = useState<CatalogFilterState>(initialFilterState);
-  const [searchInput, setSearchInput] = useState('');
-  const [searchApplied, setSearchApplied] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('date');
+  const isFirstRender = useRef(true);
+
+  const [filterState, setFilterState] = useState<CatalogFilterState>(() => {
+    const s = { ...initialFilterState };
+    const cats = searchParams.get('category') || searchParams.get('categories');
+    if (cats) s.categoryIds = cats.split(',').map(Number).filter(id => !isNaN(id));
+    const title = searchParams.get('attribute_title');
+    if (title) s.titles = title.split(',').map(decodeURIComponent).filter(Boolean);
+    const char = searchParams.get('attribute_character');
+    if (char) s.characters = char.split(',').map(decodeURIComponent).filter(Boolean);
+    const genre = searchParams.get('attribute_genre');
+    if (genre) s.genres = genre.split(',').map(decodeURIComponent).filter(Boolean);
+    const games = searchParams.get('attribute_games');
+    if (games) s.games = games.split(',').map(decodeURIComponent).filter(Boolean);
+    const priceMin = searchParams.get('price_min');
+    if (priceMin) s.priceFrom = priceMin;
+    const priceMax = searchParams.get('price_max');
+    if (priceMax) s.priceTo = priceMax;
+    return s;
+  });
+  const [searchInput, setSearchInput] = useState(() => searchParams.get('search') ?? '');
+  const [searchApplied, setSearchApplied] = useState(() => searchParams.get('search') ?? '');
+  const [sortBy, setSortBy] = useState<SortOption>(
+    () => (searchParams.get('sort') as SortOption) || 'date'
+  );
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [categoryNames, setCategoryNames] = useState<Record<number, string>>({});
@@ -113,70 +135,24 @@ export default function CatalogPage() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [newProductIds, setNewProductIds] = useState<Set<number>>(new Set());
 
+  // Sync state → URL so filters survive page refresh
   useEffect(() => {
-    const q = searchParams.get('search') ?? '';
-    setSearchInput(q);
-    setSearchApplied(q);
-  }, [searchParams]);
-
-  useEffect(() => {
-    const categoryParam = searchParams.get('category') || searchParams.get('categories');
-    if (categoryParam) {
-      const ids = categoryParam.split(',').map(Number).filter(id => !isNaN(id));
-      if (ids.length > 0) {
-        setFilterState((s) => ({
-          ...s,
-          categoryIds: ids,
-        }));
-      }
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
     }
-  }, [searchParams.get('category'), searchParams.get('categories')]);
-
-  // Apply filters from URL parameters
-  useEffect(() => {
-    const newState: Partial<CatalogFilterState> = {};
-    
-    const titleParam = searchParams.get('attribute_title');
-    if (titleParam) {
-      newState.titles = titleParam.split(',').map(decodeURIComponent);
-    }
-    
-    const characterParam = searchParams.get('attribute_character');
-    if (characterParam) {
-      newState.characters = characterParam.split(',').map(decodeURIComponent);
-    }
-    
-    const genreParam = searchParams.get('attribute_genre');
-    if (genreParam) {
-      newState.genres = genreParam.split(',').map(decodeURIComponent);
-    }
-    
-    const gamesParam = searchParams.get('attribute_games');
-    if (gamesParam) {
-      newState.games = gamesParam.split(',').map(decodeURIComponent);
-    }
-    
-    const priceMin = searchParams.get('price_min');
-    if (priceMin) {
-      newState.priceFrom = priceMin;
-    }
-    
-    const priceMax = searchParams.get('price_max');
-    if (priceMax) {
-      newState.priceTo = priceMax;
-    }
-    
-    if (Object.keys(newState).length > 0) {
-      setFilterState((s) => ({ ...s, ...newState }));
-    }
-  }, [
-    searchParams.get('attribute_title'),
-    searchParams.get('attribute_character'),
-    searchParams.get('attribute_genre'),
-    searchParams.get('attribute_games'),
-    searchParams.get('price_min'),
-    searchParams.get('price_max'),
-  ]);
+    const params = new URLSearchParams();
+    if (searchApplied.trim()) params.set('search', searchApplied.trim());
+    if (filterState.categoryIds.length) params.set('categories', filterState.categoryIds.join(','));
+    if (filterState.priceFrom) params.set('price_min', filterState.priceFrom);
+    if (filterState.priceTo) params.set('price_max', filterState.priceTo);
+    if (filterState.titles.length) params.set('attribute_title', filterState.titles.join(','));
+    if (filterState.characters.length) params.set('attribute_character', filterState.characters.join(','));
+    if (filterState.genres.length) params.set('attribute_genre', filterState.genres.join(','));
+    if (filterState.games.length) params.set('attribute_games', filterState.games.join(','));
+    if (sortBy !== 'date') params.set('sort', sortBy);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [filterState, searchApplied, sortBy]);
 
   useEffect(() => {
     fetch('/api/catalog/filters')
@@ -308,8 +284,6 @@ export default function CatalogPage() {
   useEffect(() => {
     setCurrentPage(1);
     setAllProducts([]);
-    // When filtered results are shorter than previous list, keep viewport anchored to top.
-    window.scrollTo({ top: 0, behavior: 'auto' });
   }, [
     searchApplied,
     sortBy,
