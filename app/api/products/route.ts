@@ -219,7 +219,10 @@ function createProductAttributeLookup(product: any): Record<string, Set<string>>
       : a?.option
       ? [a.option]
       : [];
-    const values = new Set(opts.map((v: string) => String(v || '').trim().toLowerCase()).filter(Boolean));
+    const normalizedValues = opts
+      .map((v: string) => String(v || '').trim().toLowerCase())
+      .filter((v: string) => Boolean(v));
+    const values = new Set<string>(normalizedValues);
     if (!values.size) continue;
     if (attrName) lookup[attrName] = values;
     if (attrSlug) lookup[attrSlug] = values;
