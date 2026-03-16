@@ -51,11 +51,17 @@ export async function GET() {
 
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data?.available_avatars)) {
-          availableAvatars = data.available_avatars.map((v: any) => String(v));
+
+        const rawAvailable = (data as any)?.available_avatars;
+        if (Array.isArray(rawAvailable)) {
+          availableAvatars = rawAvailable.map((v: any) => String(v));
+        } else if (rawAvailable && typeof rawAvailable === "object") {
+          // Может прийти как объект {0: "default", 1: "avatar_premium"}
+          availableAvatars = Object.values(rawAvailable).map((v: any) => String(v));
         }
-        if (data?.current_avatar) {
-          currentAvatar = String(data.current_avatar);
+
+        if ((data as any)?.current_avatar) {
+          currentAvatar = String((data as any).current_avatar);
         }
       }
     } catch {
