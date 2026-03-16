@@ -416,6 +416,11 @@ export async function GET(req: Request) {
       status: "publish",
     };
 
+    const sku = (params.get("sku") || "").trim();
+    if (sku) {
+      wcParams.sku = sku;
+    }
+
     const sort = params.get("sort") || "date";
     if (sort === "price_asc") {
       wcParams.orderby = "price";

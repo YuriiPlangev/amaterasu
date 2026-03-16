@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const login = (payload.login as string) || "Unknown";
-  let profile: { displayName?: string; email?: string; phone?: string } = {};
+  let profile: { displayName?: string; email?: string; phone?: string; avatar?: string } = {};
   try {
     const profileCookie = cookieStore.get(PROFILE_COOKIE)?.value;
     if (profileCookie) profile = JSON.parse(decodeURIComponent(profileCookie));
@@ -39,6 +39,7 @@ export async function PATCH(req: NextRequest) {
   if (body.displayName !== undefined) profile.displayName = String(body.displayName).trim() || login;
   if (body.email !== undefined) profile.email = String(body.email).trim();
   if (body.phone !== undefined) profile.phone = String(body.phone).trim();
+  if ((body as any).avatar !== undefined) profile.avatar = String((body as any).avatar).trim();
 
   const value = encodeURIComponent(JSON.stringify(profile));
   const cookie = serialize(PROFILE_COOKIE, value, {
@@ -49,7 +50,7 @@ export async function PATCH(req: NextRequest) {
     maxAge: MAX_AGE,
   });
 
-  return new NextResponse(JSON.stringify({ success: true, profile: { displayName: profile.displayName, email: profile.email, phone: profile.phone } }), {
+  return new NextResponse(JSON.stringify({ success: true, profile: { displayName: profile.displayName, email: profile.email, phone: profile.phone, avatar: profile.avatar } }), {
     status: 200,
     headers: { "Set-Cookie": cookie, "Content-Type": "application/json" },
   });

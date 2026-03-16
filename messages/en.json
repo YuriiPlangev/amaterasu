@@ -291,7 +291,15 @@
     "save": "Save changes",
     "saving": "Saving…",
     "saved": "Contact details saved",
-    "error": "Save failed"
+    "error": "Save failed",
+    "avatar": "Avatar",
+    "avatarOption": "Avatar #{number}",
+    "avatarPremiumOption": "Premium avatar",
+    "buyAvatarPrompt": "This is a premium avatar. After payment it will be permanently unlocked in your collection.",
+    "buyAvatarConfirmButton": "Buy avatar",
+    "buyAvatarCancelButton": "Cancel",
+    "buyAvatarAdded": "Premium avatar was added to your cart. You will be redirected to checkout.",
+    "buyAvatarError": "Failed to add avatar to cart. Please try again."
   },
   "orderHistory": {
     "title": "Order history",
@@ -323,7 +331,13 @@
     "loading": "Loading comments...",
     "loginRequired": "Only registered users can leave comments",
     "login": "Sign in",
-    "noComments": "No comments yet. Be the first!"
+    "noComments": "No comments yet. Be the first!",
+    "reply": "Reply",
+    "replyPlaceholder": "Write a reply...",
+    "send": "Send",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete"
   }
 }
 

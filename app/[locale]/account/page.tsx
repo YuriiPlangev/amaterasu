@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyToken } from '../../../lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getTranslations } from 'next-intl/server';
 import LogoutButton from './LogoutButton';
 import ProfileForm from '../../../components/account/ProfileForm';
@@ -25,6 +26,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   const userLogin = typeof payload.login === 'string' ? payload.login : 'User';
   const userRoles = Array.isArray(payload.roles) ? payload.roles : [];
   let profileName = userLogin;
+  let avatar: string | null = null;
 
   try {
     const profileCookie = cookieStore.get('profile')?.value;
@@ -32,6 +34,9 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
       const parsed = JSON.parse(decodeURIComponent(profileCookie));
       if (parsed?.displayName && typeof parsed.displayName === 'string') {
         profileName = parsed.displayName;
+      }
+      if (parsed?.avatar && typeof parsed.avatar === 'string') {
+        avatar = parsed.avatar;
       }
     }
   } catch {
@@ -48,8 +53,12 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
                 <h1 className="text-3xl font-bold text-white mb-1">{t('profileTitle')}</h1>
                 <p className="text-white/80">{t('welcome')} {profileName}!</p>
               </div>
-              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-xl font-bold text-[#9C0000]">
-                {profileName.charAt(0).toUpperCase()}
+              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-xl font-bold text-[#9C0000] overflow-hidden">
+                {avatar ? (
+                  <Image src={avatar} alt={profileName} width={56} height={56} className="w-full h-full object-cover" />
+                ) : (
+                  profileName.charAt(0).toUpperCase()
+                )}
               </div>
             </div>
           </div>

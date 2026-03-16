@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import { useCartStore } from '../../store/cartStore';
 
 type UserProfile = {
   id: string;
@@ -10,25 +12,52 @@ type UserProfile = {
   displayName?: string;
   email?: string;
   phone?: string;
+  avatar?: string;
 };
+
+type AvatarItem =
+  | { id: string; src: string; type: 'free' }
+  | { id: string; src: string; type: 'premium'; sku: string };
+
+const AVATARS: AvatarItem[] = [
+  { id: 'photo_1', src: '/avatars/photo_1.jpg', type: 'free' as const },
+  { id: 'photo_2', src: '/avatars/photo_2.jpg', type: 'free' as const },
+  { id: 'photo_3', src: '/avatars/photo_3.jpg', type: 'free' as const },
+  { id: 'photo_4', src: '/avatars/photo_4.jpg', type: 'free' as const },
+  { id: 'photo_5', src: '/avatars/photo_5.jpg', type: 'free' as const },
+  { id: 'photo_6', src: '/avatars/photo_6.jpg', type: 'free' as const },
+  { id: 'photo_7', src: '/avatars/photo_7.jpg', type: 'free' as const },
+  { id: 'photo_8', src: '/avatars/photo_8.jpg', type: 'free' as const },
+  { id: 'photo_9', src: '/avatars/photo_9.jpg', type: 'free' as const },
+  { id: 'photo_10', src: '/avatars/photo_10.jpg', type: 'free' as const },
+  // Преміум-аватар (купується за товаром з SKU avatar_premium)
+  { id: 'premium_1', src: '/avatars/premium/avatar_premium.gif', type: 'premium' as const, sku: 'avatar_premium' },
+];
 
 export default function ProfileForm({ initialLogin }: { initialLogin: string }) {
   const t = useTranslations('profileForm');
+  const locale = useLocale();
+  const router = useRouter();
+  const addToCart = useCartStore((state) => state.add);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [form, setForm] = useState({ displayName: '', email: '', phone: '' });
+  const [form, setForm] = useState({ displayName: '', email: '', phone: '', avatar: '' });
+  const [availableAvatars, setAvailableAvatars] = useState<string[]>(['default']);
+  const [pendingPremiumSku, setPendingPremiumSku] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/auth/user', { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
       .then((data) => {
         setProfile(data);
+        setAvailableAvatars(Array.isArray(data.availableAvatars) ? data.availableAvatars : ['default']);
         setForm({
           displayName: data.displayName ?? data.login ?? '',
           email: data.email ?? '',
           phone: data.phone ?? '',
+          avatar: data.avatar ?? '',
         });
       })
       .catch(() => setProfile(null))
@@ -48,6 +77,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
           displayName: form.displayName.trim() || undefined,
           email: form.email.trim() || undefined,
           phone: form.phone.trim() || undefined,
+          avatar: form.avatar || undefined,
         }),
       });
       const data = await res.json();
@@ -60,6 +90,35 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
       setMessage({ type: 'error', text: err instanceof Error ? err.message : t('error') });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleBuyAvatar = async (sku: string) => {
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/products?sku=${encodeURIComponent(sku)}&per_page=1`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(typeof data?.message === 'string' ? data.message : 'Failed');
+      }
+
+      const product = Array.isArray(data)
+        ? data[0]
+        : Array.isArray(data.products)
+        ? data.products[0]
+        : null;
+
+      if (!product) {
+        setMessage({ type: 'error', text: t('buyAvatarError') });
+        return;
+      }
+
+      addToCart(product, 1);
+      setMessage({ type: 'success', text: t('buyAvatarAdded') });
+      router.push(`/${locale}/cart`);
+    } catch {
+      setMessage({ type: 'error', text: t('buyAvatarError') });
     }
   };
 
@@ -118,6 +177,80 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
             className="w-full px-4 py-2.5 border border-[#D8D8D8] rounded-lg focus:ring-2 focus:ring-[#9C0000]/30 focus:border-[#9C0000] outline-none transition"
             placeholder="+380..."
           />
+        </div>
+        <div>
+          <p className="block text-sm font-medium text-[#374151] mb-2">{t('avatar')}</p>
+          <div className="grid grid-cols-5 gap-3">
+            {AVATARS.map((avatar, index) => {
+              const ownedKey = avatar.type === 'premium' ? avatar.sku : avatar.id;
+              const owned = avatar.type === 'free' || availableAvatars.includes(ownedKey);
+              const selected = form.avatar === avatar.src;
+              const isPremiumLocked = avatar.type === 'premium' && !owned;
+
+              return (
+                <button
+                  key={avatar.id}
+                  type="button"
+                  onClick={() => {
+                    if (isPremiumLocked && avatar.type === 'premium') {
+                      setPendingPremiumSku(avatar.sku);
+                    } else {
+                      setForm((f) => ({ ...f, avatar: avatar.src }));
+                    }
+                  }}
+                  className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition ${
+                    selected ? 'border-[#9C0000]' : 'border-transparent hover:border-[#D8D8D8]'
+                  }`}
+                  aria-label={
+                    avatar.type === 'premium'
+                      ? t('avatarPremiumOption')
+                      : t('avatarOption', { number: index + 1 })
+                  }
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={avatar.src}
+                    alt={avatar.type === 'premium' ? t('avatarPremiumOption') : t('avatarOption', { number: index + 1 })}
+                    className="w-full h-full object-cover"
+                  />
+                  {isPremiumLocked && (
+                    <span className="absolute inset-0 bg-black/45 flex items-center justify-center">
+                      <span className="w-7 h-7 rounded-full bg-[#FACC15] text-[#7C2D12] text-[11px] font-extrabold flex items-center justify-center shadow-md">
+                        ★
+                      </span>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {pendingPremiumSku && (
+            <div className="mt-3 rounded-lg border border-[#F97373] bg-[#FFF7F7] px-4 py-3 text-sm text-[#7F1D1D]">
+              <p>{t('buyAvatarPrompt')}</p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleBuyAvatar(pendingPremiumSku);
+                    setPendingPremiumSku(null);
+                  }}
+                  className="px-3 py-1.5 rounded-md bg-[#9C0000] text-white text-xs font-semibold hover:bg-[#7D0000] transition-colors"
+                >
+                  {t('buyAvatarConfirmButton')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingPremiumSku(null);
+                    setMessage(null);
+                  }}
+                  className="px-3 py-1.5 rounded-md bg-[#E5E7EB] text-xs font-semibold text-[#374151] hover:bg-[#D1D5DB] transition-colors"
+                >
+                  {t('buyAvatarCancelButton')}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         {message && (
           <p className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-[#9C0000]'}`}>

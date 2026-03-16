@@ -29,7 +29,7 @@ export default function HeaderSearch({
   const placeholderText = placeholder ?? t('placeholder');
   const basePath = `/${locale}`;
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Array<{ id: number; name: string; slug: string; price: string }>>([]);
+  const [results, setResults] = useState<Array<{ id: number; name: string; slug: string; price: string; image?: string | null }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [touched, setTouched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -52,12 +52,20 @@ export default function HeaderSearch({
         ? data.products
         : [];
       setResults(
-        products.map((p: any) => ({
-              id: p.id,
-              name: p.name || '',
-              slug: p.slug || '',
-              price: p.price || '',
-            }))
+        products.map((p: any) => {
+          const image =
+            p.image ||
+            p.thumbnail ||
+            (Array.isArray(p.images) && p.images[0]?.src) ||
+            null;
+          return {
+            id: p.id,
+            name: p.name || '',
+            slug: p.slug || '',
+            price: p.price || '',
+            image,
+          };
+        })
       );
     } catch {
       setResults([]);
@@ -149,7 +157,20 @@ export default function HeaderSearch({
                       onClick={onClose}
                       className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#2a2a2a] text-white text-sm"
                     >
-                      <span className="truncate">{p.name}</span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative w-10 h-10 rounded-md bg-[#111111] flex-shrink-0 overflow-hidden">
+                          {p.image ? (
+                            <Image
+                              src={p.image}
+                              alt={p.name}
+                              fill
+                              sizes="40px"
+                              className="object-cover"
+                            />
+                          ) : null}
+                        </div>
+                        <span className="truncate">{p.name}</span>
+                      </div>
                       <span className="text-[#9C0000] font-semibold shrink-0">{p.price} ₴</span>
                     </Link>
                   </li>

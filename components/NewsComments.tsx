@@ -10,18 +10,43 @@ interface Comment {
   author: string;
   content: string;
   date: string;
+  parentId?: string | null;
+  userId?: string | null;
 }
 
 export default function NewsComments({ slug }: { slug: string }) {
   const t = useTranslations('comments');
   const locale = useLocale();
   const router = useRouter();
-  
+
   const [comments, setComments] = useState<Comment[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+
+  // Получить данные текущего пользователя (id + аватар)
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('/api/auth/user');
+        if (res.ok) {
+          const data = await res.json();
+          setUserId(data.id || null);
+          setUserAvatar(data.avatar || null);
+        }
+      } catch {
+        setUserId(null);
+        setUserAvatar(null);
+      }
+    };
+    fetchUser();
+  }, []);
 
   // Check authentication status
   useEffect(() => {
@@ -33,7 +58,7 @@ export default function NewsComments({ slug }: { slug: string }) {
         setIsAuthenticated(false);
       }
     };
-    
+
     checkAuth();
   }, []);
 
@@ -58,9 +83,9 @@ export default function NewsComments({ slug }: { slug: string }) {
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!commentText.trim()) return;
-    
+
     if (isAuthenticated === false) {
       const returnTo = `/${locale}/news/${slug}`;
       router.push(`/${locale}/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
@@ -88,6 +113,77 @@ export default function NewsComments({ slug }: { slug: string }) {
       setIsSubmitting(false);
     }
   }, [commentText, isAuthenticated, comments, slug, locale, router]);
+
+  // Ответ на комментарий
+  const handleReply = useCallback(async (parentId: string) => {
+    if (!commentText.trim()) return;
+
+    if (isAuthenticated === false) {
+      const returnTo = `/${locale}/news/${slug}`;
+      router.push(`/${locale}/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/news/${slug}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: commentText, parentId }),
+      });
+      if (res.ok) {
+        const newComment = await res.json();
+        setComments([newComment, ...comments]);
+        setCommentText('');
+        setReplyTo(null);
+      }
+    } catch (error) {
+      console.error('Failed to reply to comment:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [commentText, slug, comments, isAuthenticated, locale, router]);
+
+  // Редактирование комментария
+  const handleEdit = useCallback(async (commentId: string) => {
+    if (!editText.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/news/${slug}/comments/actions`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId, content: editText }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setComments(comments.map(c => c.id === commentId ? { ...c, content: updated.content } : c));
+        setEditId(null);
+      }
+    } catch (error) {
+      console.error('Failed to edit comment:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [editText, slug, comments]);
+
+  // Удаление комментария
+  const handleDelete = useCallback(async (commentId: string) => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/news/${slug}/comments/actions`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId }),
+      });
+      if (res.ok) {
+        setComments(comments.filter(c => c.id !== commentId));
+      }
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [slug, comments]);
 
   if (isLoading) {
     return <div className="text-center py-6 text-[#9CA3AF]">{t('loading')}</div>;
@@ -148,13 +244,91 @@ export default function NewsComments({ slug }: { slug: string }) {
               minute: '2-digit',
             });
 
+            const isOwner = userId && comment.userId && userId === comment.userId;
+
             return (
               <div key={comment.id} className="border-l-4 border-[#9C0000] pl-6 py-4">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-semibold text-[#1C1C1C]">{comment.author}</p>
-                  <p className="text-sm text-[#9CA3AF]">{formattedDate}</p>
+                <div className="flex items-start justify-between mb-2 gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-[#F3F4F6] flex items-center justify-center text-xs font-semibold text-[#9C0000] overflow-hidden">
+                      {isOwner && userAvatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={userAvatar} alt={comment.author} className="w-full h-full object-cover" />
+                      ) : (
+                        comment.author.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <p className="font-semibold text-[#1C1C1C]">{comment.author}</p>
+                  </div>
+                  <p className="text-sm text-[#9CA3AF] mt-1">{formattedDate}</p>
                 </div>
-                <p className="text-[#1C1C1C] leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                {editId === comment.id ? (
+                  <form
+                    onSubmit={e => {
+                      e.preventDefault();
+                      handleEdit(comment.id);
+                    }}
+                    className="space-y-2 mb-2"
+                  >
+                    <textarea
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      className="w-full rounded-lg border border-[#E5E7EB] px-4 py-2 text-[#1C1C1C]"
+                    />
+                    <div className="flex gap-2">
+                      <button type="submit" className="bg-[#9C0000] text-white px-4 py-1 rounded" disabled={isSubmitting}>{t('save')}</button>
+                      <button type="button" className="bg-gray-200 px-4 py-1 rounded" onClick={() => setEditId(null)}>{t('cancel')}</button>
+                    </div>
+                  </form>
+                ) : (
+                  <p className="text-[#1C1C1C] leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                )}
+                <div className="flex gap-3 mt-2">
+                  {!isOwner && (
+                    <button
+                      className="text-xs text-[#9C0000] underline hover:no-underline"
+                      onClick={() => setReplyTo(comment.id)}
+                    >
+                      {t('reply')}
+                    </button>
+                  )}
+                  {isOwner && (
+                    <>
+                      <button
+                        className="text-xs text-[#1C1C1C] underline hover:no-underline"
+                        onClick={() => {
+                          setEditId(comment.id);
+                          setEditText(comment.content);
+                        }}
+                      >{t('edit')}</button>
+                      <button
+                        className="text-xs text-[#9C0000] underline hover:no-underline"
+                        onClick={() => handleDelete(comment.id)}
+                        disabled={isSubmitting}
+                      >{t('delete')}</button>
+                    </>
+                  )}
+                </div>
+                {replyTo === comment.id && (
+                  <form
+                    onSubmit={e => {
+                      e.preventDefault();
+                      handleReply(comment.id);
+                    }}
+                    className="space-y-2 mt-2"
+                  >
+                    <textarea
+                      value={commentText}
+                      onChange={e => setCommentText(e.target.value)}
+                      className="w-full rounded-lg border border-[#E5E7EB] px-4 py-2 text-[#1C1C1C]"
+                      placeholder={t('replyPlaceholder')}
+                    />
+                    <div className="flex gap-2">
+                      <button type="submit" className="bg-[#9C0000] text-white px-4 py-1 rounded" disabled={isSubmitting}>{t('send')}</button>
+                      <button type="button" className="bg-gray-200 px-4 py-1 rounded" onClick={() => setReplyTo(null)}>{t('cancel')}</button>
+                    </div>
+                  </form>
+                )}
               </div>
             );
           })

@@ -60,7 +60,7 @@ export default function NewsSlugPage() {
 
   return (
     <div className="max-w-[1920px] w-full mx-auto site-padding-x py-10 md:py-16 pt-24 md:pt-28 pb-16">
-      <div className="max-w-[840px] mx-auto">
+      <div className="max-w-[1200px] mx-auto">
         <Link
           href={`${basePath}/news`}
           className="inline-flex items-center gap-2 text-[#6B7280] text-sm font-medium mb-8 hover:text-[#9C0000] transition-colors"
@@ -69,51 +69,48 @@ export default function NewsSlugPage() {
           {t('backToNews')}
         </Link>
 
-        <article className="rounded-2xl border border-[#E5E7EB] bg-white shadow-sm overflow-hidden">
-          {/* Шапка: зображення + заголовок поверх (опційно) або блок мета */}
-          {post.image && (
-            <div className="relative w-full aspect-[21/9] md:aspect-[3/1] bg-[#F3F4F6]">
-              <Image
-                src={getProxiedImageUrl(post.image)}
-                alt={post.title.replace(/<[^>]*>/g, '')}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 840px"
-                priority
-              />
+
+        <article className="rounded-2xl  bg-white  overflow-hidden">
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Картинка слева */}
+            {post.image && (
+              <div className="relative w-full md:w-1/2 min-h-[260px] md:min-h-[340px] bg-[#F3F4F6] flex-shrink-0">
+                <Image
+                  src={getProxiedImageUrl(post.image)}
+                  alt={post.title.replace(/<[^>]*>/g, '')}
+                  fill
+                  className="object-cover rounded-none md:rounded-l-2xl"
+                  sizes="(max-width: 768px) 100vw, 420px"
+                  priority
+                />
+              </div>
+            )}
+            {/* Текст справа */}
+            <div className="w-full md:w-1/2 px-6 py-8 md:px-8 md:py-8 flex flex-col justify-center md:border-l md:border-[#E5E7EB] md:pl-10">
+              {post.badge && (
+                <span className="block w-full mb-4 py-1.5 px-3 bg-[#9C0000] text-white text-xs font-semibold rounded-md uppercase tracking-wide">
+                  {post.badge}
+                </span>
+              )}
+              <h1 className="text-[clamp(24px,2.8vw,38px)] font-bold text-[#1C1C1C] mb-3 leading-tight">
+                {post.title}
+              </h1>
+              <p className="text-[#9CA3AF] text-sm mb-6">{formattedDate}</p>
+              {hasExcerpt && (
+                <div
+                  className="text-[#1C1C1C] text-lg leading-relaxed mb-8 pb-8 border-b border-[#E5E7EB] [&_p]:!text-[#1C1C1C] [&_span]:!text-[#1C1C1C]"
+                  dangerouslySetInnerHTML={{ __html: post.excerpt }}
+                />
+              )}
+              {hasContent ? (
+                <div
+                  className="news-content text-[#1C1C1C] leading-[1.75] [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_li]:mb-1 [&_a]:!text-[#9C0000] [&_a]:underline [&_a:hover]:no-underline [&_img]:rounded-lg [&_img]:my-4 [&_p]:!text-[#1C1C1C] [&_h2]:!text-[#1C1C1C] [&_h3]:!text-[#1C1C1C] [&_li]:!text-[#1C1C1C] [&_span]:!text-[#1C1C1C] [&_div]:!text-[#1C1C1C]"
+                  dangerouslySetInnerHTML={{ __html: post.content }}
+                />
+              ) : hasExcerpt ? null : (
+                <p className="text-[#1C1C1C] italic">{t('noContent')}</p>
+              )}
             </div>
-          )}
-
-          <div className="px-6 py-8 md:px-10 md:py-10">
-            {post.badge && (
-              <span className="inline-block mb-4 py-1.5 px-3 bg-[#9C0000] text-white text-xs font-semibold rounded-md uppercase tracking-wide">
-                {post.badge}
-              </span>
-            )}
-
-            <h1
-              className="text-[clamp(24px,2.8vw,38px)] font-bold text-[#1C1C1C] mb-3 leading-tight"
-            >
-              {post.title}
-            </h1>
-
-            <p className="text-[#9CA3AF] text-sm mb-6">{formattedDate}</p>
-
-            {hasExcerpt && (
-              <div
-                className="text-[#1C1C1C] text-lg leading-relaxed mb-8 pb-8 border-b border-[#E5E7EB] [&_p]:!text-[#1C1C1C] [&_span]:!text-[#1C1C1C]"
-                dangerouslySetInnerHTML={{ __html: post.excerpt }}
-              />
-            )}
-
-            {hasContent ? (
-              <div
-                className="news-content text-[#1C1C1C] leading-[1.75] [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_li]:mb-1 [&_a]:!text-[#9C0000] [&_a]:underline [&_a:hover]:no-underline [&_img]:rounded-lg [&_img]:my-4 [&_p]:!text-[#1C1C1C] [&_h2]:!text-[#1C1C1C] [&_h3]:!text-[#1C1C1C] [&_li]:!text-[#1C1C1C] [&_span]:!text-[#1C1C1C] [&_div]:!text-[#1C1C1C]"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-              />
-            ) : hasExcerpt ? null : (
-              <p className="text-[#1C1C1C] italic">{t('noContent')}</p>
-            )}
           </div>
         </article>
 
