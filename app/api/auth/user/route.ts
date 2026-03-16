@@ -19,7 +19,7 @@ export async function GET() {
   }
 
   const login = (payload.login as string) || "Unknown";
-  let profile: { displayName?: string; email?: string; phone?: string; avatar?: string } = {};
+  let profile: { displayName?: string; email?: string; phone?: string; avatarId?: string } = {};
   try {
     const profileCookie = cookieStore.get(PROFILE_COOKIE)?.value;
     if (profileCookie) profile = JSON.parse(decodeURIComponent(profileCookie));
@@ -70,7 +70,7 @@ export async function GET() {
     displayName: profile.displayName ?? login,
     email: profile.email ?? "",
     phone: profile.phone ?? "",
-    avatar: profile.avatar ?? "",
+    avatarId: profile.avatarId ?? "",
     availableAvatars,
     currentAvatar,
   });

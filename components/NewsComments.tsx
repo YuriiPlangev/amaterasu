@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { avatarIdToSrc } from '../lib/avatars';
 
 interface Comment {
   id: string;
@@ -12,6 +13,7 @@ interface Comment {
   date: string;
   parentId?: string | null;
   userId?: string | null;
+  avatarId?: string | null;
 }
 
 export default function NewsComments({ slug }: { slug: string }) {
@@ -25,12 +27,12 @@ export default function NewsComments({ slug }: { slug: string }) {
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [userAvatarId, setUserAvatarId] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
 
-  // Получить данные текущего пользователя (id + аватар)
+  // Получить данные текущего пользователя (id + аватарId)
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -38,11 +40,11 @@ export default function NewsComments({ slug }: { slug: string }) {
         if (res.ok) {
           const data = await res.json();
           setUserId(data.id || null);
-          setUserAvatar(data.avatar || null);
+          setUserAvatarId(data.currentAvatar || data.avatarId || null);
         }
       } catch {
         setUserId(null);
-        setUserAvatar(null);
+        setUserAvatarId(null);
       }
     };
     fetchUser();
@@ -245,15 +247,18 @@ export default function NewsComments({ slug }: { slug: string }) {
             });
 
             const isOwner = userId && comment.userId && userId === comment.userId;
+            const avatarSrc =
+              avatarIdToSrc(comment.avatarId) ||
+              (isOwner ? avatarIdToSrc(userAvatarId) : null);
 
             return (
               <div key={comment.id} className="border-l-4 border-[#9C0000] pl-6 py-4">
                 <div className="flex items-start justify-between mb-2 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-[#F3F4F6] flex items-center justify-center text-xs font-semibold text-[#9C0000] overflow-hidden">
-                      {isOwner && userAvatar ? (
+                      {avatarSrc ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={userAvatar} alt={comment.author} className="w-full h-full object-cover" />
+                        <img src={avatarSrc} alt={comment.author} className="w-full h-full object-cover" />
                       ) : (
                         comment.author.charAt(0).toUpperCase()
                       )}

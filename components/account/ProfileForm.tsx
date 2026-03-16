@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '../../store/cartStore';
+import { avatarIdToSrc } from '../../lib/avatars';
 
 type UserProfile = {
   id: string;
@@ -12,7 +13,9 @@ type UserProfile = {
   displayName?: string;
   email?: string;
   phone?: string;
-  avatar?: string;
+  avatarId?: string;
+  availableAvatars?: string[];
+  currentAvatar?: string | null;
 };
 
 type AvatarItem =
@@ -20,18 +23,18 @@ type AvatarItem =
   | { id: string; src: string; type: 'premium'; sku: string };
 
 const AVATARS: AvatarItem[] = [
-  { id: 'photo_1', src: '/avatars/photo_1.jpg', type: 'free' as const },
-  { id: 'photo_2', src: '/avatars/photo_2.jpg', type: 'free' as const },
-  { id: 'photo_3', src: '/avatars/photo_3.jpg', type: 'free' as const },
-  { id: 'photo_4', src: '/avatars/photo_4.jpg', type: 'free' as const },
-  { id: 'photo_5', src: '/avatars/photo_5.jpg', type: 'free' as const },
-  { id: 'photo_6', src: '/avatars/photo_6.jpg', type: 'free' as const },
-  { id: 'photo_7', src: '/avatars/photo_7.jpg', type: 'free' as const },
-  { id: 'photo_8', src: '/avatars/photo_8.jpg', type: 'free' as const },
-  { id: 'photo_9', src: '/avatars/photo_9.jpg', type: 'free' as const },
-  { id: 'photo_10', src: '/avatars/photo_10.jpg', type: 'free' as const },
+  { id: 'photo_1', src: '/avatars/photo_1.jpg', type: 'free' },
+  { id: 'photo_2', src: '/avatars/photo_2.jpg', type: 'free' },
+  { id: 'photo_3', src: '/avatars/photo_3.jpg', type: 'free' },
+  { id: 'photo_4', src: '/avatars/photo_4.jpg', type: 'free' },
+  { id: 'photo_5', src: '/avatars/photo_5.jpg', type: 'free' },
+  { id: 'photo_6', src: '/avatars/photo_6.jpg', type: 'free' },
+  { id: 'photo_7', src: '/avatars/photo_7.jpg', type: 'free' },
+  { id: 'photo_8', src: '/avatars/photo_8.jpg', type: 'free' },
+  { id: 'photo_9', src: '/avatars/photo_9.jpg', type: 'free' },
+  { id: 'photo_10', src: '/avatars/photo_10.jpg', type: 'free' },
   // Преміум-аватар (купується за товаром з SKU avatar_premium)
-  { id: 'premium_1', src: '/avatars/premium/avatar_premium.gif', type: 'premium' as const, sku: 'avatar_premium' },
+  { id: 'avatar_premium', src: '/avatars/premium/avatar_premium.gif', type: 'premium', sku: 'avatar_premium' },
 ];
 
 export default function ProfileForm({ initialLogin }: { initialLogin: string }) {
@@ -43,7 +46,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [form, setForm] = useState({ displayName: '', email: '', phone: '', avatar: '' });
+  const [form, setForm] = useState({ displayName: '', email: '', phone: '', avatarId: 'photo_1' });
   const [availableAvatars, setAvailableAvatars] = useState<string[]>(['default']);
   const [pendingPremiumSku, setPendingPremiumSku] = useState<string | null>(null);
 
@@ -53,11 +56,12 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
       .then((data) => {
         setProfile(data);
         setAvailableAvatars(Array.isArray(data.availableAvatars) ? data.availableAvatars : ['default']);
+        const avatarId = (data.currentAvatar || data.avatarId || 'photo_1') as string;
         setForm({
           displayName: data.displayName ?? data.login ?? '',
           email: data.email ?? '',
           phone: data.phone ?? '',
-          avatar: data.avatar ?? '',
+          avatarId,
         });
       })
       .catch(() => setProfile(null))
@@ -77,7 +81,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
           displayName: form.displayName.trim() || undefined,
           email: form.email.trim() || undefined,
           phone: form.phone.trim() || undefined,
-          avatar: form.avatar || undefined,
+          avatarId: form.avatarId || undefined,
         }),
       });
       const data = await res.json();
@@ -184,7 +188,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
             {AVATARS.map((avatar, index) => {
               const ownedKey = avatar.type === 'premium' ? avatar.sku : avatar.id;
               const owned = avatar.type === 'free' || availableAvatars.includes(ownedKey);
-              const selected = form.avatar === avatar.src;
+              const selected = form.avatarId === avatar.id;
               const isPremiumLocked = avatar.type === 'premium' && !owned;
 
               return (
@@ -195,7 +199,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
                     if (isPremiumLocked && avatar.type === 'premium') {
                       setPendingPremiumSku(avatar.sku);
                     } else {
-                      setForm((f) => ({ ...f, avatar: avatar.src }));
+                      setForm((f) => ({ ...f, avatarId: avatar.id }));
                     }
                   }}
                   className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition ${
@@ -251,6 +255,15 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
               </div>
             </div>
           )}
+          <div className="mt-4 flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-[#F3F4F6] border border-[#E5E7EB]">
+              {avatarIdToSrc(form.avatarId) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarIdToSrc(form.avatarId) as string} alt="" className="w-full h-full object-cover" />
+              ) : null}
+            </div>
+            <p className="text-sm text-[#6B7280]">{t('avatarSelectedHint')}</p>
+          </div>
         </div>
         {message && (
           <p className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-[#9C0000]'}`}>

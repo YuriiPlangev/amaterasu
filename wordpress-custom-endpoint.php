@@ -187,12 +187,20 @@ function custom_get_post_comments($request) {
     
     $result = array();
     foreach ($comments as $comment) {
+        $avatar_id = 'default';
+        if (!empty($comment->user_id)) {
+            $current_avatar = get_user_meta($comment->user_id, 'current_avatar', true);
+            if (!empty($current_avatar)) {
+                $avatar_id = $current_avatar;
+            }
+        }
         $result[] = array(
             'id' => $comment->comment_ID,
             'author' => $comment->comment_author,
             'content' => $comment->comment_content,
             'date' => $comment->comment_date,
             'userId' => $comment->user_id,
+            'avatarId' => $avatar_id,
         );
     }
     
