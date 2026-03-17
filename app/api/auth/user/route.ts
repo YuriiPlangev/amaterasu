@@ -38,34 +38,34 @@ export async function GET() {
   if (wpUrl && wcKey && wcSecret && userId) {
     try {
       const url = new URL(`${wpUrl.replace(/\/+$/, "")}/wp-json/wp/v2/users/${userId}`);
-      url.searchParams.set("_fields", "id,available_avatars,current_avatar");
 
-      const basic = Buffer.from(`${wcKey}:${wcSecret}`).toString("base64");
-      const res = await fetch(url.toString(), {
-        headers: {
-          Authorization: `Basic ${basic}`,
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      });
+// Указываем правильные поля (те, что в register_rest_field)
+url.searchParams.set("_fields", "id,availableAvatars,currentAvatar");
 
-      if (res.ok) {
-        const data = await res.json();
+const basic = Buffer.from(`${wcKey}:${wcSecret}`).toString("base64");
+const res = await fetch(url.toString(), {
+  headers: {
+    Authorization: `Basic ${basic}`,
+    "Content-Type": "application/json",
+  },
+  cache: "no-store",
+});
 
-        const rawAvailable = (data as any)?.available_avatars;
-        if (Array.isArray(rawAvailable)) {
-          availableAvatars = rawAvailable.map((v: any) => String(v));
-        } else if (rawAvailable && typeof rawAvailable === "object") {
-          // Может прийти как объект {0: "default", 1: "avatar_premium"}
-          availableAvatars = Object.values(rawAvailable).map((v: any) => String(v));
-        }
+if (res.ok) {
+  const data = await res.json();
 
-        if ((data as any)?.current_avatar) {
-          currentAvatar = String((data as any).current_avatar);
-        }
-      }
-    } catch {
-      // ignore WP avatar errors, keep defaults
+  // Берем данные из camelCase ключей
+  const rawAvailable = data.availableAvatars; 
+  if (Array.isArray(rawAvailable)) {
+    availableAvatars = rawAvailable.map((v: any) => String(v));
+  }
+
+  if (data.currentAvatar) {
+    currentAvatar = String(data.currentAvatar);
+  }
+}
+    } catch (e) {
+        console.error("WP Fetch Error:", e);
     }
   }
 

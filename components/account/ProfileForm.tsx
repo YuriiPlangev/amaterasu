@@ -229,8 +229,8 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
             })}
           </div>
           {pendingPremiumSku && (
-            <div className="mt-3 rounded-lg border border-[#F97373] bg-[#FFF7F7] px-4 py-3 text-sm text-[#7F1D1D]">
-              <p>{t('buyAvatarPrompt')}</p>
+            <div className="mt-3 rounded-lg border border-[#F97373] bg-[#FFF0F0] px-4 py-3 text-[13px] md:text-sm text-[#7F1D1D]">
+              <p className="font-semibold">{t('buyAvatarPrompt')}</p>
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
