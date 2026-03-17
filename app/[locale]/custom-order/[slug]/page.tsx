@@ -26,8 +26,20 @@ export default async function CustomOrderPage({
        categoryLower.includes('брелок') || categoryLower.includes('брелки') || categoryLower.includes('keychain'))
     ? 'keychain' as const
     : 'cup' as const;
-  
-  console.log('🔍 Debug:', { slug, categoryName, productType });
+
+  // "Virtual" custom design product for cart (no real Woo product)
+  const productId = 0;
+  const productName = categoryName;
+  const productImage =
+    productType === 'badge'
+      ? '/images/badge_cover.webp'
+      : productType === 'magnet'
+      ? '/images/magnet_cover.webp'
+      : productType === 'keychain'
+      ? '/images/keychain_cover.webp'
+      : '/images/cup_cover.webp';
+
+  const productPrice = productType === 'cup' ? '200' : '40';
 
   return (
     <div className="max-w-[1280px] w-full mx-auto site-padding-x py-6 md:py-10 mt-16 md:mt-24">
@@ -46,7 +58,14 @@ export default async function CustomOrderPage({
           {t('description')}
         </p>
 
-        <CustomDesignPreview categoryName={categoryName} productType={productType} />
+        <CustomDesignPreview
+          categoryName={categoryName}
+          productType={productType}
+          productId={productId}
+          productName={productName}
+          productImage={productImage}
+          productPrice={productPrice}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className="rounded-xl border border-[#E5E7EB] p-4">

@@ -54,6 +54,14 @@ export default function Footer() {
               <Image src='/svg/instagram.svg' alt="" width={24} height={24} className='shrink-0' aria-hidden />
               <p className='text-[#BCBCBC] text-sm md:text-base transition-colors duration-200'>@amaterasu1shop</p>
             </a>
+            <a href="https://www.tiktok.com/@amaterasu1shop" target="_blank" rel="noopener noreferrer" className='footer-link-hover flex gap-2 items-center transition-opacity duration-200 hover:opacity-90' aria-label="TikTok: @amaterasu1shop">
+              <Image src='/svg/tiktok.svg' alt="" width={24} height={24} className='shrink-0' aria-hidden />
+              <p className='text-[#BCBCBC] text-sm md:text-base transition-colors duration-200'>@amaterasu1shop</p>
+            </a>
+            <a href="https://pin.it/6HoSfQqIC" target="_blank" rel="noopener noreferrer" className='footer-link-hover flex gap-2 items-center transition-opacity duration-200 hover:opacity-90' aria-label="Pinterest: amaterasu1shop">
+              <Image src='/svg/pinterest.svg' alt="" width={24} height={24} className='shrink-0' aria-hidden />
+              <p className='text-[#BCBCBC] text-sm md:text-base transition-colors duration-200'>Pinterest</p>
+            </a>
           </div>
         </div>
         <div className='max-w-[1920px] mx-auto site-padding-x pb-6'>

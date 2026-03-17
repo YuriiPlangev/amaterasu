@@ -3,15 +3,27 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useToastStore } from '../store/toastStore';
+import { useCart } from '../hooks/useCart';
 import Image from 'next/image';
 import html2canvas from 'html2canvas';
 
 interface CustomDesignPreviewProps {
   categoryName: string;
   productType?: 'cup' | 'badge' | 'keychain' | 'magnet';
+  productId: number;
+  productName: string;
+  productImage: string;
+  productPrice: string;
 }
 
-export default function CustomDesignPreview({ categoryName, productType = 'cup' }: CustomDesignPreviewProps) {
+export default function CustomDesignPreview({
+  categoryName,
+  productType = 'cup',
+  productId,
+  productName,
+  productImage,
+  productPrice,
+}: CustomDesignPreviewProps) {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [uploadedImage2, setUploadedImage2] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<1 | 2>(1);
@@ -25,29 +37,43 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
   const [offsetX2, setOffsetX2] = useState(50);
   const [offsetY2, setOffsetY2] = useState(50);
   const [isSending, setIsSending] = useState(false);
-  const [userContact, setUserContact] = useState('');
+  const [phone, setPhone] = useState('');
+  const [telegram, setTelegram] = useState('');
   const [originalImageData, setOriginalImageData] = useState<string | null>(null);
   const [originalImageData2, setOriginalImageData2] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const t = useTranslations('customOrder');
   const { addToast } = useToastStore();
+  const { add } = useCart();
 
-  // Load user contact from localStorage
+  // Load contact data from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('customOrderUserContact');
-    if (saved) {
-      setUserContact(saved);
+    const savedPhone = typeof window !== 'undefined' ? localStorage.getItem('customOrderPhone') : null;
+    const savedTelegram = typeof window !== 'undefined' ? localStorage.getItem('customOrderTelegram') : null;
+    if (savedPhone) {
+      setPhone(savedPhone);
+    }
+    if (savedTelegram) {
+      setTelegram(savedTelegram);
     }
   }, []);
 
-  // Save user contact to localStorage
-  const handleContactChange = (value: string) => {
-    setUserContact(value);
+  const handlePhoneChange = (value: string) => {
+    setPhone(value);
     if (value.trim()) {
-      localStorage.setItem('customOrderUserContact', value);
+      localStorage.setItem('customOrderPhone', value);
     } else {
-      localStorage.removeItem('customOrderUserContact');
+      localStorage.removeItem('customOrderPhone');
+    }
+  };
+
+  const handleTelegramChange = (value: string) => {
+    setTelegram(value);
+    if (value.trim()) {
+      localStorage.setItem('customOrderTelegram', value);
+    } else {
+      localStorage.removeItem('customOrderTelegram');
     }
   };
 
@@ -157,8 +183,8 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
       }
     }
 
-    if (!userContact.trim()) {
-      addToast('Будь ласка, введіть свій нікнейм або номер телефону', 'error');
+    if (!phone.trim()) {
+      addToast('Будь ласка, вкажіть номер телефону', 'error');
       return;
     }
 
@@ -177,7 +203,9 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
           originalImage2: productType === 'keychain' ? originalImageData2 : undefined,
           mockupImage,
           categoryName,
-          userName: userContact.trim(),
+          userName: phone.trim(),
+          phone: phone.trim(),
+          telegram: telegram.trim() || null,
           productType,
         }),
       });
@@ -188,7 +216,24 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
         throw new Error(result.error || 'Failed to send');
       }
 
-      addToast('Фотографії успішно відправлені боту! ✅', 'success');
+      addToast(
+        'Макет успішно відправлено в Telegram бот! Це попередній варіант — ми звʼяжемося з вами для уточнення деталей. Товар з цим макетом додано в кошик для оплати.',
+        'success'
+      );
+
+      // Add custom design product to cart as virtual item,
+      // show base product image (without user design) in the cart
+      add(
+        {
+          id: productId,
+          name: productName,
+          price: productPrice,
+          image: productImage,
+          images: [{ src: productImage }],
+          virtual: true,
+        },
+        1
+      );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Помилка відправки';
       addToast(`Помилка: ${errorMessage}`, 'error');
@@ -197,10 +242,15 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
     }
   };
 
-  const productBgImage = productType === 'badge' ? '/images/badge.jpg' 
-    : productType === 'magnet' ? '/images/magnet.png'
-    : productType === 'keychain' ? '/images/keychain.png' 
-    : '/images/cup.jpg';
+  // Base mockup background (без cover), cover-картинки используем тільки в кошику
+  const productBgImage =
+    productType === 'badge'
+      ? '/images/badge.jpg'
+      : productType === 'magnet'
+      ? '/images/magnet.png'
+      : productType === 'keychain'
+      ? '/images/keychain.png'
+      : '/images/cup.jpg';
   const productAspectRatio = (productType === 'badge' || productType === 'magnet' || productType === 'keychain') ? '2/1' : '16/9';
   const previewMinHeightClass = (productType === 'badge' || productType === 'magnet' || productType === 'keychain')
     ? 'min-h-[170px] sm:min-h-[260px] md:min-h-[400px]'
@@ -514,44 +564,56 @@ export default function CustomDesignPreview({ categoryName, productType = 'cup' 
 
           {/* Contact Input */}
           {currentImage && (
-            <>
-              {/* User Contact Input */}
-              <div className="rounded-lg bg-white border border-[#E5E7EB] p-4">
-                <label className="block text-sm font-medium text-[#1C1C1C] mb-2">
-                  Ваш нікнейм або телефон
-                </label>
-                <input
-                  type="text"
-                  value={userContact}
-                  onChange={(e) => handleContactChange(e.target.value)}
-                  placeholder="Наприклад: @username або +380..."
-                  className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] text-sm focus:outline-none focus:ring-2 focus:ring-[#9C0000]"
-                />
-                <p className="text-xs text-[#6B7280] mt-2">
-                  Буде автоматично збережено для наступних замовлень
+            <div className="rounded-lg bg-white border border-[#E5E7EB] p-4">
+              <label className="block text-sm font-medium text-[#1C1C1C] mb-2">
+                Номер телефону (обов’язково) та юзернейм тг (за побажанням) для швидшого звʼязку з вами
+              </label>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-[#4B5563] mb-1">Номер телефону (обов’язково)</p>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    placeholder="+380..."
+                    className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] text-sm focus:outline-none focus:ring-2 focus:ring-[#9C0000]"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-[#4B5563] mb-1">@username в Telegram (за бажанням)</p>
+                  <input
+                    type="text"
+                    value={telegram}
+                    onChange={(e) => handleTelegramChange(e.target.value)}
+                    placeholder="@username (необов’язково)"
+                    className="w-full px-3 py-2 rounded-lg border border-[#D1D5DB] text-sm focus:outline-none focus:ring-2 focus:ring-[#9C0000]"
+                  />
+                </div>
+                <p className="text-xs text-[#6B7280]">
+                  Дані будуть автоматично збережені для наступних замовлень
                 </p>
               </div>
-            </>
+            </div>
           )}
 
-          {/* Save Contact Button */}
+          {/* Send Button */}
           <button
             onClick={handleSendToTelegram}
             disabled={
               isSending || 
               (productType === 'keychain' ? (!uploadedImage && !uploadedImage2) : !uploadedImage) ||
-              !userContact.trim()
+              !phone.trim()
             }
             className={`w-full px-4 py-3 rounded-lg font-semibold text-white transition-all ${
               isSending || 
               (productType === 'keychain' ? (!uploadedImage && !uploadedImage2) : !uploadedImage) ||
-              !userContact.trim()
+              !phone.trim()
                 ? 'bg-[#9C0000]/50 cursor-not-allowed'
                 : 'bg-[#9C0000] hover:bg-[#8B0000] shadow-lg hover:shadow-xl'
             }`}
           >
             <span className="flex items-center justify-center gap-2">
-              {isSending ? 'Відправка...' : '📤 Відправити в Telegram бот'}
+              {isSending ? 'Відправка...' : '📤 Відправити в Telegram бот і в кошик'}
             </span>
           </button>
         </div>

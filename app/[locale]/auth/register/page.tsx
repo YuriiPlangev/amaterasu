@@ -47,9 +47,8 @@ export default function RegisterPage() {
       }
 
       setSuccess(true);
-      setTimeout(() => {
-        window.location.href = `/${locale}/auth/login?returnTo=${encodeURIComponent(returnTo)}`;
-      }, 2000);
+      // Після успішної реєстрації відразу переводимо користувача в профіль
+      window.location.href = `/${locale}/account`;
     } catch (error) {
       console.error("Registration error:", error);
       setError(t('generalError'));

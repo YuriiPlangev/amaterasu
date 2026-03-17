@@ -2,7 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { originalImage, originalImage2, mockupImage, categoryName, userName, userFirstName, productType } = await request.json();
+    const {
+      originalImage,
+      originalImage2,
+      mockupImage,
+      categoryName,
+      userName,
+      userFirstName,
+      productType,
+      phone,
+      telegram,
+    } = await request.json();
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -16,8 +26,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare caption
-    const productTypeLabel = productType === 'badge' ? 'значок' : productType === 'magnet' ? 'магніт' : productType === 'keychain' ? 'брелок' : 'чашка';
-    const caption = `🎨 Нове замовлення на CustomDesign!\n\n📦 Категорія: ${categoryName}\n🎯 Тип: ${productTypeLabel}\n👤 Контакт користувача: ${userName || 'Не вказано'}`;
+    const productTypeLabel =
+      productType === 'badge'
+        ? 'значок'
+        : productType === 'magnet'
+        ? 'магніт'
+        : productType === 'keychain'
+        ? 'брелок'
+        : 'чашка';
+
+    const captionLines = [
+      '🎨 Нове замовлення на CustomDesign!',
+      '',
+      `📦 Категорія: ${categoryName}`,
+      `🎯 Тип: ${productTypeLabel}`,
+      `📞 Телефон: ${phone || userName || 'Не вказано'}`,
+      `💬 Telegram: ${telegram || 'Не вказано'}`,
+      '',
+      '⚠️ Це попередній макет, результат не фінальний. Ми звʼяжемося з клієнтом для уточнення деталей перед друком.',
+      '🧾 Товар буде доданий до кошика для оплати.',
+    ];
+
+    const caption = captionLines.join('\n');
 
     // Send original image 1 as document to preserve quality
     if (originalImage) {

@@ -416,6 +416,11 @@ export async function GET(req: Request) {
       status: "publish",
     };
 
+    const slug = (params.get("slug") || "").trim();
+    if (slug) {
+      wcParams.slug = slug;
+    }
+
     const sku = (params.get("sku") || "").trim();
     if (sku) {
       wcParams.sku = sku;

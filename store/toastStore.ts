@@ -21,7 +21,7 @@ export const useToastStore = create<ToastState>((set, get) => ({
     const timer = setTimeout(() => {
       get().hide();
       clearTimeout(timer);
-    }, 2500);
+    }, 3500);
   },
 
   addToast: (message: string, type: ToastType = 'cart') => {
@@ -29,7 +29,7 @@ export const useToastStore = create<ToastState>((set, get) => ({
     const timer = setTimeout(() => {
       get().hide();
       clearTimeout(timer);
-    }, 2500);
+    }, 3500);
   },
 
   hide: () => set({ visible: false }),

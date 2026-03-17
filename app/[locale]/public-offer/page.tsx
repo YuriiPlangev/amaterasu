@@ -83,11 +83,12 @@ const CONTENT: Record<Locale, {
       'Код / ЄДРПОУ: 3670706238.',
       'Рахунок IBAN: UA823052990000026000014924506.',
       'Банк: АТ КБ "ПРИВАТБАНК".',
+      'Юридична адреса: Україна, 1, Одеська обл., Білгород-Дністровський р-н, місто Білгород-Дністровський, вул. Ломоносова, буд. 2, кв. 30.',
       'Контакти для претензій: +38 (068) 549-96-90, Telegram: @amaterasu1shop.',
       'Географія продажу та доставки: Україна.',
     ],
     note:
-      'Після отримання повних даних буде додано юридичну адресу, остаточний блок для претензій та інші відомості, необхідні для фінальної редакції документів.',
+      'Ця редакція публічної оферти містить актуальні реквізити продавця. У разі зміни юридичної адреси або банківських даних оновлена інформація буде опублікована на цій сторінці.',
   },
   en: {
     title: 'Public Offer',
@@ -161,11 +162,12 @@ const CONTENT: Record<Locale, {
       'Registration code: 3670706238.',
       'IBAN: UA823052990000026000014924506.',
       'Bank: JSC CB "PRIVATBANK".',
+      'Registered address: Ukraine, 1, Odesa region, Bilhorod-Dnistrovskyi district, Bilhorod-Dnistrovskyi city, Lomonosova street, building 2, apt. 30.',
       'Complaint contacts: +38 (068) 549-96-90, Telegram: @amaterasu1shop.',
       'Sales and delivery geography: Ukraine.',
     ],
     note:
-      'Once the remaining details are provided, we will add the legal address, final complaint handling block, and other information required for the final legal version.',
+      'This public offer version includes up-to-date seller details. In case of changes to the legal address or banking details, updated information will be published on this page.',
   },
 };
 

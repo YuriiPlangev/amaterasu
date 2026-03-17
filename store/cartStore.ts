@@ -1,7 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type CartItem = { id: number; name: string; qty: number; price?: string; image?: string };
+type CartItem = {
+  id: number;
+  name: string;
+  qty: number;
+  price?: string;
+  image?: string;
+  virtual?: boolean;
+};
 
 interface CartStore {
   items: CartItem[];
@@ -22,6 +29,11 @@ export const useCartStore = create<CartStore>()(
     const items = get().items;
     const existingItem = items.find(item => item.id === product.id);
     
+    const isVirtual =
+      product?.virtual === true ||
+      product?.is_virtual === true ||
+      product?.type === 'virtual';
+
     if (existingItem) {
       // Если товар уже есть, увеличиваем количество
       set({
@@ -41,8 +53,9 @@ export const useCartStore = create<CartStore>()(
             name: product.name,
             qty,
             price: product.price,
-            image: product.images?.[0]?.src || product.image
-          }
+            image: product.images?.[0]?.src || product.image,
+            virtual: isVirtual,
+          },
         ]
       });
     }

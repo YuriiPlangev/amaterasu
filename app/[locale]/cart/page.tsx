@@ -62,6 +62,24 @@ export default function CartPage() {
   const npWarehouseRef = useRef<HTMLDivElement>(null);
   const ukrposhtaDropdownRef = useRef<HTMLDivElement>(null);
 
+  const allVirtual = items.length > 0 && items.every((i: any) => i.virtual);
+
+  // Попереднє заповнення email/телефону для залогіненого користувача
+  useEffect(() => {
+    fetch('/api/auth/user')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setFormData((prev) => ({
+          ...prev,
+          firstName: prev.firstName || data.displayName || '',
+          email: prev.email || data.email || '',
+          phone: prev.phone || data.phone || '',
+        }));
+      })
+      .catch(() => {});
+  }, []);
+
   const fetchNpCities = useCallback(async (search: string) => {
     setLoadingCities(true);
     try {
@@ -186,13 +204,15 @@ export default function CartPage() {
       alert(t('consentRequired'));
       return;
     }
-    if (formData.deliveryMethod === 'nova_poshta') {
+    const allVirtual = items.length > 0 && items.every((i: any) => i.virtual);
+
+    if (!allVirtual && formData.deliveryMethod === 'nova_poshta') {
       if (!formData.novaPoshtaCityRef || !formData.novaPoshtaWarehouseRef) {
         alert('Оберіть місто та відділення Нової Пошти');
         return;
       }
     }
-    if (formData.deliveryMethod === 'ukrposhta') {
+    if (!allVirtual && formData.deliveryMethod === 'ukrposhta') {
       if (!formData.ukrposhtaCity || !formData.ukrposhtaBranch) {
         alert('Оберіть місто та вкажіть номер відділення Укрпошти');
         return;
@@ -200,8 +220,8 @@ export default function CartPage() {
     }
     setIsSubmitting(true);
 
-    const address = getAddressFromDelivery();
-    const city = getCityFromDelivery();
+    const address = allVirtual ? '' : getAddressFromDelivery();
+    const city = allVirtual ? '' : getCityFromDelivery();
 
     try {
       const response = await fetch('/api/orders', {
@@ -222,21 +242,23 @@ export default function CartPage() {
             postcode: formData.postcode || '',
             country: formData.country,
             notes: formData.notes,
-            deliveryMethod: formData.deliveryMethod,
-            novaPoshtaCity: formData.novaPoshtaCityName,
-            novaPoshtaWarehouse: formData.novaPoshtaWarehouseDesc,
-            ukrposhtaCity: formData.ukrposhtaCity,
-            ukrposhtaBranch: formData.ukrposhtaBranch,
+            deliveryMethod: allVirtual ? 'virtual' : formData.deliveryMethod,
+            novaPoshtaCity: allVirtual ? '' : formData.novaPoshtaCityName,
+            novaPoshtaWarehouse: allVirtual ? '' : formData.novaPoshtaWarehouseDesc,
+            ukrposhtaCity: allVirtual ? '' : formData.ukrposhtaCity,
+            ukrposhtaBranch: allVirtual ? '' : formData.ukrposhtaBranch,
           },
-          shipping: formData.shippingSameAsBilling ? undefined : {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            address,
-            city,
-            postcode: formData.postcode || '',
-            country: formData.country,
-          },
-          paymentMethod: formData.paymentMethod,
+          shipping: allVirtual || formData.shippingSameAsBilling
+            ? undefined
+            : {
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                address,
+                city,
+                postcode: formData.postcode || '',
+                country: formData.country,
+              },
+          paymentMethod: allVirtual ? 'card' : formData.paymentMethod,
         }),
       });
 
@@ -440,14 +462,16 @@ export default function CartPage() {
                   </div>
                 </div>
               </div>
-              <div className="bg-[#FFF7F7] border border-[#F5B7B7] rounded-xl p-4 text-sm text-black mb-6">
-                <p className="font-semibold mb-2 text-black">Доставка та оплата</p>
-                <ul className="space-y-1 text-[#5A5A5A]">
-                  <li>• Нова Пошта: від 45 грн</li>
-                  <li>• Укрпошта: від 45 грн</li>
-                  <li>• Оплата при отриманні</li>
-                </ul>
-              </div>
+              {!allVirtual && (
+                <div className="bg-[#FFF7F7] border border-[#F5B7B7] rounded-xl p-4 text-sm text-black mb-6">
+                  <p className="font-semibold mb-2 text-black">Доставка та оплата</p>
+                  <ul className="space-y-1 text-[#5A5A5A]">
+                    <li>• Нова Пошта: від 45 грн</li>
+                    <li>• Укрпошта: від 45 грн</li>
+                    <li>• Оплата при отриманні</li>
+                  </ul>
+                </div>
+              )}
 
               {!showCheckout ? (
                 <button
@@ -499,35 +523,37 @@ export default function CartPage() {
                     className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
                   />
 
-                  <div>
-                    <label className="block text-sm font-medium text-black mb-2">{t('deliveryMethod')}</label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="deliveryMethod"
-                          value="nova_poshta"
-                          checked={formData.deliveryMethod === 'nova_poshta'}
-                          onChange={() => setFormData((p) => ({ ...p, deliveryMethod: 'nova_poshta' }))}
-                          className="w-4 h-4 text-[#9C0000] border-gray-300 focus:ring-[#9C0000]"
-                        />
-                        <span>{t('novaPoshta')}</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="deliveryMethod"
-                          value="ukrposhta"
-                          checked={formData.deliveryMethod === 'ukrposhta'}
-                          onChange={() => setFormData((p) => ({ ...p, deliveryMethod: 'ukrposhta' }))}
-                          className="w-4 h-4 text-[#9C0000] border-gray-300 focus:ring-[#9C0000]"
-                        />
-                        <span>{t('ukrposhta')}</span>
-                      </label>
+                  {!allVirtual && (
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">{t('deliveryMethod')}</label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="deliveryMethod"
+                            value="nova_poshta"
+                            checked={formData.deliveryMethod === 'nova_poshta'}
+                            onChange={() => setFormData((p) => ({ ...p, deliveryMethod: 'nova_poshta' }))}
+                            className="w-4 h-4 text-[#9C0000] border-gray-300 focus:ring-[#9C0000]"
+                          />
+                          <span>{t('novaPoshta')}</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="deliveryMethod"
+                            value="ukrposhta"
+                            checked={formData.deliveryMethod === 'ukrposhta'}
+                            onChange={() => setFormData((p) => ({ ...p, deliveryMethod: 'ukrposhta' }))}
+                            className="w-4 h-4 text-[#9C0000] border-gray-300 focus:ring-[#9C0000]"
+                          />
+                          <span>{t('ukrposhta')}</span>
+                        </label>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  {formData.deliveryMethod === 'nova_poshta' && (
+                  {!allVirtual && formData.deliveryMethod === 'nova_poshta' && (
                     <div className="space-y-4" ref={npDropdownRef}>
                       <div className="relative">
                         <label className="block text-sm font-medium text-black mb-1">{t('selectCity')}</label>
@@ -626,7 +652,7 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  {formData.deliveryMethod === 'ukrposhta' && (
+                  {!allVirtual && formData.deliveryMethod === 'ukrposhta' && (
                     <div className="space-y-4" ref={ukrposhtaDropdownRef}>
                       <div className="relative">
                         <label className="block text-sm font-medium text-black mb-1">{t('selectCity')}</label>
@@ -684,16 +710,25 @@ export default function CartPage() {
                     </div>
                   )}
                   
-                  <select
-                    name="paymentMethod"
-                    value={formData.paymentMethod}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
-                  >
-                    <option value="cash_on_delivery">{t('cashOnDelivery')}</option>
-                    <option value="card">{t('card')}</option>
-                    <option value="liqpay">LiqPay (Visa/Mastercard)</option>
-                  </select>
+                  {allVirtual ? (
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">{t('paymentMethod')}</label>
+                      <div className="px-4 py-2 border border-[#D8D8D8] rounded-md bg-gray-50 text-sm text-[#111111]">
+                        {t('card')}
+                      </div>
+                    </div>
+                  ) : (
+                    <select
+                      name="paymentMethod"
+                      value={formData.paymentMethod}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
+                    >
+                      <option value="cash_on_delivery">{t('cashOnDelivery')}</option>
+                      <option value="card">{t('card')}</option>
+                      <option value="liqpay">LiqPay (Visa/Mastercard)</option>
+                    </select>
+                  )}
                   
                   <textarea
                     name="notes"
