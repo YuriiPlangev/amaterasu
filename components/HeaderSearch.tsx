@@ -43,7 +43,7 @@ export default function HeaderSearch({
     setIsLoading(true);
     try {
       const res = await fetch(
-        `/api/products?search=${encodeURIComponent(q.trim())}&per_page=${RESULTS_LIMIT}`
+        `/api/search?q=${encodeURIComponent(q.trim())}&per_page=${RESULTS_LIMIT}`
       );
       const data = await res.json();
       const products = Array.isArray(data)

@@ -5,41 +5,47 @@ export function useProducts(params: any = {}) {
     queryKey: ['products', params],
     queryFn: async () => {
       const searchParams = new URLSearchParams();
+      const hasSearch = typeof params.search === 'string' && params.search.trim() !== '';
+
       Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
+        if (value === undefined || value === null || String(value) === '') return;
+        // Для поискового запроса шлём параметр q, а не search
+        if (key === 'search' && hasSearch) {
+          searchParams.append('q', String(value));
+        } else {
           searchParams.append(key, String(value));
         }
       });
-      const url = `/api/products${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
+      const query = searchParams.toString();
+      const basePath = hasSearch ? '/api/search' : '/api/products';
+      const url = `${basePath}${query ? `?${query}` : ''}`;
 
       const res = await fetch(url, { cache: 'no-store' });
 
       if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
-      
-      
-      // Перевірка чи це новий формат (з пагінацією) чи старий (просто масив)
+
+      // Новий формат: { products, hasMore, total, page, perPage }
       if (data && typeof data === 'object' && 'products' in data) {
-        return data; // Новий формат: { products, hasMore, total, page, perPage }
+        return data;
       }
-      
-      // Старий формат: просто масив товарів - обернемо його
+
+      // Старий формат: просто масив товарів
       return {
         products: Array.isArray(data) ? data : [],
         hasMore: false,
         total: Array.isArray(data) ? data.length : 0,
         page: 1,
-        perPage: Array.isArray(data) ? data.length : 0
+        perPage: Array.isArray(data) ? data.length : 0,
       };
     },
     select: (data) => {
-      // Для обратної сумісності: якщо не передано page, повертаємо просто масив
       if (!params.page && data.products) {
         return data.products;
       }
-      // Інакше повертаємо повний об'єкт
       return data;
-    }
+    },
   });
-  
 }
+
