@@ -73,7 +73,7 @@ function SortDropdown({
 
   useEffect(() => {
     if (!isOpen) return;
-    const onPointerDown = (e: PointerEvent) => {
+    const onMouseDown = (e: MouseEvent) => {
       const el = containerRef.current;
       if (!el) return;
       if (!el.contains(e.target as Node)) setIsOpen(false);
@@ -81,10 +81,10 @@ function SortDropdown({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsOpen(false);
     };
-    window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('mousedown', onMouseDown);
     window.addEventListener('keydown', onKeyDown);
     return () => {
-      window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [isOpen, setIsOpen]);
@@ -93,7 +93,11 @@ function SortDropdown({
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         className={
@@ -115,6 +119,7 @@ function SortDropdown({
         <div
           role="listbox"
           tabIndex={-1}
+          onClick={(e) => e.stopPropagation()}
           className={
             menuClassName ??
             'absolute right-0 mt-2 w-full min-w-[220px] rounded-xl border border-[#D8D8D8] bg-white shadow-lg p-1 z-30'
@@ -128,7 +133,16 @@ function SortDropdown({
                 type="button"
                 role="option"
                 aria-selected={selected}
-                onClick={() => {
+                onMouseDown={(e) => {
+                  // важливо: спочатку застосувати значення, щоб не "з'їдалося" blur/закриттям
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   onChange(opt.value);
                   setIsOpen(false);
                 }}

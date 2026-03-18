@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -25,7 +25,6 @@ export default function ProductCard({ product }: { product: any }) {
 
   const productDescription = cleanDescription(product?.short_description || '');
   const isInStock = product?.stock_status === 'instock';
-  const [isCartHovered, setIsCartHovered] = useState(false);
   
   // Price and discount logic
   const currentPrice = parseFloat(product?.price || '0');
@@ -153,10 +152,8 @@ export default function ProductCard({ product }: { product: any }) {
         <button
           type="button"
           onClick={isCustomDesign ? handleAddToCart : isInCart ? handleGoToCart : handleAddToCart}
-          onMouseEnter={() => setIsCartHovered(true)}
-          onMouseLeave={() => setIsCartHovered(false)}
           disabled={!isInStock}
-          className={`btn-press uppercase flex justify-center items-center gap-2 px-3 py-2 rounded-lg flex-1 transition-all duration-300 font-bold text-[14px] disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`btn-press group uppercase flex justify-center items-center gap-2 px-3 py-2 rounded-lg flex-1 transition-all duration-300 font-bold text-[14px] disabled:opacity-50 disabled:cursor-not-allowed ${
             isInCart
               ? 'border-2 border-[#9C0000] text-[#9C0000] bg-white hover:bg-[#FFF7F7]'
               : 'bg-[#9C0000] text-white hover:bg-white hover:text-[#9C0000] hover:border-[#9C0000] hover:border'
@@ -164,12 +161,20 @@ export default function ProductCard({ product }: { product: any }) {
         >
           {isCustomDesign ? tCard('details') : isInCart ? tCard('toCart') : tCard('buy')}
           {!isInCart && !isCustomDesign && (
-            <Image
-              src={isCartHovered ? '/svg/shopping-bag-red.svg' : '/svg/shopping-bag.svg'}
-              alt="cart"
-              width={24}
-              height={24}
-            />
+            <span className="relative w-6 h-6 shrink-0">
+              <Image
+                src="/svg/shopping-bag.svg"
+                alt=""
+                fill
+                className="absolute inset-0 opacity-100 transition-opacity duration-300 ease-in-out group-hover:opacity-0"
+              />
+              <Image
+                src="/svg/shopping-bag-red.svg"
+                alt=""
+                fill
+                className="absolute inset-0 opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-100"
+              />
+            </span>
           )}
         </button>
         {/* Desktop: сердечко рядом с кнопкой */}

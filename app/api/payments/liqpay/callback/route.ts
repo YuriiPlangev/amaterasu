@@ -67,11 +67,12 @@ export async function POST(req: NextRequest) {
     const liqpayStatus = String(payload?.status || "").toLowerCase();
     const transactionId = String(payload?.transaction_id || payload?.liqpay_order_id || "");
 
-    let nextStatus: "processing" | "failed" | null = null;
+    let nextStatus: "completed" | "failed" | null = null;
     let setPaid = false;
 
     if (["success", "sandbox", "wait_accept"].includes(liqpayStatus)) {
-      nextStatus = "processing";
+      // Важно: аватары выдаём на статусе completed (woocommerce_order_status_completed).
+      nextStatus = "completed";
       setPaid = true;
     } else if (["failure", "error", "reversed", "unsubscribed"].includes(liqpayStatus)) {
       nextStatus = "failed";

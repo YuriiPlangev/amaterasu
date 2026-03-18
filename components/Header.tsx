@@ -84,16 +84,20 @@ export default function Header() {
                   className='hidden md:block'
                 />
               ) : (
-                <button type='button' onClick={() => setIsSearchOpen(true)} className='flex items-center' aria-label={tSearch('ariaSearch')}>
-                  <Image src='/svg/search.svg' alt='search' width={24} height={24} className='w-[clamp(18px,1.4vw,24px)] h-[clamp(18px,1.4vw,24px)]' />
+                <button type='button' onClick={() => setIsSearchOpen(true)} className='group flex items-center transition-transform duration-200 hover:scale-110' aria-label={tSearch('ariaSearch')}>
+                  <Image src='/svg/search.svg' alt='search' width={24} height={24} className='w-[clamp(18px,1.4vw,24px)] h-[clamp(18px,1.4vw,24px)] transition-opacity duration-200 group-hover:opacity-80' />
                 </button>
               )}
             </div>
-            <Link href={`${basePath}/favorites`} className='flex items-center'><Image src='/svg/heart.svg' alt='heart' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)] md:h-[clamp(18px,1.4vw,24px)]' /></Link>
-            <Link href={`${basePath}/cart`} className={`flex items-center relative ${cartItemsCount > 0 ? 'cart-icon-has-items' : ''}`} aria-label={tCart('title')}>
-              <Image src="/svg/cart.svg" alt="cart" width={24} height={24} className="w-6 h-6 md:w-[clamp(18px,1.4vw,24px)]" />
+            <Link href={`${basePath}/favorites`} className='group flex items-center transition-transform duration-200 hover:scale-110'>
+              <Image src='/svg/heart.svg' alt='heart' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)] md:h-[clamp(18px,1.4vw,24px)] transition-opacity duration-200 group-hover:opacity-80' />
             </Link>
-            <Link href={profileHref} className='flex items-center'><Image src='/svg/profile.svg' alt='profile' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)]' /></Link>
+            <Link href={`${basePath}/cart`} className={`group flex items-center relative transition-transform duration-200 hover:scale-110 ${cartItemsCount > 0 ? 'cart-icon-has-items' : ''}`} aria-label={tCart('title')}>
+              <Image src="/svg/cart.svg" alt="cart" width={24} height={24} className="w-6 h-6 md:w-[clamp(18px,1.4vw,24px)] transition-opacity duration-200 group-hover:opacity-80" />
+            </Link>
+            <Link href={profileHref} className='group flex items-center transition-transform duration-200 hover:scale-110'>
+              <Image src='/svg/profile.svg' alt='profile' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)] transition-opacity duration-200 group-hover:opacity-80' />
+            </Link>
             
             <div className='hidden md:flex gap-2' role="group" aria-label={tA11y('languageGroup')}>
               <button onClick={() => switchLocale('uk')} className={`px-2 py-1 text-[clamp(12px,1vw,14px)] ${locale === 'uk' ? 'text-white font-bold' : 'text-gray-400'}`} aria-label={tA11y('languageUk')} aria-current={locale === 'uk' ? 'true' : undefined}>UA</button>
