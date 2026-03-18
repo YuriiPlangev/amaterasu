@@ -62,7 +62,14 @@ export default function CartPage() {
   const npWarehouseRef = useRef<HTMLDivElement>(null);
   const ukrposhtaDropdownRef = useRef<HTMLDivElement>(null);
 
-  const allVirtual = items.length > 0 && items.every((i: any) => i.virtual);
+  const allVirtual =
+    items.length > 0 &&
+    items.every((i: any) => {
+      if (i?.virtual === true) return true;
+      const name = String(i?.name || '').toLowerCase();
+      // Фолбек для старих записів у localStorage, де `virtual` могло не зберегтися.
+      return name.includes('аватар') || name.includes('avatar');
+    });
 
   // Попереднє заповнення email/телефону для залогіненого користувача
   useEffect(() => {

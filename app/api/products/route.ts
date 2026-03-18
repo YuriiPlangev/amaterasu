@@ -389,6 +389,7 @@ function minimizeProductPayload(product: any, acf: any) {
     regular_price: String(product?.regular_price || ""),
     stock_status: String(product?.stock_status || "instock"),
     short_description: decodeHtmlEntities(product?.short_description || ""),
+    virtual: Boolean(product?.virtual),
     images: Array.isArray(product?.images)
       ? product.images.slice(0, 3).map((img: any) => ({ src: img?.src, alt: img?.alt || "" }))
       : [],

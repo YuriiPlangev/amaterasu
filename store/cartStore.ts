@@ -32,7 +32,8 @@ export const useCartStore = create<CartStore>()(
     const isVirtual =
       product?.virtual === true ||
       product?.is_virtual === true ||
-      product?.type === 'virtual';
+      product?.type === 'virtual' ||
+      (Array.isArray(product?.categories) && product.categories.some((c: any) => Number(c?.id) === 7012 || String(c?.slug || '').toLowerCase() === 'avatars'));
 
     if (existingItem) {
       // Если товар уже есть, увеличиваем количество
