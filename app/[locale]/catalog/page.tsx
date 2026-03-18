@@ -47,6 +47,105 @@ const TrashIcon = () => (
 
 export type SortOption = 'date' | 'price_asc' | 'price_desc';
 
+type SortDropdownProps = {
+  label: string;
+  value: SortOption;
+  options: { value: SortOption; label: string }[];
+  isOpen: boolean;
+  setIsOpen: (v: boolean) => void;
+  onChange: (v: SortOption) => void;
+  buttonClassName?: string;
+  menuClassName?: string;
+};
+
+function SortDropdown({
+  label,
+  value,
+  options,
+  isOpen,
+  setIsOpen,
+  onChange,
+  buttonClassName,
+  menuClassName,
+}: SortDropdownProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const active = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const el = containerRef.current;
+      if (!el) return;
+      if (!el.contains(e.target as Node)) setIsOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, setIsOpen]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        className={
+          buttonClassName ??
+          'border border-[#D8D8D8] rounded-md px-3 py-2 bg-white pr-10 min-w-[220px] text-left'
+        }
+      >
+        <span className="block truncate">{active?.label ?? label}</span>
+        <Image
+          src="/svg/arrow-down.svg"
+          alt=""
+          width={14}
+          height={8}
+          className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          role="listbox"
+          tabIndex={-1}
+          className={
+            menuClassName ??
+            'absolute right-0 mt-2 w-full min-w-[220px] rounded-xl border border-[#D8D8D8] bg-white shadow-lg p-1 z-30'
+          }
+        >
+          {options.map((opt) => {
+            const selected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
+                  selected ? 'bg-[#111827] text-white' : 'text-[#111827] hover:bg-[#F3F4F6]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function normalizeFilterLabel(value: string) {
   return value.trim().toLowerCase();
 }
@@ -176,6 +275,15 @@ export default function CatalogPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [newProductIds, setNewProductIds] = useState<Set<number>>(new Set());
+  const [perPage, setPerPage] = useState(12);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setPerPage(mq.matches ? 8 : 12);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   const titleIdToLabel = useMemo(() => {
     return buildIdToLabelMap(filterOptions?.titles);
@@ -330,16 +438,20 @@ export default function CatalogPage() {
     const titleId = titleLabelToId.get(normalizeFilterLabel(titleValue));
     if (!titleId) return;
 
+    // При кліку по логотипу тайтла дозволяємо вибрати тільки ОДИН тайтл:
+    // якщо вже обраний — знімаємо фільтр, якщо інший — замінюємо попередній.
     setFilterState((s) => {
       const has = s.titles.includes(titleId);
-      if (has) return { ...s, titles: s.titles.filter((t) => t !== titleId) };
-      return { ...s, titles: [...s.titles, titleId] };
+      if (has) {
+        return { ...s, titles: [] };
+      }
+      return { ...s, titles: [titleId] };
     });
   };
 
   const productParams: Record<string, string | undefined> = useMemo(() => {
     const params: Record<string, string | undefined> = {
-      per_page: '16',
+      per_page: String(perPage),
       page: String(currentPage),
       sort: sortBy,
     };
@@ -357,6 +469,7 @@ export default function CatalogPage() {
     return params;
   }, [
     currentPage,
+    perPage,
     sortBy,
     searchApplied,
     filterState.categoryIds,
@@ -377,6 +490,7 @@ export default function CatalogPage() {
     setCurrentPage(1);
     setAllProducts([]);
   }, [
+    perPage,
     searchApplied,
     sortBy,
     filterState.categoryIds.join(','),
@@ -455,9 +569,16 @@ export default function CatalogPage() {
       }
     : null;
 
+  // Исключаем товары-аватарки (категория avatars, id = 7012), чтобы они не светились в общем каталоге
+  const nonAvatarProducts = allProducts.filter((p: any) => {
+    const cats = Array.isArray(p?.categories) ? p.categories : [];
+    // WooCommerce REST обычно возвращает категории как объекты { id, name, slug }
+    return !cats.some((c: any) => Number(c?.id) === 7012 || String(c?.slug || '').toLowerCase() === 'avatars');
+  });
+
   const displayedProducts = customDesignProduct
-    ? [customDesignProduct, ...allProducts]
-    : allProducts;
+    ? [customDesignProduct, ...nonAvatarProducts]
+    : nonAvatarProducts;
 
   const loadMore = () => {
     setCurrentPage(prev => prev + 1);
@@ -504,31 +625,8 @@ export default function CatalogPage() {
         </div>
       ) : (
         <>
-      {/* Top: Тайтли + кнопки скролу справа зверху, потім слайдер */}
-      <div className="mb-6 flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center p-1 border border-[#9C0000] rounded-[25px] w-fit">
-            <div className="rounded-[20px] bg-[#9C0000] px-12 py-2.5 w-fit">
-              <p>{t('titles')}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              className="logo-slider-prev w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
-              aria-label={t('scrollLeft')}
-            >
-              <Image src="/svg/arrow-left.svg" alt="" width={24} height={24} />
-            </button>
-            <button
-              type="button"
-              className="logo-slider-next w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
-              aria-label={t('scrollRight')}
-            >
-              <Image src="/svg/arrow-right.svg" alt="" width={24} height={24} />
-            </button>
-          </div>
-        </div>
+      {/* Top: логотипи тайтлів + стрілки по краях каруселі */}
+      <div className="mb-6">
         <div className="relative overflow-visible min-w-0 w-full">
           <Swiper
             slidesPerView={2}
@@ -567,6 +665,22 @@ export default function CatalogPage() {
               </SwiperSlide>
             ))}
           </Swiper>
+
+          {/* Стрілки по краях видимої області слайдера */}
+          <button
+            type="button"
+            className="logo-slider-prev absolute -left-6 sm:-left-8 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
+            aria-label={t('scrollLeft')}
+          >
+            <Image src="/svg/arrow-left.svg" alt="" width={24} height={24} />
+          </button>
+          <button
+            type="button"
+            className="logo-slider-next absolute -right-6 sm:-right-8 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
+            aria-label={t('scrollRight')}
+          >
+            <Image src="/svg/arrow-right.svg" alt="" width={24} height={24} />
+          </button>
         </div>
       </div>
       
@@ -587,15 +701,31 @@ export default function CatalogPage() {
 
         {/* Content */}
         <section>
-          <header className="mb-6 flex flex-col md:flex-row gap-3 md:gap-4 w-full">
-            {/* Search: пошук тільки після натискання «Шукати» */}
-            <div className="w-full">
-              <CatalogSearch
-                placeholder={t('searchPlaceholder')}
-                value={searchInput}
-                onSearch={setSearchInput}
-                onSearchSubmit={() => setSearchApplied(searchInput.trim())}
-              />
+          <header className="mb-6 flex flex-col gap-3 md:gap-4 w-full">
+            {/* Search + desktop sort в один ряд */}
+            <div className="w-full flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+              <div className="w-full md:flex-1">
+                <CatalogSearch
+                  placeholder={t('searchPlaceholder')}
+                  value={searchInput}
+                  onSearch={setSearchInput}
+                  onSearchSubmit={() => setSearchApplied(searchInput.trim())}
+                />
+              </div>
+
+              {/* Desktop: сортировка справа от інпуту */}
+              <div className="hidden md:flex items-center gap-3 shrink-0">
+                <label className="">{t('sortBy')}</label>
+                <SortDropdown
+                  label={t('sortBy')}
+                  value={sortBy}
+                  options={SORT_OPTIONS}
+                  isOpen={isSortOpen}
+                  setIsOpen={setIsSortOpen}
+                  onChange={(v) => setSortBy(v)}
+                  buttonClassName="border border-[#D8D8D8] rounded-md px-3 py-2 bg-white pr-10 min-w-[220px] text-left"
+                />
+              </div>
             </div>
 
             {/* Mobile: Filters + Sort row */}
@@ -608,32 +738,21 @@ export default function CatalogPage() {
                 <FunnelIcon />
                 {t('filters')}
               </button>
-              <div className="relative flex items-center gap-2 shrink-0">
-                <label className="text-sm hidden md:block text-[#111827]">{t('sortBy')}</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  onMouseDown={() => setIsSortOpen((v) => !v)}
-                  onBlur={() => setIsSortOpen(false)}
-                  className="border border-[#D8D8D8] rounded-md px-3 py-2 bg-white appearance-none pr-8 text-sm"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <Image
-                  src="/svg/arrow-down.svg"
-                  alt=""
-                  width={14}
-                  height={8}
-                  className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 transition-transform ${isSortOpen ? 'rotate-180' : ''}`}
-                />
-              </div>
+              <SortDropdown
+                label={t('sortBy')}
+                value={sortBy}
+                options={SORT_OPTIONS}
+                isOpen={isSortOpen}
+                setIsOpen={setIsSortOpen}
+                onChange={(v) => setSortBy(v)}
+                buttonClassName="border border-[#D8D8D8] rounded-md px-3 py-2 bg-white pr-8 text-sm min-w-[200px] text-left"
+                menuClassName="absolute right-0 mt-2 w-full min-w-[200px] rounded-xl border border-[#D8D8D8] bg-white shadow-lg p-1 z-30"
+              />
             </div>
 
-            {/* Desktop: Clear + filter tags */}
+            {/* Desktop: выбранные фильтры отдельной строкой под поиском */}
             {hasActiveFilters && (
-              <div className="hidden md:flex items-center gap-2 flex-wrap">
+              <div className="hidden md:flex items-center gap-2 flex-wrap w-full md:order-3 md:basis-full">
                 <button
                   type="button"
                   onClick={clearFilters}
@@ -656,30 +775,6 @@ export default function CatalogPage() {
               </div>
             )}
 
-            {/* Desktop: Sort only */}
-            <div className="hidden md:flex items-center gap-3 shrink-0">
-              <label className="">{t('sortBy')}</label>
-              <div className="relative">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  onMouseDown={() => setIsSortOpen((v) => !v)}
-                  onBlur={() => setIsSortOpen(false)}
-                  className="border border-[#D8D8D8] rounded-md px-3 py-2 bg-white appearance-none pr-10"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <Image
-                  src="/svg/arrow-down.svg"
-                  alt=""
-                  width={14}
-                  height={8}
-                  className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 transition-transform ${isSortOpen ? 'rotate-180' : ''}`}
-                />
-              </div>
-            </div>
 
             {/* Mobile: Clear + filter tags */}
             {hasActiveFilters && (
@@ -721,12 +816,12 @@ export default function CatalogPage() {
             <>
               {displayedProducts && displayedProducts.length > 0 ? (
                 <>
-                  <section className="grid grid-cols-2 lg:grid-cols-3 [@media(min-width:1600px)]:grid-cols-4 gap-6">
+                  <section className="grid grid-cols-2 lg:grid-cols-3 [@media(min-width:1600px)]:grid-cols-4 gap-x-3 gap-y-3 md:gap-x-[13px] md:gap-y-5">
                     {displayedProducts.map((product: any, index: number) => (
                       <div 
                         key={product.id} 
                         className={`w-full ${newProductIds.has(product.id) ? 'new-product-animate' : ''}`}
-                        style={newProductIds.has(product.id) ? { animationDelay: `${(index % 16) * 0.05}s` } : {}}
+                        style={newProductIds.has(product.id) ? { animationDelay: `${(index % perPage) * 0.05}s` } : {}}
                       >
                         <ProductCard product={product} />
                       </div>
@@ -739,19 +834,19 @@ export default function CatalogPage() {
                       <button
                         onClick={loadMore}
                         disabled={isLoading}
-                        className="bg-[#9C0000] text-white px-8 py-3 rounded-lg font-semibold text-base hover:bg-[#7a0000] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2 min-w-[180px] justify-center"
+                        className="bg-white text-black px-8 py-3 rounded-lg font-semibold text-base transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-3 min-w-[260px] justify-center"
                       >
-                        {isLoading && currentPage > 1 ? (
-                          <>
-                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            {t('loadingMore')}
-                          </>
-                        ) : (
-                          t('loadMore')
-                        )}
+                        <span>
+                          {isLoading && currentPage > 1 ? t('loadingMore') : t('loadMoreCount', { count: perPage })}
+                        </span>
+                        <Image
+                          src="/svg/refresh.svg"
+                          alt=""
+                          width={22}
+                          height={22}
+                          className={`${isLoading && currentPage > 1 ? 'animate-spin [animation-direction:reverse]' : ''}`}
+                          aria-hidden
+                        />
                       </button>
                     </div>
                   )}

@@ -47,7 +47,20 @@ export default function RegisterPage() {
       }
 
       setSuccess(true);
-      // Після успішної реєстрації відразу переводимо користувача в профіль
+
+      // Після успішної реєстрації намагаємось автоматично залогінити користувача,
+      // щоб номер телефону та інші дані одразу підставлялись у профіль та кошик.
+      try {
+        await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+      } catch (e) {
+        console.error("Auto login after register failed:", e);
+      }
+
+      // Після реєстрації переводимо користувача в профіль
       window.location.href = `/${locale}/account`;
     } catch (error) {
       console.error("Registration error:", error);

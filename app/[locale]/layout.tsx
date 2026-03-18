@@ -10,6 +10,7 @@ import Footer from '../../components/Footer';
 import SkipLink from '../../components/SkipLink';
 import SetDocumentLang from '../../components/SetDocumentLang';
 import JsonLdOrganization from '../../components/seo/JsonLdOrganization';
+import ScrollToTopButton from '../../components/ScrollToTopButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,6 +82,7 @@ export default async function LocaleLayout({
         <Header />
         <main id="main-content" className="flex flex-1 flex-col">{children}</main>
         <Footer />
+        <ScrollToTopButton />
       </div>
     </NextIntlClientProvider>
   );

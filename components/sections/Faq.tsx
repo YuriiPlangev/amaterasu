@@ -38,14 +38,14 @@ const FaqItem = ({ item }: { item: FaqItem }) => {
       >
         <span className='text-[14px] md:text-[18px] font-semibold text-[#1C1C1C]'>{item.question}</span>
         <div className='flex-shrink-0'>
-          <svg
-            className={`w-6 h-6 text-[#9C0000] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 14l-7 7m0 0l-7-7m7 7V3' />
-          </svg>
+          <Image
+            src="/svg/arrow-up.svg"
+            alt=""
+            width={24}
+            height={24}
+            className={`w-6 h-6 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+            aria-hidden
+          />
         </div>
       </button>
 

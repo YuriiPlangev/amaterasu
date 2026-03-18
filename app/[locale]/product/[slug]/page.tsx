@@ -339,6 +339,26 @@ export default async function ProductPage({
     const productTag = product?.tags?.[0]?.name || '';
     const productCategory = product?.categories?.[0]?.name || '';
     const productCategoryId = product?.categories?.[0]?.id || null;
+    // Берем бренд так же, как в карточке товара
+    const brandFromList = Array.isArray(product?.brands)
+      ? product.brands.find((b: any) => {
+          if (!b) return false;
+          if (typeof b === 'string') return Boolean(b.trim());
+          return Boolean(String(b?.name || '').trim());
+        })
+      : null;
+
+    const productBrand =
+      (typeof brandFromList === 'string' ? brandFromList : brandFromList?.name) ||
+      (typeof product?.brand === 'string' ? product.brand : product?.brand?.name) ||
+      (Array.isArray(product?.attributes)
+        ? product.attributes.find((attr: any) => {
+            const attrName = String(attr?.name || '').toLowerCase();
+            const attrSlug = String(attr?.slug || '').toLowerCase();
+            return attrName.includes('brand') || attrName.includes('бренд') || attrSlug.includes('brand');
+          })?.options?.[0]
+        : '') ||
+      '';
     const images = product?.images || [];
     const mainImage = images?.[0]?.src || '/images/placeholder.jpg';
 
@@ -423,12 +443,21 @@ export default async function ProductPage({
           />
 
           <aside className="flex flex-col gap-5">
-            <h1 className="text-[clamp(20px,2.2vw,28px)] font-semibold text-[#1C1C1C] leading-snug">
-              {product?.name}
-              {shortDescription && (
-                <span className="block mt-1 text-base md:text-lg font-normal text-[#6B7280]">{shortDescription}</span>
+            <div className="flex flex-col gap-2">
+              {productBrand && (
+                <span className="inline-flex w-fit items-center rounded-md bg-[#9C0000] px-4 py-2 text-xs md:text-sm font-semibold leading-none text-white">
+                  {productBrand}
+                </span>
               )}
-            </h1>
+              <h1 className="text-[clamp(20px,2.2vw,28px)] font-semibold text-[#1C1C1C] leading-snug">
+                {product?.name}
+                {shortDescription && (
+                  <span className="block mt-1 text-base md:text-lg font-normal text-[#6B7280]">
+                    {shortDescription}
+                  </span>
+                )}
+              </h1>
+            </div>
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex flex-col items-start gap-1">
                 <p className="text-[#9C0000] text-[clamp(24px,2.5vw,32px)] font-bold">{product?.price} ₴</p>

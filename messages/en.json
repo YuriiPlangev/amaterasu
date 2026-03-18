@@ -176,6 +176,7 @@
     "scrollRight": "Scroll right",
     "filterLabel": "Filter:",
     "loadMore": "Load More",
+    "loadMoreCount": "Load {count} more items",
     "loadingMore": "Loading..."
   },
   "catalogFilters": {
@@ -254,6 +255,7 @@
     "address": "Address",
     "addressNote": "(by appointment)",
     "addressCity": "Bilhorod-Dnistrovskyi",
+    "legalAddress": "Ukraine, 1, Odesa region, Bilhorod-Dnistrovskyi district, Bilhorod-Dnistrovskyi city, Lomonosova St., building 2, apt. 30",
     "socials": "Socials",
     "writeTelegram": "Message on Telegram",
     "fastReply": "Quick reply",
@@ -264,7 +266,8 @@
     "title": "News",
     "subtitle": "Latest news, promotions, and store updates.",
     "noPosts": "No news found",
-    "readMore": "Read more →"
+    "viewAll": "View all news & promotions",
+    "readMore": "Read more"
   },
   "newsSlug": {
     "backToNews": "Back to news",

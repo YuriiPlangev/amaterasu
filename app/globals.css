@@ -238,6 +238,16 @@ textarea:focus-visible {
   transform: scale(0.98);
 }
 
+/* Sticky header only on mobile */
+@media (max-width: 767px) {
+  .site-header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+}
+
 /* Поява пошуку в хедері */
 @keyframes header-search-enter {
   from {

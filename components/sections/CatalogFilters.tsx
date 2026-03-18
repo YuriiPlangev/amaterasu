@@ -59,7 +59,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   loadingText,
   nothingFoundText,
 }) => {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const filtered = query
     ? items.filter((i) =>

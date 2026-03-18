@@ -54,7 +54,7 @@ export default function Header() {
   ];
 
   return (
-    <header className='bg-[#1C1C1C] w-full relative z-50'>
+    <header className='site-header bg-[#1C1C1C] w-full relative z-50'>
       <div className='max-w-[1920px] w-full mx-auto site-padding-x'>
         {/* Контент хедера */}
         <div className='flex items-center justify-between gap-4 pt-3 md:pt-[clamp(10px,1.6vw,22px)] relative z-20'>
@@ -63,7 +63,12 @@ export default function Header() {
             <ul className='flex gap-[clamp(10px,1.8vw,32px)] text-[clamp(12px,1.05vw,17px)] font-medium whitespace-nowrap'>
               {navLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-white hover:text-[#9C0000] transition-colors duration-200 underline-offset-4 hover:underline">{link.label}</Link>
+                  <Link
+                    href={link.href}
+                    className="text-white hover:text-[#9C0000] transition-colors duration-200 underline-offset-4 hover:underline uppercase tracking-[0.08em]"
+                  >
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>

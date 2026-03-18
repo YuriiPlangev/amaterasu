@@ -22,7 +22,7 @@ type AvatarItem =
   | { id: string; src: string; type: 'free' }
   | { id: string; src: string; type: 'premium'; sku: string };
 
-const AVATARS: AvatarItem[] = [
+const FREE_AVATARS: AvatarItem[] = [
   { id: 'photo_1', src: '/avatars/photo_1.jpg', type: 'free' },
   { id: 'photo_2', src: '/avatars/photo_2.jpg', type: 'free' },
   { id: 'photo_3', src: '/avatars/photo_3.jpg', type: 'free' },
@@ -33,8 +33,6 @@ const AVATARS: AvatarItem[] = [
   { id: 'photo_8', src: '/avatars/photo_8.jpg', type: 'free' },
   { id: 'photo_9', src: '/avatars/photo_9.jpg', type: 'free' },
   { id: 'photo_10', src: '/avatars/photo_10.jpg', type: 'free' },
-  // Преміум-аватар (купується за товаром з SKU avatar_premium)
-  { id: 'avatar_premium', src: '/avatars/premium/avatar_premium.gif', type: 'premium', sku: 'avatar_premium' },
 ];
 
 export default function ProfileForm({ initialLogin }: { initialLogin: string }) {
@@ -48,9 +46,11 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [form, setForm] = useState({ displayName: '', email: '', phone: '', avatarId: 'photo_1' });
   const [availableAvatars, setAvailableAvatars] = useState<string[]>(['default']);
+  const [premiumAvatars, setPremiumAvatars] = useState<AvatarItem[]>([]);
   const [pendingPremiumSku, setPendingPremiumSku] = useState<string | null>(null);
 
   useEffect(() => {
+    // 1. Загружаем профиль пользователя
     fetch('/api/auth/user', { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
       .then((data) => {
@@ -66,6 +66,36 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
       })
       .catch(() => setProfile(null))
       .finally(() => setLoading(false));
+
+    // 2. Загружаем покупные (преміум) аватари з WooCommerce категорії avatars (id=7012)
+    fetch('/api/products?category=7012&per_page=50')
+      .then((res) => (res.ok ? res.json() : Promise.reject(res)))
+      .then((data) => {
+        // API может вернуть либо { products: [...] }, либо просто [...]
+        const rawProducts = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.products)
+          ? data.products
+          : [];
+
+        const mapped: AvatarItem[] = rawProducts
+          .map((p: any) => {
+            const sku = (p?.sku || '').trim();
+            const src = p?.images?.[0]?.src as string | undefined;
+            if (!sku || !src) return null;
+            return {
+              id: sku,
+              src,
+              type: 'premium' as const,
+              sku,
+            };
+          })
+          .filter((x: AvatarItem | null): x is AvatarItem => Boolean(x));
+        setPremiumAvatars(mapped);
+      })
+      .catch(() => {
+        // тихо игнорируем, если категорию або доступ не удалось прочитать
+      });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,7 +215,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
         <div>
           <p className="block text-sm font-medium text-[#374151] mb-2">{t('avatar')}</p>
           <div className="grid grid-cols-5 gap-3">
-            {AVATARS.map((avatar, index) => {
+            {[...FREE_AVATARS, ...premiumAvatars].map((avatar, index) => {
               const ownedKey = avatar.type === 'premium' ? avatar.sku : avatar.id;
               const owned = avatar.type === 'free' || availableAvatars.includes(ownedKey);
               const selected = form.avatarId === avatar.id;

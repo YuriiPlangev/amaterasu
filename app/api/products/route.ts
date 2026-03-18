@@ -384,12 +384,20 @@ function minimizeProductPayload(product: any, acf: any) {
     id: product?.id,
     name: decodeHtmlEntities(product?.name || ""),
     slug: product?.slug || String(product?.id || ""),
+    sku: product?.sku || "",
     price: String(product?.price || ""),
     regular_price: String(product?.regular_price || ""),
     stock_status: String(product?.stock_status || "instock"),
     short_description: decodeHtmlEntities(product?.short_description || ""),
     images: Array.isArray(product?.images)
       ? product.images.slice(0, 3).map((img: any) => ({ src: img?.src, alt: img?.alt || "" }))
+      : [],
+    categories: Array.isArray(product?.categories)
+      ? product.categories.map((c: any) => ({
+          id: c?.id,
+          name: c?.name,
+          slug: c?.slug,
+        }))
       : [],
     attributes: Array.isArray(product?.attributes) ? product.attributes : [],
     brands: Array.isArray(product?.brands) ? product.brands : [],

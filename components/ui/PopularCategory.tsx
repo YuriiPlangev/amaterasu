@@ -55,7 +55,7 @@ const PopularCategory = ({ category, locale = 'uk' }: { category: any; locale?: 
         </div>
 
         <div className='bg-[#1C1C1CB2] absolute bottom-2 left-2 right-2 rounded-b-2xl text-center py-2'>
-          <h3 className='text-white font-bold text-[20px] truncate'>{category.name}</h3>
+          <h3 className='text-white font-medium text-[20px] truncate'>{category.name}</h3>
         </div>
       </article>
     </Link>

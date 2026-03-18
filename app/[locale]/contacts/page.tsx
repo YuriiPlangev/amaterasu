@@ -85,6 +85,9 @@ export default function ContactsPage() {
             <p className="text-[#374151] text-[15px]">
               {t('addressCity')}
             </p>
+            <p className="text-[#374151] text-[15px] mt-3 break-words">
+              {t('legalAddress')}
+            </p>
             <p className="text-[#6B7280] text-sm mt-1">
               {t('addressNote')}
             </p>
