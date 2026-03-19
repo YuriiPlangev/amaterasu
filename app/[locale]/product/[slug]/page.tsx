@@ -433,11 +433,11 @@ export default async function ProductPage({
           ))}
         </nav>
 
-        <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-6 lg:gap-8 items-stretch">
+        <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-6 lg:gap-8 items-start">
           <ProductGallery
             product={product}
             name={product?.name}
-            tag={productTag}
+            tag={productBrand}
             images={images}
             fallbackSrc={mainImage}
           />
@@ -546,24 +546,20 @@ export default async function ProductPage({
         </section>
 
         <section className="mt-12 md:mt-16 space-y-12 md:space-y-16">
-          <div>
-            <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold mb-6 text-[#1C1C1C]">Схожі товари</h2>
-            <RelatedProducts
-              tagId={firstTagId}
-              excludeProductId={product.id}
-              limit={10}
-              showTitle={false}
-            />
-          </div>
-          <div>
-            <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold mb-6 text-[#1C1C1C]">Схожі товари по категоріям</h2>
-            <RelatedProducts
-              categoryId={firstCategoryId}
-              excludeProductId={product.id}
-              limit={10}
-              showTitle={false}
-            />
-          </div>
+          <RelatedProducts
+            tagId={firstTagId}
+            excludeProductId={product.id}
+            limit={10}
+            showTitle={true}
+            titleKey="similarFromTitle"
+          />
+          <RelatedProducts
+            categoryId={firstCategoryId}
+            excludeProductId={product.id}
+            limit={10}
+            showTitle={true}
+            titleKey="similarFromCategory"
+          />
         </section>
       </div>
     );

@@ -30,7 +30,7 @@ export default function ProductGallery({ product, name, tag, images, fallbackSrc
   const active = gallery[activeIndex]?.src || fallbackSrc;
 
   return (
-    <div className="relative border-2 border-[#D8D8D8] rounded-2xl bg-white p-4 md:p-6 flex flex-col h-full min-h-0">
+    <div className="relative border-2 border-[#D8D8D8] rounded-2xl bg-white p-4 md:p-6 flex flex-col min-h-0 overflow-hidden lg:sticky lg:top-0 lg:self-start lg:max-h-[100vh]">
       {tag && (
         <span className="absolute top-4 left-4 bg-[#9C0000] text-white font-semibold rounded-[6px] px-3 py-1 text-sm z-10">
           {tag}
@@ -51,7 +51,7 @@ export default function ProductGallery({ product, name, tag, images, fallbackSrc
         </button>
       )}
 
-      <div className="flex-1 flex items-center justify-center min-h-0">
+      <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
         <Image
           src={getProxiedImageUrl(active)}
           alt={name}
@@ -61,7 +61,8 @@ export default function ProductGallery({ product, name, tag, images, fallbackSrc
         />
       </div>
 
-      <div className="flex gap-2 md:gap-3 mt-4 md:mt-0 md:absolute md:left-6 md:bottom-6 overflow-x-auto pb-2 md:pb-0">
+      {gallery.length > 1 && (
+      <div className="flex gap-2 md:gap-3 mt-4 overflow-x-auto pb-2">
         {gallery.slice(0, 4).map((img, idx) => (
           <button
             key={`${img?.src || idx}`}
@@ -80,6 +81,7 @@ export default function ProductGallery({ product, name, tag, images, fallbackSrc
           </button>
         ))}
       </div>
+      )}
     </div>
   );
 }

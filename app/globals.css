@@ -70,6 +70,18 @@ textarea:focus-visible {
   scrollbar-width: none;
 }
 
+/* Фильтры: вложенная прокрутка не должна увеличивать scrollHeight родителя */
+.filter-section-list {
+  contain: layout;
+}
+
+/* Logo slider: центрирование картинок в слайдах */
+.logo-slider .swiper-slide {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
 /* Best Sellers swiper pagination (mobile) */
 .best-sellers-swiper .swiper-pagination-bullet {
   width: 8px;
@@ -102,6 +114,22 @@ textarea:focus-visible {
   
   -webkit-mask-size: 100% calc(100% - var(--flame-height) + 1px), 50% var(--flame-height);
   mask-size: 100% calc(100% - var(--flame-height) + 1px), 50% var(--flame-height);
+}
+
+/* Мобильная версия: одна маска огня вместо двух (без repeat-x) */
+@media (max-width: 767px) {
+  .flame-boundary {
+    -webkit-mask-repeat: no-repeat, no-repeat;
+    mask-repeat: no-repeat, no-repeat;
+    -webkit-mask-size: 100% calc(100% - var(--flame-height) + 1px), 100% var(--flame-height);
+    mask-size: 100% calc(100% - var(--flame-height) + 1px), 100% var(--flame-height);
+  }
+  .header-flame-mask {
+    -webkit-mask-repeat: no-repeat, no-repeat;
+    mask-repeat: no-repeat, no-repeat;
+    -webkit-mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 100% var(--header-flame-height);
+    mask-size: 100% calc(100% - var(--header-flame-height) + 1px), 100% var(--header-flame-height);
+  }
 }
 
 /* Медиа-запрос для очень широких экранов, чтобы огонь не становился гигантским */
@@ -147,6 +175,29 @@ textarea:focus-visible {
 .news-swiper .swiper-pagination-bullet-active {
   background: #1C1C1C;
   border-color: #1C1C1C;
+}
+@media (max-width: 767px) {
+  .news-swiper .swiper-pagination {
+    bottom: -6px !important;
+  }
+}
+
+/* Страница новости: без горизонтальной прокрутки, текст переносится вниз */
+.news-content,
+.news-excerpt {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow-x: hidden;
+}
+.news-content pre,
+.news-excerpt pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.news-content img,
+.news-content pre,
+.news-content iframe {
+  max-width: 100%;
 }
 
 /* Hero entrance: текст за замовчуванням прихований, щоб не було спалаху */

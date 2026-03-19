@@ -93,7 +93,7 @@ function SortDropdown({
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        onClick={(e) => {
+        onMouseDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
           setIsOpen(!isOpen);
@@ -122,7 +122,7 @@ function SortDropdown({
           onClick={(e) => e.stopPropagation()}
           className={
             menuClassName ??
-            'absolute right-0 mt-2 w-full min-w-[220px] rounded-xl border border-[#D8D8D8] bg-white shadow-lg p-1 z-30'
+            'absolute right-0 top-full mt-3 w-full min-w-[220px] rounded-xl border border-[#D8D8D8] bg-white shadow-lg p-1 z-30'
           }
         >
           {options.map((opt) => {
@@ -134,16 +134,15 @@ function SortDropdown({
                 role="option"
                 aria-selected={selected}
                 onMouseDown={(e) => {
-                  // важливо: спочатку застосувати значення, щоб не "з'їдалося" blur/закриттям
                   e.preventDefault();
                   e.stopPropagation();
-                  onChange(opt.value);
+                  if (opt.value !== value) onChange(opt.value);
                   setIsOpen(false);
                 }}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  onChange(opt.value);
+                  if (opt.value !== value) onChange(opt.value);
                   setIsOpen(false);
                 }}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
@@ -628,7 +627,7 @@ export default function CatalogPage() {
               {t('apply')}
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="flex-1 min-h-0 max-h-[calc(100vh-10rem)] overflow-y-auto overflow-x-hidden px-4 py-4">
             <CatalogFilters
               variant="drawer"
               value={filterState}
@@ -680,17 +679,17 @@ export default function CatalogPage() {
             ))}
           </Swiper>
 
-          {/* Стрілки по краях видимої області слайдера */}
+          {/* Стрілки по краях видимої області слайдера; на мобільному ближче, щоб не виходили за екран */}
           <button
             type="button"
-            className="logo-slider-prev absolute -left-6 sm:-left-8 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
+            className="logo-slider-prev absolute left-1 sm:-left-4 md:-left-6 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
             aria-label={t('scrollLeft')}
           >
             <Image src="/svg/arrow-left.svg" alt="" width={24} height={24} />
           </button>
           <button
             type="button"
-            className="logo-slider-next absolute -right-6 sm:-right-8 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
+            className="logo-slider-next absolute right-1 sm:-right-4 md:-right-6 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
             aria-label={t('scrollRight')}
           >
             <Image src="/svg/arrow-right.svg" alt="" width={24} height={24} />
@@ -703,8 +702,8 @@ export default function CatalogPage() {
 
       <div className="grid grid-cols-1 items-start md:grid-cols-[clamp(260px,24vw,420px)_minmax(0,1fr)] gap-8">
         {/* Sidebar: desktop only */}
-        <aside className="hidden md:block self-start">
-          <div className="sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto pr-2">
+        <aside className="hidden md:block self-start w-full">
+          <div className="sticky top-6 pr-2">
             <CatalogFilters
               value={filterState}
               onChange={setFilterState}
@@ -737,7 +736,7 @@ export default function CatalogPage() {
                   isOpen={isSortOpen}
                   setIsOpen={setIsSortOpen}
                   onChange={(v) => setSortBy(v)}
-                  buttonClassName="border border-[#D8D8D8] rounded-md px-3 py-2 bg-white pr-10 min-w-[220px] text-left"
+                  buttonClassName="border border-[#D8D8D8] rounded-md px-3 py-3 bg-white pr-10 min-w-[220px] text-left h-[46px]"
                 />
               </div>
             </div>
@@ -759,8 +758,8 @@ export default function CatalogPage() {
                 isOpen={isSortOpen}
                 setIsOpen={setIsSortOpen}
                 onChange={(v) => setSortBy(v)}
-                buttonClassName="border border-[#D8D8D8] rounded-md px-3 py-2 bg-white pr-8 text-sm min-w-[200px] text-left"
-                menuClassName="absolute right-0 mt-2 w-full min-w-[200px] rounded-xl border border-[#D8D8D8] bg-white shadow-lg p-1 z-30"
+                buttonClassName="border border-[#D8D8D8] rounded-md px-3 py-3 bg-white pr-8 text-sm min-w-[200px] text-left h-[46px]"
+                menuClassName="absolute right-0 top-full mt-2 w-full min-w-[200px] rounded-xl border border-[#D8D8D8] bg-white shadow-lg p-1 z-30"
               />
             </div>
 

@@ -487,6 +487,7 @@ export async function GET(req: Request) {
     const isBestseller = params.get("bestseller") === "true";
     let list: WooListResponse<any>;
 
+    const wooStart = performance.now();
     if (attrRequests.length > 0) {
       const primaryResolved = await resolveAttrTermIds(attrRequests[0]);
       if (!primaryResolved) {
@@ -499,6 +500,7 @@ export async function GET(req: Request) {
         ? await fetchBestsellersPage(wcParams)
         : await wooList<any>("products", wcParams);
     }
+    const wooTimeMs = Math.round(performance.now() - wooStart);
 
     let pageProducts = list.data;
 
@@ -520,7 +522,9 @@ export async function GET(req: Request) {
       .map((p: any) => Number(p?.id))
       .filter((id: number) => Number.isFinite(id));
 
-    const acfById = await wpAcfByProductIds(productIds);
+    // Для списка каталога пропускаем ACF — delivery_status не нужен в карточках, экономим 1 HTTP-запрос
+    const isListRequest = !slug && !sku;
+    const acfById = isListRequest ? new Map<number, any>() : await wpAcfByProductIds(productIds);
 
     if (isBestseller) {
       pageProducts = pageProducts.filter((product: any) => toBooleanFlag(product?.featured));
@@ -529,6 +533,13 @@ export async function GET(req: Request) {
     const products = pageProducts.map((product: any) =>
       minimizeProductPayload(product, acfById.get(Number(product?.id)) || {})
     );
+
+    const responseHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Cache-Control": "public, s-maxage=600, stale-while-revalidate=600",
+      "Server-Timing": `woo;dur=${wooTimeMs};desc="WooCommerce fetch"`,
+      "X-WooCommerce-Ms": String(wooTimeMs),
+    };
 
     return new Response(
       JSON.stringify({
@@ -541,10 +552,7 @@ export async function GET(req: Request) {
       }),
       {
         status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "public, s-maxage=600, stale-while-revalidate=600",
-        },
+        headers: responseHeaders,
       }
     );
   } catch (err: any) {

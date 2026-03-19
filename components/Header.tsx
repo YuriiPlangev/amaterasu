@@ -75,18 +75,20 @@ export default function Header() {
           </nav>
           
           <nav className='flex items-center gap-3 md:gap-[clamp(12px,1.6vw,28px)] shrink-0' aria-label={tA11y('userNav')}>
-            <div className='flex items-center gap-2'>
-              {isSearchOpen ? (
-                <HeaderSearch
-                  isOpen={true}
-                  onClose={() => setIsSearchOpen(false)}
-                  placeholder={tSearch('placeholderMinChars')}
-                  className='hidden md:block'
-                />
-              ) : (
-                <button type='button' onClick={() => setIsSearchOpen(true)} className='group flex items-center transition-transform duration-200 hover:scale-110' aria-label={tSearch('ariaSearch')}>
-                  <Image src='/svg/search.svg' alt='search' width={24} height={24} className='w-[clamp(18px,1.4vw,24px)] h-[clamp(18px,1.4vw,24px)] transition-opacity duration-200 group-hover:opacity-80' />
-                </button>
+            <div className='relative'>
+              <button type='button' onClick={() => setIsSearchOpen(true)} className='group flex items-center transition-transform duration-200 hover:scale-110' aria-label={tSearch('ariaSearch')}>
+                <Image src='/svg/search.svg' alt='search' width={24} height={24} className='w-[clamp(18px,1.4vw,24px)] h-[clamp(18px,1.4vw,24px)] transition-opacity duration-200 group-hover:opacity-80' />
+              </button>
+              {isSearchOpen && (
+                <div className='absolute top-full right-0 mt-2 z-20'>
+                  <HeaderSearch
+                    isOpen={true}
+                    onClose={() => setIsSearchOpen(false)}
+                    placeholder={tSearch('placeholderMinChars')}
+                    className='w-[200px] sm:w-[240px]'
+                    compact
+                  />
+                </div>
               )}
             </div>
             <Link href={`${basePath}/favorites`} className='group flex items-center transition-transform duration-200 hover:scale-110'>
@@ -115,17 +117,6 @@ export default function Header() {
           </nav>
         </div>
 
-        {/* Mobile: search panel when open */}
-        {isSearchOpen && (
-          <div className='md:hidden pb-3 relative z-20'>
-            <HeaderSearch
-              isOpen={true}
-              onClose={() => setIsSearchOpen(false)}
-              placeholder={tSearch('placeholderMinChars')}
-              className='w-full'
-            />
-          </div>
-        )}
       </div>
 
       {/* ОГОНЬ (как в футере): показываем только если это НЕ главная; -1px чтобы не было белой полоски */}

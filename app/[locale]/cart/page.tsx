@@ -77,11 +77,13 @@ export default function CartPage() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data) return;
+        const rawPhone = (data.phone || '').replace(/\D/g, '');
+        const normPhone = rawPhone.startsWith('380') ? rawPhone.slice(0, 12) : rawPhone.startsWith('0') ? rawPhone.slice(0, 10) : rawPhone.length <= 9 ? '0' + rawPhone : '380' + rawPhone.slice(-9);
         setFormData((prev) => ({
           ...prev,
           firstName: prev.firstName || data.displayName || '',
           email: prev.email || data.email || '',
-          phone: prev.phone || data.phone || '',
+          phone: prev.phone || normPhone || '',
         }));
       })
       .catch(() => {});
@@ -182,9 +184,37 @@ export default function CartPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const formatPhoneDisplay = (digits: string) => {
+    if (!digits) return '';
+    if (digits.startsWith('380')) {
+      return `+380 ${digits.slice(3, 5)} ${digits.slice(5, 8)} ${digits.slice(8, 10)} ${digits.slice(10, 12)}`.trim();
+    }
+    if (digits.startsWith('0')) {
+      return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`.trim();
+    }
+    return digits;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    if (name === 'phone') {
+      const digits = value.replace(/\D/g, '');
+      let normalized = digits;
+      if (digits.length > 0 && !digits.startsWith('0') && !digits.startsWith('380')) {
+        normalized = digits.length <= 9 ? '0' + digits : '380' + digits.slice(-9);
+      }
+      let limited = normalized;
+      if (normalized.startsWith('380')) limited = normalized.slice(0, 12);
+      else if (normalized.startsWith('0')) limited = normalized.slice(0, 10);
+      setFormData(prev => ({ ...prev, phone: limited }));
+      return;
+    }
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const isValidPhone = (phone: string) => {
+    const digits = phone.replace(/\D/g, '');
+    return (digits.length === 10 && digits.startsWith('0')) || (digits.length === 12 && digits.startsWith('380'));
   };
 
   const getAddressFromDelivery = () => {
@@ -209,6 +239,10 @@ export default function CartPage() {
     e.preventDefault();
     if (!legalConsent) {
       alert(t('consentRequired'));
+      return;
+    }
+    if (!isValidPhone(formData.phone)) {
+      alert(locale === 'uk' ? 'Введіть коректний номер телефону (наприклад: 050 123 45 67 або +380 50 123 45 67)' : 'Enter a valid phone number (e.g. 050 123 45 67 or +380 50 123 45 67)');
       return;
     }
     const allVirtual = items.length > 0 && items.every((i: any) => i.virtual);
@@ -243,7 +277,7 @@ export default function CartPage() {
             firstName: formData.firstName,
             lastName: formData.lastName,
             email: formData.email,
-            phone: formData.phone,
+            phone: formData.phone.startsWith('380') ? `+${formData.phone}` : formData.phone,
             address,
             city,
             postcode: formData.postcode || '',
@@ -523,8 +557,8 @@ export default function CartPage() {
                   <input
                     type="tel"
                     name="phone"
-                    placeholder={`${t('phone')} *`}
-                    value={formData.phone}
+                    placeholder={`${t('phone')} * (050 123 45 67)`}
+                    value={formatPhoneDisplay(formData.phone)}
                     onChange={handleInputChange}
                     required
                     className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"

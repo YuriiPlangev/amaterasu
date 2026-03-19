@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
           page: 1,
           perPage: Number(perPage),
           totalPages: 0,
+          hasMore: false,
         },
         { status: 200 },
       );
@@ -48,7 +49,25 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await res.json();
-    return NextResponse.json(data, { status: 200 });
+    const products = Array.isArray(data?.products) ? data.products : Array.isArray(data) ? data : [];
+    const total = Number(data?.total ?? products.length);
+    const pageNum = Math.max(1, Number(data?.page ?? page));
+    const perPageNum = Math.max(1, Number(data?.perPage ?? data?.per_page ?? perPage));
+    const totalPages = Math.ceil(total / perPageNum) || 1;
+    const hasMore = pageNum < totalPages;
+
+    return NextResponse.json(
+      {
+        ...data,
+        products,
+        total,
+        page: pageNum,
+        perPage: perPageNum,
+        totalPages,
+        hasMore,
+      },
+      { status: 200 }
+    );
   } catch (e: any) {
     return NextResponse.json(
       {

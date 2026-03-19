@@ -33,7 +33,7 @@ const News = () => {
       <section className='w-full'>
         <div className='max-w-[1920px] mx-auto site-padding-x flex justify-between items-center mt-12'>
           <h2 className='text-[clamp(28px,2.2vw,55px)] font-bold uppercase text-black py-[clamp(20px,2.2vw,56px)]'>Новини та акції</h2>
-          <button className='bg-[#9C0000] px-6 py-2.5 flex items-center text-white h-auto rounded-lg uppercase'>
+          <button className='bg-[#9C0000] hover:bg-[#b91c1c] px-6 py-2.5 flex items-center gap-2 text-white h-auto rounded-lg uppercase transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5'>
             {tNews('viewAll')}
             <Image src={'/svg/right.svg'} alt="" width={24} height={24} />
             </button>
@@ -58,7 +58,7 @@ const News = () => {
       <section className='w-full'>
         <div className='max-w-[1920px] mx-auto site-padding-x flex justify-between items-center'>
           <h2 className='text-[clamp(28px,2.2vw,55px)] font-bold uppercase text-black py-[clamp(20px,2.2vw,56px)]'>Новини та акції</h2>
-          <button className='bg-[#9C0000] px-6 py-2.5 gap-2.5 flex items-center text-white h-auto rounded-lg uppercase'>
+          <button className='bg-[#9C0000] hover:bg-[#b91c1c] px-6 py-2.5 gap-2.5 flex items-center text-white h-auto rounded-lg uppercase transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5'>
             {tNews('viewAll')}
             <Image src={'/svg/right.svg'} alt="" width={20} height={20} />
             </button>
@@ -72,9 +72,9 @@ const News = () => {
     <section className='w-full relative overflow-visible bg-white'>
       <div className='max-w-[1920px] mx-auto site-padding-x flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
         <h2 className='text-[clamp(22px,2.2vw,55px)] font-bold uppercase text-black py-4 md:py-[clamp(20px,2.2vw,56px)]'>Новини та акції</h2>
-        <Link href={`/${locale}/news`} className='hidden sm:flex bg-[#9C0000] px-6 py-2.5 gap-2 items-center text-white h-auto rounded-lg shrink-0 uppercase'>
+        <Link href={`/${locale}/news`} className='hidden sm:flex group bg-[#9C0000] hover:bg-[#b91c1c] px-6 py-2.5 gap-2 items-center text-white h-auto rounded-lg shrink-0 uppercase transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5'>
           {tNews('viewAll')}
-          <Image src={'/svg/right.svg'} alt="" width={20} height={20} />
+          <Image src={'/svg/right.svg'} alt="" width={20} height={20} className="transition-transform duration-200 group-hover:translate-x-1" />
         </Link>
       </div>
       

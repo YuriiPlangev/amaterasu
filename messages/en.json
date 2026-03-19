@@ -325,7 +325,9 @@
     "condition": "Condition",
     "deliveryNovaDesc": "Delivery across Ukraine, cash on delivery",
     "deliveryUkrDesc": "Delivery across Ukraine",
-    "similarProducts": "Similar products"
+    "similarProducts": "Similar products",
+    "similarFromTitle": "From this title",
+    "similarFromCategory": "From this category"
   },
   "comments": {
     "title": "Comments",

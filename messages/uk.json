@@ -325,7 +325,9 @@
     "condition": "Стан",
     "deliveryNovaDesc": "Доставка по всій Україні, оплата при отриманні",
     "deliveryUkrDesc": "Доставка по Україні",
-    "similarProducts": "Схожі товари"
+    "similarProducts": "Схожі товари",
+    "similarFromTitle": "З цього тайтлу",
+    "similarFromCategory": "З цієї категорії"
   },
   "comments": {
     "title": "Коментарі",

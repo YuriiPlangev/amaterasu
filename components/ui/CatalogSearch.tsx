@@ -22,22 +22,22 @@ const CatalogSearch: React.FC<Props> = ({ className = '', placeholder, value = '
   };
   return (
     <form onSubmit={handleSubmit} className={`w-full ${className}`}>
-      <div className="flex items-center w-full rounded-xl border border-[#D8D8D8] bg-white px-3 py-2 gap-3">
+      <div className="flex items-center w-full rounded-xl border border-[#D8D8D8] bg-white px-1.5 py-1.5 gap-3">
         <input
           type="text"
           aria-label={t('ariaSearch')}
           placeholder={placeholderText}
           value={value}
-          className="flex-1 bg-transparent outline-none text-[#111111] placeholder-[#B0B0B0]"
+          className="flex-1 pl-4 bg-transparent outline-none text-[#111111] placeholder-[#B0B0B0]"
           onChange={(e) => onSearch?.(e.target.value)}
         />
         <button
           type="submit"
           aria-label={t('searchButton')}
-          className="flex items-center gap-2 bg-[#9C0000] text-white rounded-lg px-6 py-3 text-sm font-semibold"
+          className="flex items-center gap-2 bg-[#9C0000] text-white rounded-lg px-6 py-3 text-sm font-semibold h-[46px]"
         >
           {t('searchButton')}
-          <Image src="/svg/search.svg" alt="search" width={16} height={16} />
+          <Image src="/svg/search-catalog.svg" alt="search" width={16} height={16} />
         </button>
       </div>
     </form>

@@ -102,7 +102,15 @@ export default function ProductCard({ product }: { product: any }) {
       )}
 
       <Link href={productHref} className="flex flex-col w-full cursor-pointer flex-1" onClick={handleProductClick}>
-        <Image src={getProxiedImageUrl(product?.images?.[0]?.src)} alt={product?.name} width={300} height={260} className="w-full h-[260px] object-contain rounded-2xl" />
+        <div className="relative w-full aspect-square rounded-2xl overflow-hidden">
+          <Image
+            src={getProxiedImageUrl(product?.images?.[0]?.src)}
+            alt={product?.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            className="object-contain"
+          />
+        </div>
         <div className="flex flex-col items-center w-full gap-[10px] flex-1">
           <div className="flex justify-between items-start gap-2 w-full">
             <div className="flex flex-col justify-start">
@@ -142,7 +150,7 @@ export default function ProductCard({ product }: { product: any }) {
           </div>
           <div className="self-start w-full min-w-0">
             <h3 className="text-black font-medium text-[16px] truncate" title={product?.name}>{product?.name}</h3>
-            <p className="text-black font-medium text-[15px] truncate">{productDescription}</p>
+            <p className="text-[#6B7280] font-normal text-sm truncate mt-1">{productDescription}</p>
           </div>
         </div>
       </Link>

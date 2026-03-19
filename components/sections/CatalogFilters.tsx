@@ -96,7 +96,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                 className="w-full rounded-md border border-[#E5E5E5] px-3 py-2 text-sm outline-none"
               />
             </div>
-            <div className="mt-2 max-h-40 overflow-y-auto pr-2">
+            <div className="filter-section-list mt-2 h-40 min-h-0 overflow-y-auto overflow-x-hidden pr-2">
               {isLoading ? (
                 <div className="text-sm text-gray-400 py-2">{loadingText ?? ''}</div>
               ) : (

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { getProxiedImageUrl } from '../lib/imageProxy';
 
 const MIN_CHARS = 3;
 const DEBOUNCE_MS = 300;
@@ -15,6 +16,7 @@ interface HeaderSearchProps {
   onClose: () => void;
   className?: string;
   placeholder?: string;
+  compact?: boolean;
 }
 
 export default function HeaderSearch({
@@ -22,6 +24,7 @@ export default function HeaderSearch({
   onClose,
   className = '',
   placeholder,
+  compact = false,
 }: HeaderSearchProps) {
   const router = useRouter();
   const locale = useLocale();
@@ -121,7 +124,7 @@ export default function HeaderSearch({
 
   return (
     <div ref={wrapRef} className={`relative z-[120] header-search-animate ${className}`}>
-      <form onSubmit={handleSubmit} className="rounded-lg border border-[#BCBCBC] px-3 py-2 bg-[#111111] flex items-center gap-3 min-w-[180px] md:min-w-[240px]">
+      <form onSubmit={handleSubmit} className={`rounded-lg border border-[#BCBCBC] bg-[#111111] flex items-center ${compact ? 'gap-2 px-2 py-1.5 min-w-[160px]' : 'gap-3 px-3 py-2 min-w-[180px] md:min-w-[240px]'}`}>
         <input
           ref={inputRef}
           type="text"
@@ -129,7 +132,7 @@ export default function HeaderSearch({
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholderText}
           aria-label={t('ariaSearch')}
-          className="bg-transparent outline-none flex-1 text-white placeholder-[#BCBCBC] text-sm md:text-base"
+          className={`bg-transparent outline-none flex-1 text-white placeholder-[#BCBCBC] ${compact ? 'text-sm' : 'text-sm md:text-base'}`}
         />
         <button type="submit" aria-label={t('ariaSearch')} className="shrink-0 text-[#BCBCBC] hover:text-white">
           <Image src="/svg/search.svg" alt="search" width={18} height={18} />
@@ -161,7 +164,7 @@ export default function HeaderSearch({
                         <div className="relative w-10 h-10 rounded-md bg-[#111111] flex-shrink-0 overflow-hidden">
                           {p.image ? (
                             <Image
-                              src={p.image}
+                              src={getProxiedImageUrl(p.image)}
                               alt={p.name}
                               fill
                               sizes="40px"
