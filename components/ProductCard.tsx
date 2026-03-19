@@ -161,7 +161,7 @@ export default function ProductCard({ product }: { product: any }) {
           type="button"
           onClick={isCustomDesign ? handleAddToCart : isInCart ? handleGoToCart : handleAddToCart}
           disabled={!isInStock}
-          className={`btn-press group uppercase flex justify-center items-center gap-2 px-3 py-2 rounded-lg flex-1 transition-all duration-300 font-bold text-[14px] disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`btn-press border group uppercase flex justify-center items-center gap-2 px-3 py-2 rounded-lg flex-1 transition-all duration-300 font-bold text-[14px] disabled:opacity-50 disabled:cursor-not-allowed ${
             isInCart
               ? 'border-2 border-[#9C0000] text-[#9C0000] bg-white hover:bg-[#FFF7F7]'
               : 'bg-[#9C0000] text-white hover:bg-white hover:text-[#9C0000] hover:border-[#9C0000] hover:border'

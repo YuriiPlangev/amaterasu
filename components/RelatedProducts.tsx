@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useId } from 'react';
 import { useTranslations } from 'next-intl';
 import ProductCard from './ProductCard';
 import { useProducts } from '../hooks/useProducts';
@@ -28,7 +28,10 @@ export default function RelatedProducts({
   const t = useTranslations('productPage');
   const tCommon = useTranslations('common');
   const tA11y = useTranslations('a11y');
-  
+  const uniqueId = useId().replace(/:/g, '');
+  const prevSel = `.related-prev-${uniqueId}`;
+  const nextSel = `.related-next-${uniqueId}`;
+
   // Первичный запрос с фильтром
   const params: any = {};
   if (tagId) params.tag = tagId;
@@ -86,17 +89,17 @@ export default function RelatedProducts({
       {showTitle && (
         <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold text-[#1C1C1C]">{titleText}</h2>
       )}
-      <div className="relative overflow-visible -mx-2 md:mx-0">
+      <div className="relative overflow-visible -mx-2 md:mx-0 touch-pan-x">
         {showArrows && (
           <>
             <button
-              className="related-products-prev absolute left-2 md:-left-[60px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md"
+              className={`related-prev-${uniqueId} absolute left-2 md:-left-[60px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md`}
               aria-label={tA11y('scrollLeft')}
             >
               <Image src="/svg/arrow-left.svg" alt="" width={24} height={24} />
             </button>
             <button
-              className="related-products-next absolute right-2 md:-right-[60px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md"
+              className={`related-next-${uniqueId} absolute right-2 md:-right-[60px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md`}
               aria-label={tA11y('scrollRight')}
             >
               <Image src="/svg/arrow-right.svg" alt="" width={24} height={24} />
@@ -113,8 +116,10 @@ export default function RelatedProducts({
             0: { slidesPerView: 2, spaceBetween: 12 },
           }}
           loop={filteredProducts.length >= 2}
-          navigation={showArrows ? { nextEl: '.related-products-next', prevEl: '.related-products-prev' } : false}
+          navigation={showArrows ? { nextEl: nextSel, prevEl: prevSel } : false}
           modules={[Navigation]}
+          passiveListeners={false}
+          touchReleaseOnEdges={true}
           className="related-products-swiper pb-12"
         >
           {filteredProducts.map((product: any) => (

@@ -82,6 +82,18 @@ textarea:focus-visible {
   align-items: center !important;
 }
 
+/* Best Sellers: overflow visible + padding для теней при hover */
+.best-sellers-swiper {
+  overflow: visible !important;
+}
+.best-sellers-swiper .swiper-wrapper {
+  overflow: visible !important;
+}
+.best-sellers-swiper .swiper-slide {
+  overflow: visible !important;
+  padding-bottom: 32px;
+}
+
 /* Best Sellers swiper pagination (mobile) */
 .best-sellers-swiper .swiper-pagination-bullet {
   width: 8px;
