@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { avatarIdToSrc } from '../lib/avatars';
+import AvatarWithFallback from './ui/AvatarWithFallback';
 
 interface Comment {
   id: string;
@@ -14,6 +14,7 @@ interface Comment {
   parentId?: string | null;
   userId?: string | null;
   avatarId?: string | null;
+  avatarSrc?: string | null;
 }
 
 export default function NewsComments({ slug }: { slug: string }) {
@@ -68,7 +69,9 @@ export default function NewsComments({ slug }: { slug: string }) {
   useEffect(() => {
     const loadComments = async () => {
       try {
-        const res = await fetch(`/api/news/${slug}/comments`);
+        const res = await fetch(`/api/news/${slug}/comments`, {
+          headers: { 'X-Request-Source': 'NewsComments' },
+        });
         if (res.ok) {
           const data = await res.json();
           setComments(data.comments || data || []);
@@ -248,6 +251,7 @@ export default function NewsComments({ slug }: { slug: string }) {
 
             const isOwner = userId && comment.userId && userId === comment.userId;
             const avatarSrc =
+              comment.avatarSrc ||
               avatarIdToSrc(comment.avatarId) ||
               (isOwner ? avatarIdToSrc(userAvatarId) : null);
 
@@ -255,14 +259,13 @@ export default function NewsComments({ slug }: { slug: string }) {
               <div key={comment.id} className="border-l-4 border-[#9C0000] pl-6 py-4">
                 <div className="flex items-start justify-between mb-2 gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[#F3F4F6] flex items-center justify-center text-xs font-semibold text-[#9C0000] overflow-hidden">
-                      {avatarSrc ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={avatarSrc} alt={comment.author} className="w-full h-full object-cover" />
-                      ) : (
-                        comment.author.charAt(0).toUpperCase()
-                      )}
-                    </div>
+                    <AvatarWithFallback
+                      src={avatarSrc}
+                      alt={comment.author}
+                      fallbackChar={comment.author.charAt(0).toUpperCase()}
+                      size={36}
+                      className="flex-shrink-0"
+                    />
                     <p className="font-semibold text-[#1C1C1C]">{comment.author}</p>
                   </div>
                   <p className="text-sm text-[#9CA3AF] mt-1">{formattedDate}</p>

@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '../../store/cartStore';
-import { avatarIdToSrc } from '../../lib/avatars';
+import { avatarIdToSrc, LOCAL_AVATAR_IDS } from '../../lib/avatars';
+import { getProxiedImageUrl } from '../../lib/imageProxy';
 
 type UserProfile = {
   id: string;
@@ -20,6 +21,7 @@ type UserProfile = {
 
 type AvatarItem =
   | { id: string; src: string; type: 'free' }
+  | { id: string; src: string; type: 'launch'; sku: string }
   | { id: string; src: string; type: 'premium'; sku: string };
 
 const FREE_AVATARS: AvatarItem[] = [
@@ -83,6 +85,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
             const sku = (p?.sku || '').trim();
             const src = p?.images?.[0]?.src as string | undefined;
             if (!sku || !src) return null;
+            if (LOCAL_AVATAR_IDS.includes(sku as any)) return null;
             return {
               id: sku,
               src,
@@ -215,11 +218,18 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
         <div>
           <p className="block text-sm font-medium text-[#374151] mb-2">{t('avatar')}</p>
           <div className="grid grid-cols-5 gap-3">
-            {[...FREE_AVATARS, ...premiumAvatars].map((avatar, index) => {
-              const ownedKey = avatar.type === 'premium' ? avatar.sku : avatar.id;
+            {[
+              ...FREE_AVATARS,
+              ...(availableAvatars.some((a) => LOCAL_AVATAR_IDS.includes(a as any))
+                ? LOCAL_AVATAR_IDS.map((id) => ({ id, src: `/avatars/${id}.jpg`, type: 'launch' as const, sku: id }))
+                : []),
+              ...premiumAvatars,
+            ].map((avatar, index) => {
+              const ownedKey = avatar.type === 'premium' || avatar.type === 'launch' ? avatar.sku : avatar.id;
               const owned = avatar.type === 'free' || availableAvatars.includes(ownedKey);
               const selected = form.avatarId === avatar.id;
               const isPremiumLocked = avatar.type === 'premium' && !owned;
+              const isLaunchLocked = avatar.type === 'launch' && !owned;
 
               return (
                 <button
@@ -228,7 +238,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
                   onClick={() => {
                     if (isPremiumLocked && avatar.type === 'premium') {
                       setPendingPremiumSku(avatar.sku);
-                    } else {
+                    } else if (!isLaunchLocked) {
                       setForm((f) => ({ ...f, avatarId: avatar.id }));
                     }
                   }}
@@ -238,20 +248,20 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
                   aria-label={
                     avatar.type === 'premium'
                       ? t('avatarPremiumOption')
+                      : avatar.type === 'launch'
+                      ? t('avatarLaunchOption')
                       : t('avatarOption', { number: index + 1 })
                   }
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={avatar.src}
-                    alt={avatar.type === 'premium' ? t('avatarPremiumOption') : t('avatarOption', { number: index + 1 })}
+                    alt={avatar.type === 'premium' ? t('avatarPremiumOption') : avatar.type === 'launch' ? t('avatarLaunchOption') : t('avatarOption', { number: index + 1 })}
                     className="w-full h-full object-cover"
                   />
-                  {isPremiumLocked && (
-                    <span className="absolute inset-0 bg-black/45 flex items-center justify-center">
-                      <span className="w-7 h-7 rounded-full bg-[#FACC15] text-[#7C2D12] text-[11px] font-extrabold flex items-center justify-center shadow-md">
-                        ★
-                      </span>
+                  {(isPremiumLocked || isLaunchLocked) && (
+                    <span className="absolute top-0.5 right-0.5 z-10 w-5 h-5 rounded-full bg-[#FACC15] text-[#7C2D12] text-[10px] font-extrabold flex items-center justify-center shadow-md ring-2 ring-white">
+                      ★
                     </span>
                   )}
                 </button>
@@ -259,8 +269,8 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
             })}
           </div>
           {pendingPremiumSku && (
-            <div className="mt-3 rounded-lg border border-[#9C0000] bg-white px-4 py-3 text-[14px] md:text-sm text-[#111111]">
-              <p className="font-semibold">
+            <div className="mt-3 rounded-lg border border-[#9C0000] bg-white px-4 py-3 text-[14px] md:text-sm">
+              <p className="font-semibold text-[#1C1C1C]">
                 {t('buyAvatarPrompt')}
               </p>
               <div className="mt-2 flex gap-2">
@@ -289,12 +299,17 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
           )}
           <div className="mt-4 flex items-center gap-3">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-[#F3F4F6] border border-[#E5E7EB]">
-              {avatarIdToSrc(form.avatarId) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarIdToSrc(form.avatarId) as string} alt="" className="w-full h-full object-cover" />
-              ) : null}
+              {(() => {
+                const premium = premiumAvatars.find((a) => a.id === form.avatarId);
+                const src =
+                  (premium ? getProxiedImageUrl(premium.src) : null) || avatarIdToSrc(form.avatarId);
+                return src ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                ) : null;
+              })()}
             </div>
-            <p className="text-sm text-[#6B7280]">{t('avatarSelectedHint')}</p>
+            <p className="text-sm text-[#1C1C1C]">{t('avatarSelectedHint')}</p>
           </div>
         </div>
         {message && (

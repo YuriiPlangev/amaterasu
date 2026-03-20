@@ -309,6 +309,7 @@
     "avatar": "Аватар",
     "avatarOption": "Аватар №{number}",
     "avatarPremiumOption": "Преміум-аватар",
+    "avatarLaunchOption": "Аватар дня запуску",
     "avatarSelectedHint": "Обраний аватар буде видно у профілі та в коментарях.",
     "buyAvatarPrompt": "Це преміум-аватар. Після оплати він назавжди відкриється у вашій колекції.",
     "buyAvatarConfirmButton": "Купити аватар",

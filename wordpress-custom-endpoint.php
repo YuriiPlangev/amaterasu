@@ -140,10 +140,64 @@ function amaterasu_process_checkout($request) {
 }
 
 // ========================
+// ПОЛЯ ПОЛЬЗОВАТЕЛЯ: АВАТАР (для отображения всем)
+// ========================
+// Регистрируем current_avatar и availableAvatars в REST API пользователей.
+// Аватар сохраняется в user meta — его видят все (профиль, комментарии).
+
+add_action('rest_api_init', function () {
+    register_rest_field('user', 'current_avatar', array(
+        'get_callback' => function ($user) {
+            return get_user_meta($user['id'], 'current_avatar', true) ?: '';
+        },
+        'update_callback' => function ($value, $user) {
+            update_user_meta($user->ID, 'current_avatar', sanitize_text_field($value));
+        },
+        'schema' => array('type' => 'string', 'description' => 'ID выбранного аватара'),
+    ));
+
+    register_rest_field('user', 'available_avatars', array(
+        'get_callback' => function ($user) {
+            $val = get_user_meta($user['id'], 'available_avatars', true);
+            return is_array($val) ? $val : array();
+        },
+        'update_callback' => function ($value, $user) {
+            $arr = is_array($value) ? array_map('sanitize_text_field', $value) : array();
+            update_user_meta($user->ID, 'available_avatars', $arr);
+        },
+        'schema' => array('type' => 'array', 'description' => 'Доступные аватары (SKU купленных)'),
+    ));
+});
+
+// Для совместимости с /api/auth/user (ожидает availableAvatars)
+add_filter('rest_prepare_user', function ($response, $user, $request) {
+    $meta = get_user_meta($user->ID, 'available_avatars', true);
+    if (!is_array($meta)) {
+        $meta = array('default');
+    }
+    $response->data['availableAvatars'] = $meta;
+    return $response;
+}, 10, 3);
+
+// ========================
 // ENDPOINTS ДЛЯ КОММЕНТАРИЕВ
 // ========================
 
 add_action('rest_api_init', function () {
+    // Массовое получение current_avatar по user_id (для обогащения комментариев)
+    register_rest_route('custom/v1', '/users/avatars', array(
+        'methods' => 'GET',
+        'callback' => 'custom_get_users_avatars',
+        'permission_callback' => '__return_true',
+        'args' => array(
+            'ids' => array(
+                'required' => true,
+                'type' => 'string',
+                'description' => 'Comma-separated user IDs',
+            ),
+        ),
+    ));
+
     // Получение комментариев к посту
     register_rest_route('custom/v1', '/posts/(?P<id>\d+)/comments', array(
         'methods' => 'GET',
@@ -168,9 +222,30 @@ add_action('rest_api_init', function () {
             'post_id' => array('required' => true),
             'user_id' => array('required' => true),
             'content' => array('required' => true),
+            'avatar_id' => array('required' => false),
         ),
     ));
 });
+
+/**
+ * Массовое получение current_avatar по user ID
+ */
+function custom_get_users_avatars($request) {
+    $ids_param = $request->get_param('ids');
+    if (empty($ids_param)) {
+        return rest_ensure_response(array());
+    }
+    $ids = array_filter(array_map('intval', explode(',', $ids_param)));
+    $result = array();
+    foreach ($ids as $uid) {
+        if ($uid <= 0) continue;
+        $av = get_user_meta($uid, 'current_avatar', true);
+        if (!empty($av) && trim($av) !== 'default') {
+            $result[(string)$uid] = trim($av);
+        }
+    }
+    return rest_ensure_response($result);
+}
 
 /**
  * Получить комментарии к посту
@@ -187,11 +262,14 @@ function custom_get_post_comments($request) {
     
     $result = array();
     foreach ($comments as $comment) {
-        $avatar_id = 'default';
-        if (!empty($comment->user_id)) {
-            $current_avatar = get_user_meta($comment->user_id, 'current_avatar', true);
-            if (!empty($current_avatar)) {
-                $avatar_id = $current_avatar;
+        $avatar_id = get_comment_meta($comment->comment_ID, 'avatar_id', true);
+        if (empty($avatar_id) || $avatar_id === 'default') {
+            $avatar_id = 'default';
+            if (!empty($comment->user_id)) {
+                $current_avatar = get_user_meta($comment->user_id, 'current_avatar', true);
+                if (!empty($current_avatar)) {
+                    $avatar_id = $current_avatar;
+                }
             }
         }
         $result[] = array(
@@ -250,13 +328,24 @@ function custom_create_comment($request) {
     }
     
     $comment = get_comment($comment_id);
-    
+    $avatar_id = isset($data['avatar_id']) && !empty(trim($data['avatar_id'])) && trim($data['avatar_id']) !== 'default'
+        ? sanitize_text_field(trim($data['avatar_id']))
+        : 'default';
+    if ($avatar_id === 'default' && !empty($user_id)) {
+        $current_avatar = get_user_meta($user_id, 'current_avatar', true);
+        if (!empty($current_avatar)) {
+            $avatar_id = $current_avatar;
+        }
+    }
+    add_comment_meta($comment_id, 'avatar_id', $avatar_id, true);
+
     return rest_ensure_response(array(
         'id' => $comment->comment_ID,
         'author' => $comment->comment_author,
         'content' => $comment->comment_content,
         'date' => $comment->comment_date,
         'userId' => $comment->user_id,
+        'avatarId' => $avatar_id,
     ));
 }
 

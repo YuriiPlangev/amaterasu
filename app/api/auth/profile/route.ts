@@ -6,7 +6,7 @@ import { serialize } from "cookie";
 const PROFILE_COOKIE = "profile";
 const MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
-/** PATCH /api/auth/profile — оновити контактні дані (зберігається в cookie) */
+/** PATCH /api/auth/profile — оновити контактні дані (cookie + WordPress user meta для аватара) */
 export async function PATCH(req: NextRequest) {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
@@ -28,6 +28,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const login = (payload.login as string) || "Unknown";
+  const userId = String(payload.sub ?? "");
   let profile: { displayName?: string; email?: string; phone?: string; avatarId?: string } = {};
   try {
     const profileCookie = cookieStore.get(PROFILE_COOKIE)?.value;
@@ -40,6 +41,29 @@ export async function PATCH(req: NextRequest) {
   if (body.email !== undefined) profile.email = String(body.email).trim();
   if (body.phone !== undefined) profile.phone = String(body.phone).trim();
   if (body.avatarId !== undefined) profile.avatarId = String(body.avatarId).trim();
+
+  // Синхронизируем аватар в WordPress user meta — чтобы его видели все (комментарии, профиль)
+  if (body.avatarId !== undefined && userId) {
+    const wpUrl = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
+    const appLogin = process.env.WP_USER_LOGIN;
+    const appPass = process.env.WP_USER_PASS;
+    if (wpUrl && appLogin && appPass) {
+      try {
+        const url = `${wpUrl.replace(/\/+$/, "")}/wp-json/wp/v2/users/${userId}`;
+        const authHeader = Buffer.from(`${appLogin}:${appPass}`).toString("base64");
+        await fetch(url, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Basic ${authHeader}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ current_avatar: profile.avatarId || "" }),
+        });
+      } catch (e) {
+        console.error("[Profile] Failed to sync avatar to WordPress:", e);
+      }
+    }
+  }
 
   const value = encodeURIComponent(JSON.stringify(profile));
   const cookie = serialize(PROFILE_COOKIE, value, {

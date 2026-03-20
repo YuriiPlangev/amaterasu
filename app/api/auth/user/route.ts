@@ -46,7 +46,7 @@ export async function GET() {
     try {
       const url = new URL(`${wpUrl.replace(/\/+$/, "")}/wp-json/wp/v2/users/${userId}`);
       url.searchParams.set("v", Date.now().toString()); 
-      url.searchParams.set("_fields", "id,availableAvatars,currentAvatar");
+      url.searchParams.set("_fields", "id,availableAvatars,currentAvatar,current_avatar");
 
       // Формируем Basic Auth из Логина и Пароля приложения
       const authHeader = Buffer.from(`${appLogin}:${appPass}`).toString("base64");
@@ -68,15 +68,19 @@ export async function GET() {
           availableAvatars = rawAvailable.map((v: any) => String(v));
         }
 
-        if (data.currentAvatar) {
-          currentAvatar = String(data.currentAvatar);
+        const rawAvatar = data.currentAvatar ?? data.current_avatar;
+        if (rawAvatar) {
+          currentAvatar = String(rawAvatar);
         }
       } else {
-         console.error("WP Response Error:", res.status); // Если будет 401, значит .env не подхватился
+        console.error("WP Response Error:", res.status);
       }
     } catch (e) {
         console.error("WP Fetch Error:", e);
     }
+  }
+  if (!currentAvatar && profile.avatarId && String(profile.avatarId).trim() !== "default") {
+    currentAvatar = String(profile.avatarId).trim();
   }
 
   // Это лог в терминале твоего компьютера (где запущен npm run dev)

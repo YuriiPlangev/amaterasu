@@ -9,6 +9,7 @@ import LogoutButton from './LogoutButton';
 import ProfileForm from '../../../components/account/ProfileForm';
 import OrderHistory from '../../../components/account/OrderHistory';
 import { avatarIdToSrc } from '../../../lib/avatars';
+import AvatarWithFallback from '../../../components/ui/AvatarWithFallback';
 
 export default async function AccountPage({ params }: { params: Promise<{ locale: string }> | { locale: string } }) {
   const cookieStore = await cookies();
@@ -44,6 +45,31 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
     // Ignore malformed profile cookie.
   }
 
+  // Берём аватар з WordPress (актуальніший за cookie)
+  const wpUrl = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
+  const appLogin = process.env.WP_USER_LOGIN;
+  const appPass = process.env.WP_USER_PASS;
+  if (wpUrl && appLogin && appPass && userId) {
+    try {
+      const wpRes = await fetch(`${wpUrl.replace(/\/+$/, '')}/wp-json/wp/v2/users/${userId}?_fields=current_avatar`, {
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${appLogin}:${appPass}`).toString('base64')}`,
+          'Cache-Control': 'no-store',
+        },
+        cache: 'no-store',
+      });
+      if (wpRes.ok) {
+        const wpData = await wpRes.json();
+        const wpAvatar = wpData?.current_avatar || wpData?.currentAvatar;
+        if (wpAvatar && typeof wpAvatar === 'string') {
+          avatarId = wpAvatar.trim();
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const avatarSrc = avatarIdToSrc(avatarId);
 
   return (
@@ -56,12 +82,8 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
                 <h1 className="text-3xl font-bold text-white mb-1">{t('profileTitle')}</h1>
                 <p className="text-white/80">{t('welcome')} {profileName}!</p>
               </div>
-              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center text-xl font-bold text-[#9C0000] overflow-hidden">
-                {avatarSrc ? (
-                  <Image src={avatarSrc} alt={profileName} width={56} height={56} className="w-full h-full object-cover" />
-                ) : (
-                  profileName.charAt(0).toUpperCase()
-                )}
+              <div className="w-14 h-14 bg-white rounded-full overflow-hidden">
+                <AvatarWithFallback src={avatarSrc} alt={profileName} fallbackChar={profileName.charAt(0).toUpperCase()} size={56} />
               </div>
             </div>
           </div>

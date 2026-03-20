@@ -309,6 +309,7 @@
     "avatar": "Avatar",
     "avatarOption": "Avatar #{number}",
     "avatarPremiumOption": "Premium avatar",
+    "avatarLaunchOption": "Launch day avatar",
     "avatarSelectedHint": "Your selected avatar will be visible in your profile and comments.",
     "buyAvatarPrompt": "This is a premium avatar. After payment it will be permanently unlocked in your collection.",
     "buyAvatarConfirmButton": "Buy avatar",
