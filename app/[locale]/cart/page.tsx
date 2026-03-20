@@ -35,7 +35,8 @@ export default function CartPage() {
     city: '',
     postcode: '',
     country: 'UA',
-    paymentMethod: 'cash_on_delivery',
+    paymentMethod: 'cash_on_delivery' as 'cash_on_delivery' | 'liqpay' | 'pickup' | 'iban' | 'card_number',
+    contactPreference: 'call' as '' | 'call' | 'tg' | 'no_call',
     notes: '',
     shippingSameAsBilling: true,
     deliveryMethod: 'nova_poshta' as 'nova_poshta' | 'ukrposhta',
@@ -247,22 +248,32 @@ export default function CartPage() {
     }
     const allVirtual = items.length > 0 && items.every((i: any) => i.virtual);
 
-    if (!allVirtual && formData.deliveryMethod === 'nova_poshta') {
-      if (!formData.novaPoshtaCityRef || !formData.novaPoshtaWarehouseRef) {
-        alert('Оберіть місто та відділення Нової Пошти');
-        return;
+    if (!allVirtual && formData.paymentMethod !== 'pickup') {
+      if (formData.deliveryMethod === 'nova_poshta') {
+        if (!formData.novaPoshtaCityRef || !formData.novaPoshtaWarehouseRef) {
+          alert('Оберіть місто та відділення Нової Пошти');
+          return;
+        }
       }
-    }
-    if (!allVirtual && formData.deliveryMethod === 'ukrposhta') {
-      if (!formData.ukrposhtaCity || !formData.ukrposhtaBranch) {
-        alert('Оберіть місто та вкажіть номер відділення Укрпошти');
-        return;
+      if (formData.deliveryMethod === 'ukrposhta') {
+        if (!formData.ukrposhtaCity || !formData.ukrposhtaBranch) {
+          alert('Оберіть місто та вкажіть номер відділення Укрпошти');
+          return;
+        }
       }
     }
     setIsSubmitting(true);
 
-    const address = allVirtual ? '' : getAddressFromDelivery();
-    const city = allVirtual ? '' : getCityFromDelivery();
+    const address = allVirtual || formData.paymentMethod === 'pickup' ? '' : getAddressFromDelivery();
+    const city = allVirtual || formData.paymentMethod === 'pickup' ? '' : getCityFromDelivery();
+
+    const contactPreferenceLabels: Record<string, string> = {
+      call: locale === 'uk' ? 'Очікую на дзвінок для уточнення деталей замовлення' : "I'm waiting for a call to clarify order details",
+      tg: locale === 'uk' ? 'Очікую на смс в Telegram від оператора' : "I'm waiting for a message in Telegram from the operator",
+      no_call: locale === 'uk' ? 'Мені не треба телефонувати — мені все подобається' : "No need to call — I'm happy with everything",
+    };
+    const contactPrefText = formData.contactPreference ? contactPreferenceLabels[formData.contactPreference] : '';
+    const notesWithPref = [formData.notes, contactPrefText].filter(Boolean).join('\n\n');
 
     try {
       const response = await fetch('/api/orders', {
@@ -282,12 +293,12 @@ export default function CartPage() {
             city,
             postcode: formData.postcode || '',
             country: formData.country,
-            notes: formData.notes,
-            deliveryMethod: allVirtual ? 'virtual' : formData.deliveryMethod,
-            novaPoshtaCity: allVirtual ? '' : formData.novaPoshtaCityName,
-            novaPoshtaWarehouse: allVirtual ? '' : formData.novaPoshtaWarehouseDesc,
-            ukrposhtaCity: allVirtual ? '' : formData.ukrposhtaCity,
-            ukrposhtaBranch: allVirtual ? '' : formData.ukrposhtaBranch,
+            notes: notesWithPref,
+            deliveryMethod: allVirtual ? 'virtual' : formData.paymentMethod === 'pickup' ? 'pickup' : formData.deliveryMethod,
+            novaPoshtaCity: (allVirtual || formData.paymentMethod === 'pickup') ? '' : formData.novaPoshtaCityName,
+            novaPoshtaWarehouse: (allVirtual || formData.paymentMethod === 'pickup') ? '' : formData.novaPoshtaWarehouseDesc,
+            ukrposhtaCity: (allVirtual || formData.paymentMethod === 'pickup') ? '' : formData.ukrposhtaCity,
+            ukrposhtaBranch: (allVirtual || formData.paymentMethod === 'pickup') ? '' : formData.ukrposhtaBranch,
           },
           shipping: allVirtual || formData.shippingSameAsBilling
             ? undefined
@@ -299,7 +310,7 @@ export default function CartPage() {
                 postcode: formData.postcode || '',
                 country: formData.country,
               },
-          paymentMethod: allVirtual ? 'card' : formData.paymentMethod,
+          paymentMethod: allVirtual ? 'liqpay' : formData.paymentMethod,
         }),
       });
 
@@ -564,7 +575,7 @@ export default function CartPage() {
                     className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
                   />
 
-                  {!allVirtual && (
+                  {!allVirtual && formData.paymentMethod !== 'pickup' && (
                     <div>
                       <label className="block text-sm font-medium text-black mb-2">{t('deliveryMethod')}</label>
                       <div className="flex gap-4">
@@ -594,7 +605,7 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  {!allVirtual && formData.deliveryMethod === 'nova_poshta' && (
+                  {!allVirtual && formData.paymentMethod !== 'pickup' && formData.deliveryMethod === 'nova_poshta' && (
                     <div className="space-y-4" ref={npDropdownRef}>
                       <div className="relative">
                         <label className="block text-sm font-medium text-black mb-1">{t('selectCity')}</label>
@@ -693,7 +704,7 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  {!allVirtual && formData.deliveryMethod === 'ukrposhta' && (
+                  {!allVirtual && formData.paymentMethod !== 'pickup' && formData.deliveryMethod === 'ukrposhta' && (
                     <div className="space-y-4" ref={ukrposhtaDropdownRef}>
                       <div className="relative">
                         <label className="block text-sm font-medium text-black mb-1">{t('selectCity')}</label>
@@ -755,21 +766,45 @@ export default function CartPage() {
                     <div>
                       <label className="block text-sm font-medium text-black mb-2">{t('paymentMethod')}</label>
                       <div className="px-4 py-2 border border-[#D8D8D8] rounded-md bg-gray-50 text-sm text-[#111111]">
-                        {t('card')}
+                        {t('liqpay')}
                       </div>
                     </div>
                   ) : (
-                    <select
-                      name="paymentMethod"
-                      value={formData.paymentMethod}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
-                    >
-                      <option value="cash_on_delivery">{t('cashOnDelivery')}</option>
-                      <option value="card">{t('card')}</option>
-                      <option value="liqpay">LiqPay (Visa/Mastercard)</option>
-                    </select>
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">{t('paymentMethod')}</label>
+                      <select
+                        name="paymentMethod"
+                        value={formData.paymentMethod}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
+                      >
+                        <option value="cash_on_delivery">{t('cashOnDelivery')}</option>
+                        <option value="liqpay">{t('liqpay')}</option>
+                        <option value="pickup">{t('pickup')}</option>
+                        <option value="iban">{t('paymentIban')}</option>
+                        <option value="card_number">{t('paymentCardNumber')}</option>
+                      </select>
+                      {(formData.paymentMethod === 'pickup' || formData.paymentMethod === 'iban' || formData.paymentMethod === 'card_number') && (
+                        <p className="mt-2 text-sm text-[#5A5A5A] bg-[#FFF7F7] border border-[#F5B7B7] rounded-lg px-3 py-2">
+                          {t('pickupMessage')}
+                        </p>
+                      )}
+                    </div>
                   )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-1">{t('contactPreference')}</label>
+                    <select
+                      name="contactPreference"
+                      value={formData.contactPreference}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 text-sm border border-[#D8D8D8] rounded-lg bg-white focus:outline-none focus:border-[#9C0000] focus:ring-1 focus:ring-[#9C0000]/20 transition-colors cursor-pointer"
+                    >
+                      <option value="call">{t('contactPreferenceCallShort')}</option>
+                      <option value="tg">{t('contactPreferenceTgShort')}</option>
+                      <option value="no_call">{t('contactPreferenceNoCallShort')}</option>
+                    </select>
+                  </div>
                   
                   <textarea
                     name="notes"

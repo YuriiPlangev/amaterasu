@@ -51,18 +51,18 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
     const products = Array.isArray(data?.products) ? data.products : Array.isArray(data) ? data : [];
     const total = Number(data?.total ?? products.length);
-    const pageNum = Math.max(1, Number(data?.page ?? page));
-    const perPageNum = Math.max(1, Number(data?.perPage ?? data?.per_page ?? perPage));
-    const totalPages = Math.ceil(total / perPageNum) || 1;
-    const hasMore = pageNum < totalPages;
+    const wpPage = Math.max(1, Number(data?.page ?? page));
+    const wpPerPage = Math.max(1, Number(data?.perPage ?? data?.per_page ?? perPage));
+    const totalPages = Math.ceil(total / wpPerPage) || 1;
+    const hasMore = wpPage < totalPages;
 
     return NextResponse.json(
       {
         ...data,
         products,
         total,
-        page: pageNum,
-        perPage: perPageNum,
+        page: wpPage,
+        perPage: wpPerPage,
         totalPages,
         hasMore,
       },

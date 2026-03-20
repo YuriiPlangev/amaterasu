@@ -59,7 +59,7 @@ export default function Header() {
         {/* Контент хедера */}
         <div className='flex items-center justify-between gap-4 pt-3 md:pt-[clamp(10px,1.6vw,22px)] relative z-20'>
           <Logo />
-          <nav className='hidden md:flex flex-1 justify-center' aria-label={tA11y('mainNav')}>
+          <nav className='hidden xl:flex flex-1 justify-center' aria-label={tA11y('mainNav')}>
             <ul className='flex gap-[clamp(10px,1.8vw,32px)] text-[clamp(12px,1.05vw,17px)] font-medium whitespace-nowrap'>
               {navLinks.map((link) => (
                 <li key={link.href}>
@@ -101,13 +101,13 @@ export default function Header() {
               <Image src='/svg/profile.svg' alt='profile' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)] transition-opacity duration-200 group-hover:opacity-80' />
             </Link>
             
-            <div className='hidden md:flex gap-2' role="group" aria-label={tA11y('languageGroup')}>
+            <div className='hidden xl:flex gap-2' role="group" aria-label={tA11y('languageGroup')}>
               <button onClick={() => switchLocale('uk')} className={`px-2 py-1 text-[clamp(12px,1vw,14px)] ${locale === 'uk' ? 'text-white font-bold' : 'text-gray-400'}`} aria-label={tA11y('languageUk')} aria-current={locale === 'uk' ? 'true' : undefined}>UA</button>
               <span className='text-white' aria-hidden="true">|</span>
               <button onClick={() => switchLocale('en')} className={`px-2 py-1 text-[clamp(12px,1vw,14px)] ${locale === 'en' ? 'text-white font-bold' : 'text-gray-400'}`} aria-label={tA11y('languageEn')} aria-current={locale === 'en' ? 'true' : undefined}>EN</button>
             </div>
 
-            <button type='button' onClick={() => setIsMobileMenuOpen((prev) => !prev)} className='md:hidden flex items-center justify-center w-10 h-10' aria-label={isMobileMenuOpen ? tA11y('closeMenu') : tA11y('openMenu')} aria-expanded={isMobileMenuOpen}>
+            <button type='button' onClick={() => setIsMobileMenuOpen((prev) => !prev)} className='xl:hidden flex items-center justify-center w-10 h-10' aria-label={isMobileMenuOpen ? tA11y('closeMenu') : tA11y('openMenu')} aria-expanded={isMobileMenuOpen}>
                {isMobileMenuOpen ? (
                 <svg className='w-6 h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path d='M6 18L18 6M6 6l12 12' /></svg>
                ) : (
@@ -131,11 +131,11 @@ export default function Header() {
       {isMobileMenuOpen && (
         <>
           <div
-            className='fixed inset-0 bg-black/50 z-40 md:hidden'
+            className='fixed inset-0 bg-black/50 z-40 xl:hidden'
             onClick={() => setIsMobileMenuOpen(false)}
             aria-hidden='true'
           />
-          <div className='fixed top-0 right-0 h-full w-[280px] max-w-[85vw] bg-[#1C1C1C] z-50 flex flex-col md:hidden'>
+          <div className='fixed top-0 right-0 h-full w-[280px] max-w-[85vw] bg-[#1C1C1C] z-50 flex flex-col xl:hidden'>
             <div className='flex items-center justify-between px-6 pt-6 pb-4'>
               <span className='text-white font-medium uppercase tracking-wide'>{t('menu')}</span>
               <button

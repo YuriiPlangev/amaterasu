@@ -34,10 +34,10 @@ const BestSellers = () => {
   }
 
   return (
-    <section className='w-full relative overflow-visible bg-white'>
-      <div className='max-w-[1920px] w-full mx-auto site-padding-x'>
+    <section className='w-full relative overflow-x-hidden overflow-y-visible bg-white'>
+      <div className='max-w-[1920px] w-full mx-auto site-padding-x overflow-x-hidden'>
         <h2 className='text-[clamp(22px,2.2vw,55px)] font-bold uppercase text-black py-6 md:py-[clamp(20px,2.2vw,56px)]'>Хіти продажів</h2>
-        <div className='relative overflow-visible'>
+        <div className='relative overflow-x-hidden overflow-y-visible'>
           <button 
             className="swiper-button-prev-custom absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer border border-[#1C1C1C] rounded-full p-2.5 shadow-md bg-white hidden md:flex items-center justify-center -left-[60px]"
             aria-label={t('scrollLeft')}

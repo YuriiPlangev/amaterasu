@@ -82,15 +82,18 @@ textarea:focus-visible {
   align-items: center !important;
 }
 
-/* Best Sellers: overflow visible + padding для теней при hover */
+/* Best Sellers: overflow-x hidden (no horizontal scroll), overflow-y visible для теней при hover */
 .best-sellers-swiper {
-  overflow: visible !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
 }
 .best-sellers-swiper .swiper-wrapper {
-  overflow: visible !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
 }
 .best-sellers-swiper .swiper-slide {
-  overflow: visible !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
   padding-bottom: 32px;
 }
 

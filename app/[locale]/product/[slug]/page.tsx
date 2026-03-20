@@ -418,22 +418,22 @@ export default async function ProductPage({
       <div className="max-w-[1920px] w-full mx-auto site-padding-x py-6 md:py-8 pt-20 md:pt-24 mt-12">
         <JsonLdProduct product={product} locale={locale} />
         <JsonLdBreadcrumb items={breadcrumbItems} locale={locale} />
-        <nav className="text-sm text-[#9C9C9C] mb-4 md:mb-6 flex items-center flex-wrap gap-1">
+        <nav className="text-sm text-[#9C9C9C] mb-4 md:mb-6 flex items-center flex-wrap gap-1 overflow-x-hidden">
           {breadcrumbItems.map((item, index) => (
-            <div key={index} className="flex items-center gap-1.5">
+            <div key={index} className="flex items-center gap-1.5 min-w-0 max-w-full">
               {index > 0 && <span className="text-[#9C9C9C] flex-shrink-0">›</span>}
               {item.path ? (
-                <Link href={`/${locale}${item.path}`} className="hover:text-[#1C1C1C] truncate">
+                <Link href={`/${locale}${item.path}`} className="hover:text-[#1C1C1C] truncate min-w-0">
                   {item.name}
                 </Link>
               ) : (
-                <span className="text-[#1C1C1C] truncate">{item.name}</span>
+                <span className="text-[#1C1C1C] truncate min-w-0 block" title={item.name}>{item.name}</span>
               )}
             </div>
           ))}
         </nav>
 
-        <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-6 lg:gap-8 items-start">
+        <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-6 lg:gap-8 lg:items-stretch">
           <ProductGallery
             product={product}
             name={product?.name}

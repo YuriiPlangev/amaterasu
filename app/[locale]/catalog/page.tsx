@@ -638,9 +638,9 @@ export default function CatalogPage() {
         </div>
       ) : (
         <>
-      {/* Top: логотипи тайтлів + стрілки по краях каруселі */}
+      {/* Top: логотипи тайтлів + стрілки; на max-[500px] стрілки під картинками */}
       <div className="mb-6">
-        <div className="relative overflow-visible min-w-0 w-full">
+        <div className="relative w-full min-w-0">
           <Swiper
             slidesPerView={2}
             spaceBetween={12}
@@ -679,21 +679,23 @@ export default function CatalogPage() {
             ))}
           </Swiper>
 
-          {/* Стрілки по краях видимої області слайдера; на мобільному ближче, щоб не виходили за екран */}
-          <button
-            type="button"
-            className="logo-slider-prev absolute left-1 sm:-left-4 md:-left-6 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
-            aria-label={t('scrollLeft')}
-          >
-            <Image src="/svg/arrow-left.svg" alt="" width={24} height={24} />
-          </button>
-          <button
-            type="button"
-            className="logo-slider-next absolute right-1 sm:-right-4 md:-right-6 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition"
-            aria-label={t('scrollRight')}
-          >
-            <Image src="/svg/arrow-right.svg" alt="" width={24} height={24} />
-          </button>
+          {/* Стрілки: max-[500px] — під слайдером по центру; 501px+ — по краях */}
+          <div className="flex flex-row justify-between items-center py-3 max-[500px]:flex min-[501px]:absolute min-[501px]:inset-0 min-[501px]:pointer-events-none min-[501px]:flex-row min-[501px]:items-center min-[501px]:justify-between min-[501px]:px-2 min-[501px]:py-0">
+            <button
+              type="button"
+              className="logo-slider-prev w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition shrink-0 min-[501px]:pointer-events-auto min-[501px]:absolute min-[501px]:left-1 sm:-left-4 md:-left-6 min-[501px]:top-1/2 min-[501px]:-translate-y-1/2"
+              aria-label={t('scrollLeft')}
+            >
+              <Image src="/svg/arrow-left.svg" alt="" width={24} height={24} />
+            </button>
+            <button
+              type="button"
+              className="logo-slider-next w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md hover:bg-[#f5f5f5] transition shrink-0 min-[501px]:pointer-events-auto min-[501px]:absolute min-[501px]:right-1 sm:-right-4 md:-right-6 min-[501px]:top-1/2 min-[501px]:-translate-y-1/2"
+              aria-label={t('scrollRight')}
+            >
+              <Image src="/svg/arrow-right.svg" alt="" width={24} height={24} />
+            </button>
+          </div>
         </div>
       </div>
       
@@ -715,9 +717,9 @@ export default function CatalogPage() {
         {/* Content */}
         <section>
           <header className="mb-6 flex flex-col gap-3 md:gap-4 w-full">
-            {/* Search + desktop sort в один ряд */}
-            <div className="w-full flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
-              <div className="w-full md:flex-1">
+            {/* Search + sort: до xl в колонку (під пошук), з xl — в один ряд */}
+            <div className="w-full flex flex-col xl:flex-row xl:items-center gap-3 md:gap-4">
+              <div className="w-full xl:flex-1">
                 <CatalogSearch
                   placeholder={t('searchPlaceholder')}
                   value={searchInput}
@@ -726,7 +728,7 @@ export default function CatalogPage() {
                 />
               </div>
 
-              {/* Desktop: сортировка справа от інпуту */}
+              {/* Desktop: сортировка справа від пошуку (xl+), інакше під пошуком */}
               <div className="hidden md:flex items-center gap-3 shrink-0">
                 <label className="">{t('sortBy')}</label>
                 <SortDropdown
@@ -836,7 +838,7 @@ export default function CatalogPage() {
                         className={`w-full ${newProductIds.has(product.id) ? 'new-product-animate' : ''}`}
                         style={newProductIds.has(product.id) ? { animationDelay: `${(index % perPage) * 0.05}s` } : {}}
                       >
-                        <ProductCard product={product} />
+                        <ProductCard product={product} variant="catalog" />
                       </div>
                     ))}
                   </section>
