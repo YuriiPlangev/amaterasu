@@ -12,14 +12,11 @@ type WooListResponse<T> = {
   totalPages: number;
 };
 
-type AttrInfo = {
-  id: number;
-  slug: string;
-};
-
-type AttrRequest = {
-  key: "title" | "character" | "genre" | "game";
-  values: string[];
+const ATTR_TO_TAXONOMY: Record<string, string> = {
+  title: "pa_title",
+  character: "pa_character",
+  genre: "pa_genre",
+  game: "pa_game",
 };
 
 function clampPerPage(value: unknown): number {
@@ -44,37 +41,12 @@ function readMetaValue(metaData: any[] | undefined, key: string): unknown {
   return entry?.value;
 }
 
-function parseStringList(value: string | undefined): string[] {
+function parseIdList(value: string | undefined): number[] {
   if (!value) return [];
   return value
     .split(",")
-    .map((v) => {
-      try {
-        return decodeURIComponent(v).trim();
-      } catch {
-        return v.trim();
-      }
-    })
-    .filter(Boolean);
-}
-
-function normalizeText(value: unknown): string {
-  return String(value || "").trim().toLowerCase();
-}
-
-function toWooTaxonomy(slug: string): string {
-  const normalized = normalizeText(slug);
-  if (!normalized) return "";
-  return normalized.startsWith("pa_") ? normalized : `pa_${normalized}`;
-}
-
-function getAttributeParamCandidates(value: string): string[] {
-  const normalized = normalizeText(value);
-  if (!normalized) return [];
-  if (normalized.startsWith("pa_")) {
-    return Array.from(new Set([normalized, normalized.slice(3)]));
-  }
-  return Array.from(new Set([normalized, toWooTaxonomy(normalized)]));
+    .map((v) => Number(String(v).trim()))
+    .filter((n) => Number.isInteger(n) && n > 0);
 }
 
 async function wooList<T = any>(
@@ -174,205 +146,6 @@ async function wpAcfByProductIds(productIds: number[]): Promise<Map<number, any>
   return map;
 }
 
-const slugToCategoryIdCache = new Map<string, { id: number | null; expiresAt: number }>();
-const slugToTagIdCache = new Map<string, { id: number | null; expiresAt: number }>();
-const attrInfoCache = new Map<string, { info: AttrInfo | null; expiresAt: number }>();
-const attrTermsCache = new Map<string, { terms: any[]; expiresAt: number }>();
-const CACHE_TTL_MS = REVALIDATE_SECONDS * 1000;
-
-async function resolveCategoryIdBySlug(slug: string): Promise<number | null> {
-  const key = normalizeText(slug);
-  const cached = slugToCategoryIdCache.get(key);
-  const now = Date.now();
-  if (cached && cached.expiresAt > now) return cached.id;
-
-  const result = await wooList<any>("products/categories", { slug: key, per_page: 1 });
-  const id = result.data[0]?.id ? Number(result.data[0].id) : null;
-  slugToCategoryIdCache.set(key, { id, expiresAt: now + CACHE_TTL_MS });
-  return id;
-}
-
-async function resolveTagIdBySlug(slug: string): Promise<number | null> {
-  const key = normalizeText(slug);
-  const cached = slugToTagIdCache.get(key);
-  const now = Date.now();
-  if (cached && cached.expiresAt > now) return cached.id;
-
-  const result = await wooList<any>("products/tags", { slug: key, per_page: 1 });
-  const id = result.data[0]?.id ? Number(result.data[0].id) : null;
-  slugToTagIdCache.set(key, { id, expiresAt: now + CACHE_TTL_MS });
-  return id;
-}
-
-function attrAliases(key: AttrRequest["key"]): string[] {
-  if (key === "title") return ["pa_title", "title"];
-  if (key === "character") return ["pa_character", "character"];
-  if (key === "genre") return ["pa_genre", "genre"];
-  return ["pa_game", "game", "pa_games", "games"];
-}
-
-async function getAttrInfo(key: AttrRequest["key"]): Promise<AttrInfo | null> {
-  const cacheKey = `attr:${key}`;
-  const cached = attrInfoCache.get(cacheKey);
-  const now = Date.now();
-  if (cached && cached.expiresAt > now) return cached.info;
-
-  const attrs = await wooList<any>("products/attributes", { per_page: 100 });
-  const aliases = attrAliases(key);
-  const found = attrs.data.find((a: any) => aliases.includes(normalizeText(a?.slug)));
-
-  const info = found
-    ? {
-        id: Number(found.id),
-        slug: String(found.slug || "").trim(),
-      }
-    : null;
-
-  attrInfoCache.set(cacheKey, { info, expiresAt: now + CACHE_TTL_MS });
-  return info;
-}
-
-async function getAttrTerms(attrId: number): Promise<any[]> {
-  const cacheKey = `terms:${attrId}`;
-  const cached = attrTermsCache.get(cacheKey);
-  const now = Date.now();
-  if (cached && cached.expiresAt > now) return cached.terms;
-
-  const terms = await wooList<any>(`products/attributes/${attrId}/terms`, {
-    per_page: 100,
-    page: 1,
-  });
-
-  attrTermsCache.set(cacheKey, { terms: terms.data, expiresAt: now + CACHE_TTL_MS });
-  return terms.data;
-}
-
-function splitRequestedTermValues(values: string[]): { ids: number[]; names: string[] } {
-  const ids: number[] = [];
-  const names: string[] = [];
-
-  for (const value of values) {
-    const normalized = String(value || "").trim();
-    if (!normalized) continue;
-
-    const parsed = Number(normalized);
-    if (Number.isInteger(parsed) && parsed > 0) {
-      ids.push(parsed);
-      continue;
-    }
-
-    names.push(normalized);
-  }
-
-  return {
-    ids: Array.from(new Set(ids)),
-    names,
-  };
-}
-
-async function resolveAttrTermIds(req: AttrRequest): Promise<{ taxonomy: string; termIds: number[] } | null> {
-  const info = await getAttrInfo(req.key);
-  if (!info) return null;
-
-  const requested = splitRequestedTermValues(req.values);
-  if (requested.names.length === 0 && requested.ids.length > 0) {
-    return {
-      taxonomy: info.slug,
-      termIds: requested.ids,
-    };
-  }
-
-  const terms = await getAttrTerms(info.id);
-  const wanted = requested.names.map(normalizeText);
-
-  const ids = terms
-    .filter((term: any) => {
-      const termName = normalizeText(term?.name);
-      const termSlug = normalizeText(term?.slug);
-      return wanted.some((w) => w === termName || w === termSlug || termName.includes(w));
-    })
-    .map((term: any) => Number(term?.id))
-    .filter((id: number) => Number.isFinite(id));
-
-  if (!ids.length) return null;
-
-  return {
-    taxonomy: info.slug,
-    termIds: Array.from(new Set([...requested.ids, ...ids])),
-  };
-}
-
-function productHasAnyAttrValue(product: any, expectedValues: string[]): boolean {
-  const normalizedExpected = expectedValues.map(normalizeText);
-  const attrs = Array.isArray(product?.attributes) ? product.attributes : [];
-
-  for (const attr of attrs) {
-    const options = Array.isArray(attr?.options)
-      ? attr.options
-      : attr?.option
-      ? [attr.option]
-      : [];
-
-    const optionNorm = options.map(normalizeText);
-    if (normalizedExpected.some((w) => optionNorm.includes(w))) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-async function resolveAttrRequestLabels(req: AttrRequest): Promise<string[]> {
-  const requested = splitRequestedTermValues(req.values);
-  if (requested.ids.length === 0) {
-    return requested.names;
-  }
-
-  const info = await getAttrInfo(req.key);
-  if (!info) {
-    return requested.names;
-  }
-
-  const terms = await getAttrTerms(info.id);
-  const labelsFromIds = terms
-    .filter((term: any) => requested.ids.includes(Number(term?.id)))
-    .map((term: any) => String(term?.name || term?.slug || "").trim())
-    .filter(Boolean);
-
-  return Array.from(new Set([...requested.names, ...labelsFromIds]));
-}
-
-async function fetchByPrimaryAttribute(
-  wcParams: Record<string, string | number | undefined>,
-  resolved: { taxonomy: string; termIds: number[] },
-  isBestseller: boolean
-): Promise<WooListResponse<any>> {
-  const attrCandidates = getAttributeParamCandidates(resolved.taxonomy);
-
-  for (const attrName of attrCandidates) {
-    const params = {
-      ...wcParams,
-      attribute: attrName,
-      attribute_term: resolved.termIds.join(","),
-    };
-    const result = isBestseller
-      ? await fetchBestsellersPage(params)
-      : await wooList<any>("products", params);
-
-    if (result.total > 0 || result.data.length > 0) {
-      return result;
-    }
-  }
-
-  return { data: [], total: 0, totalPages: 0 };
-}
-
-async function fetchBestsellersPage(
-  wcParams: Record<string, string | number | undefined>
-): Promise<WooListResponse<any>> {
-  return wooList<any>("products", { ...wcParams, featured: "true" });
-}
-
 function minimizeProductPayload(product: any, acf: any) {
   const deliveryStatus =
     toBooleanFlag(acf?.delivery_status) ||
@@ -426,14 +199,10 @@ export async function GET(req: Request) {
     };
 
     const slug = (params.get("slug") || "").trim();
-    if (slug) {
-      wcParams.slug = slug;
-    }
+    if (slug) wcParams.slug = slug;
 
     const sku = (params.get("sku") || "").trim();
-    if (sku) {
-      wcParams.sku = sku;
-    }
+    if (sku) wcParams.sku = sku;
 
     const sort = params.get("sort") || "date";
     if (sort === "price_asc") {
@@ -452,91 +221,69 @@ export async function GET(req: Request) {
     if (priceMin) wcParams.min_price = priceMin;
     if (priceMax) wcParams.max_price = priceMax;
 
-    const categories = parseStringList(params.get("categories") || params.get("category") || undefined)
-      .map((v) => Number(v))
-      .filter((n) => Number.isFinite(n));
-
+    // Категории: category_id или categories — сразу числовые ID
+    const categoryId = params.get("category_id");
+    const categories = categoryId
+      ? [Number(categoryId)]
+      : parseIdList(params.get("categories") || params.get("category") || undefined);
     if (categories.length > 0) {
       wcParams.category = categories.join(",");
-    } else {
-      const categorySlug = params.get("category_slug");
-      if (categorySlug) {
-        const categoryId = await resolveCategoryIdBySlug(categorySlug);
-        if (categoryId) wcParams.category = categoryId;
-      }
     }
 
-    const tagParam = params.get("tag");
-    if (tagParam && Number.isFinite(Number(tagParam))) {
-      wcParams.tag = Number(tagParam);
-    } else {
-      const tagSlug = params.get("tag_slug");
-      if (tagSlug) {
-        const tagId = await resolveTagIdBySlug(tagSlug);
-        if (tagId) wcParams.tag = tagId;
-      }
+    // Тег: только числовой ID
+    const tagId = params.get("tag");
+    if (tagId && Number.isFinite(Number(tagId))) {
+      wcParams.tag = Number(tagId);
     }
 
-    const attrRequests = ([
-      { key: "title" as const, values: parseStringList(params.get("attribute_title") || undefined) },
-      { key: "character" as const, values: parseStringList(params.get("attribute_character") || undefined) },
-      { key: "genre" as const, values: parseStringList(params.get("attribute_genre") || undefined) },
-      { key: "game" as const, values: parseStringList(params.get("attribute_games") || undefined) },
-    ] satisfies AttrRequest[]).filter((x) => x.values.length > 0);
+    // Атрибуты: ожидаем числовые ID, маппим напрямую в pa_* и attribute_term
+    const attrConfig = [
+      { param: "attribute_title", taxonomy: ATTR_TO_TAXONOMY.title },
+      { param: "attribute_character", taxonomy: ATTR_TO_TAXONOMY.character },
+      { param: "attribute_genre", taxonomy: ATTR_TO_TAXONOMY.genre },
+      { param: "attribute_games", taxonomy: ATTR_TO_TAXONOMY.game },
+    ] as const;
+
+    const firstAttrWithIds = attrConfig.find((c) => {
+      const ids = parseIdList(params.get(c.param) || undefined);
+      return ids.length > 0;
+    });
+
+    if (firstAttrWithIds) {
+      const ids = parseIdList(params.get(firstAttrWithIds.param) || undefined);
+      wcParams.attribute = firstAttrWithIds.taxonomy;
+      wcParams.attribute_term = ids.join(",");
+    }
 
     const isBestseller = params.get("bestseller") === "true";
-    let list: WooListResponse<any>;
-
     const wooStart = performance.now();
-    if (attrRequests.length > 0) {
-      const primaryResolved = await resolveAttrTermIds(attrRequests[0]);
-      if (!primaryResolved) {
-        list = { data: [], total: 0, totalPages: 0 };
-      } else {
-        list = await fetchByPrimaryAttribute(wcParams, primaryResolved, isBestseller);
-      }
-    } else {
-      list = isBestseller
-        ? await fetchBestsellersPage(wcParams)
-        : await wooList<any>("products", wcParams);
-    }
+
+    const list = isBestseller
+      ? await wooList<any>("products", { ...wcParams, featured: "true" })
+      : await wooList<any>("products", wcParams);
+
     const wooTimeMs = Math.round(performance.now() - wooStart);
-
-    let pageProducts = list.data;
-
-    // Fast refinement for additional attributes on already paginated products.
-    if (attrRequests.length > 1 && pageProducts.length > 0) {
-      const remaining = attrRequests.slice(1);
-      const remainingResolved = await Promise.all(
-        remaining.map(async (req) => ({
-          values: await resolveAttrRequestLabels(req),
-        }))
-      );
-
-      pageProducts = pageProducts.filter((product: any) =>
-        remainingResolved.every(({ values }) => productHasAnyAttrValue(product, values))
-      );
-    }
+    const pageProducts = list.data;
 
     const productIds = pageProducts
       .map((p: any) => Number(p?.id))
       .filter((id: number) => Number.isFinite(id));
 
-    // Для списка каталога пропускаем ACF — delivery_status не нужен в карточках, экономим 1 HTTP-запрос
     const isListRequest = !slug && !sku;
     const acfById = isListRequest ? new Map<number, any>() : await wpAcfByProductIds(productIds);
 
+    let finalProducts = pageProducts;
     if (isBestseller) {
-      pageProducts = pageProducts.filter((product: any) => toBooleanFlag(product?.featured));
+      finalProducts = pageProducts.filter((product: any) => toBooleanFlag(product?.featured));
     }
 
-    const products = pageProducts.map((product: any) =>
+    const products = finalProducts.map((product: any) =>
       minimizeProductPayload(product, acfById.get(Number(product?.id)) || {})
     );
 
     const responseHeaders: Record<string, string> = {
       "Content-Type": "application/json",
-      "Cache-Control": "public, s-maxage=600, stale-while-revalidate=600",
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=3600",
       "Server-Timing": `woo;dur=${wooTimeMs};desc="WooCommerce fetch"`,
       "X-WooCommerce-Ms": String(wooTimeMs),
     };

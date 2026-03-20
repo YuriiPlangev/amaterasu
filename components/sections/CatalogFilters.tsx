@@ -167,23 +167,8 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
   const [isLoading, setIsLoading] = useState(!options);
 
   useEffect(() => {
-    setData(options);
+    setData(options ?? null);
     setIsLoading(!options);
-  }, [options]);
-
-  useEffect(() => {
-    if (options) return;
-    let cancelled = false;
-    setIsLoading(true);
-    fetch('/api/catalog/filters')
-      .then((r) => r.json())
-      .then((d) => {
-        if (!cancelled) setData(d);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-    return () => { cancelled = true; };
   }, [options]);
 
   const update = (patch: Partial<CatalogFilterState>) => {

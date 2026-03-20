@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useProducts } from '../../../hooks/useProducts';
+import { useCatalogMetadata } from '../../../hooks/useCatalogMetadata';
 import ProductCard from '../../../components/ProductCard';
 import CatalogSearch from '../../../components/ui/CatalogSearch';
 import Image from 'next/image';
@@ -179,14 +180,6 @@ function buildIdToLabelMap(options: Array<{ id: number; label: string }> | undef
   return map;
 }
 
-function buildLabelToIdMap(options: Array<{ id: number; label: string }> | undefined) {
-  const map = new Map<string, number>();
-  for (const option of options ?? []) {
-    map.set(normalizeFilterLabel(option.label), option.id);
-  }
-  return map;
-}
-
 function resolveLegacyAttrIds(rawValue: string | null, labelToId: Map<string, number>): number[] {
   if (!rawValue || labelToId.size === 0) return [];
 
@@ -281,10 +274,6 @@ export default function CatalogPage() {
   );
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const [categoryNames, setCategoryNames] = useState<Record<number, string>>({});
-  const [categorySlugs, setCategorySlugs] = useState<Record<number, string>>({});
-  const [customCategoryIds, setCustomCategoryIds] = useState<number[]>([]);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [newProductIds, setNewProductIds] = useState<Set<number>>(new Set());
@@ -298,20 +287,18 @@ export default function CatalogPage() {
     return () => mq.removeEventListener('change', update);
   }, []);
 
-  const titleIdToLabel = useMemo(() => {
-    return buildIdToLabelMap(filterOptions?.titles);
-  }, [filterOptions]);
+  const {
+    metadata: filterOptions,
+    titleLabelToId,
+    characterLabelToId,
+    genreLabelToId,
+    gameLabelToId,
+  } = useCatalogMetadata();
 
-  const titleLabelToId = useMemo(() => {
-    return buildLabelToIdMap(filterOptions?.titles);
-  }, [filterOptions]);
-
+  const titleIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.titles), [filterOptions]);
   const characterIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.characters), [filterOptions]);
-  const characterLabelToId = useMemo(() => buildLabelToIdMap(filterOptions?.characters), [filterOptions]);
   const genreIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.genres), [filterOptions]);
-  const genreLabelToId = useMemo(() => buildLabelToIdMap(filterOptions?.genres), [filterOptions]);
   const gameIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.games), [filterOptions]);
-  const gameLabelToId = useMemo(() => buildLabelToIdMap(filterOptions?.games), [filterOptions]);
 
   // Sync state → URL so filters survive page refresh
   useEffect(() => {
@@ -332,27 +319,29 @@ export default function CatalogPage() {
     router.replace(`?${params.toString()}`, { scroll: false });
   }, [filterState, searchApplied, sortBy]);
 
-  useEffect(() => {
-    fetch('/api/catalog/filters')
-      .then((r) => r.json())
-      .then((d) => {
-        setFilterOptions(d);
-        const map: Record<number, string> = {};
-        const slugMap: Record<number, string> = {};
-        for (const c of d?.categories ?? []) {
-          if (c?.id != null) {
-            map[c.id] = c.name || '';
-            slugMap[c.id] = c.slug || '';
-          }
-        }
-        setCategoryNames(map);
-        setCategorySlugs(slugMap);
-        setCustomCategoryIds((d?.customProductionCategories ?? [])
-          .map((c: any) => Number(c?.id))
-          .filter((id: number) => Number.isFinite(id)));
-      })
-      .catch(() => {});
-  }, []);
+  const categoryNames = useMemo(() => {
+    const map: Record<number, string> = {};
+    for (const c of filterOptions?.categories ?? []) {
+      if (c?.id != null) map[c.id] = c.name || '';
+    }
+    return map;
+  }, [filterOptions?.categories]);
+
+  const categorySlugs = useMemo(() => {
+    const map: Record<number, string> = {};
+    for (const c of filterOptions?.categories ?? []) {
+      if (c?.id != null) map[c.id] = c.slug || '';
+    }
+    return map;
+  }, [filterOptions?.categories]);
+
+  const customCategoryIds = useMemo(
+    () =>
+      (filterOptions?.customProductionCategories ?? [])
+        .map((c) => Number(c?.id))
+        .filter((id) => Number.isFinite(id)),
+    [filterOptions?.customProductionCategories]
+  );
 
   useEffect(() => {
     const nextTitles = resolveLegacyAttrIds(searchParams.get('attribute_title'), titleLabelToId);
