@@ -1,5 +1,8 @@
+import { NextRequest } from "next/server";
 import { decodeHtmlEntities } from "../../../lib/html";
 import { woo } from "../../../lib/woo";
+
+export const dynamic = "force-dynamic";
 
 const WP_URL = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
 const WC_KEY = process.env.WC_KEY;
@@ -182,10 +185,9 @@ function minimizeProductPayload(product: any, acf: any) {
   };
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const requestUrl = new URL(req.url);
-    const params = requestUrl.searchParams;
+    const params = req.nextUrl.searchParams;
 
     const page = Math.max(1, Number(params.get("page") || 1));
     const perPage = clampPerPage(params.get("per_page") || 20);
