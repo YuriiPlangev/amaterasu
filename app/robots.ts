@@ -2,13 +2,13 @@ import type { MetadataRoute } from 'next';
 import { getBaseUrl } from '../lib/seo';
 
 export default function robots(): MetadataRoute.Robots {
-  const base = getBaseUrl();
+  const base = getBaseUrl().replace(/\/+$/, '');
   return {
     rules: [
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/auth/', '/account', '/cart', '/checkout', '/my-account'],
+        disallow: ['/api/', '/auth/', '/account', '/cart', '/checkout', '/my-account', '/favorites'],
       },
     ],
     sitemap: `${base}/sitemap.xml`,
