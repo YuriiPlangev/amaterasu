@@ -32,7 +32,6 @@ export default function Header() {
     const pathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
     const newPathname = `/${newLocale}${pathWithoutLocale}`;
     router.push(newPathname);
-    router.refresh();
   };
 
   const basePath = `/${locale}`;

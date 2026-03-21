@@ -38,19 +38,22 @@ const BestSellers = () => {
       <div className='max-w-[1920px] w-full mx-auto site-padding-x overflow-x-hidden'>
         <h2 className='text-[clamp(22px,2.2vw,55px)] font-bold uppercase text-black py-6 md:py-[clamp(20px,2.2vw,56px)]'>Хіти продажів</h2>
         <div className='relative overflow-x-hidden overflow-y-visible'>
-          <button 
-            className="swiper-button-prev-custom absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer border border-[#1C1C1C] rounded-full p-2.5 shadow-md bg-white hidden md:flex items-center justify-center -left-[60px]"
-            aria-label={t('scrollLeft')}
-          >
-            <Image src='/svg/arrow-left.svg' alt="" width={24} height={24} />
-          </button>
-
-          <button 
-            className="swiper-button-next-custom absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer border border-[#1C1C1C] rounded-full p-2.5 shadow-md bg-white hidden md:flex items-center justify-center -right-[60px]"
-            aria-label={t('scrollRight')}
-          >
-            <Image src='/svg/arrow-right.svg' alt="" width={24} height={24} />
-          </button>
+          {products && products.length > 4 && (
+            <>
+              <button
+                className="swiper-button-prev-custom absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer border border-[#1C1C1C] rounded-full p-2.5 shadow-md bg-white hidden md:flex items-center justify-center -left-[60px]"
+                aria-label={t('scrollLeft')}
+              >
+                <Image src='/svg/arrow-left.svg' alt="" width={24} height={24} />
+              </button>
+              <button
+                className="swiper-button-next-custom absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer border border-[#1C1C1C] rounded-full p-2.5 shadow-md bg-white hidden md:flex items-center justify-center -right-[60px]"
+                aria-label={t('scrollRight')}
+              >
+                <Image src='/svg/arrow-right.svg' alt="" width={24} height={24} />
+              </button>
+            </>
+          )}
 
           {products && products.length > 0 ? (
             <Swiper
@@ -62,12 +65,12 @@ const BestSellers = () => {
                 768: { slidesPerView: 2, spaceBetween: 12 },
                 0: { slidesPerView: 2, spaceBetween: 12 }
               }}
-              loop={true}
-              navigation={{
-                nextEl: ".swiper-button-next-custom",
-                prevEl: ".swiper-button-prev-custom",
-              }}
+              loop={products.length > 4}
+              navigation={products.length > 4 ? { nextEl: ".swiper-button-next-custom", prevEl: ".swiper-button-prev-custom" } : false}
               modules={[Navigation]}
+              grabCursor={true}
+              allowTouchMove={true}
+              passiveListeners={false}
               className="best-sellers-swiper pb-12"
             >
               {products.map((product: any) => (

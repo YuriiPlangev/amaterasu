@@ -6,6 +6,10 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 const nextConfig = {
   reactStrictMode: true,
   trailingSlash: false,
+  experimental: {
+    // Зменшує агресивне кешування/повторні RSC-запити при навігації
+    optimisticClientCache: false,
+  },
   env: {
     _next_intl_trailing_slash: 'false',
   },

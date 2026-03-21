@@ -1,7 +1,6 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCartStore } from '../store/cartStore';
@@ -97,7 +96,7 @@ export default function ProductCard({ product, variant = 'default' }: { product:
 
       {variant === 'catalog' ? (
         <>
-          <Link href={productHref} prefetch={false} className="order-1 w-full flex-shrink-0" onClick={handleProductClick}>
+          <a href={productHref} className="order-1 w-full flex-shrink-0" onClick={handleProductClick}>
             <div className="relative w-full aspect-square rounded-lg overflow-hidden">
               <Image
                 src={getProxiedImageUrl(product?.images?.[0]?.src)}
@@ -107,7 +106,7 @@ export default function ProductCard({ product, variant = 'default' }: { product:
                 className="object-contain"
               />
             </div>
-          </Link>
+          </a>
           <div className="order-2 md:order-3 flex justify-between items-center w-full gap-3" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
@@ -133,7 +132,7 @@ export default function ProductCard({ product, variant = 'default' }: { product:
               </button>
             )}
           </div>
-          <Link href={productHref} className="order-3 md:order-2 flex flex-col w-full flex-1 min-w-0" onClick={handleProductClick}>
+          <a href={productHref} className="order-3 md:order-2 flex flex-col w-full flex-1 min-w-0" onClick={handleProductClick}>
             <div className="flex flex-col items-center w-full gap-[10px]">
               <div className="flex justify-between items-start gap-2 w-full">
                 <div className="flex flex-col justify-start">
@@ -153,11 +152,11 @@ export default function ProductCard({ product, variant = 'default' }: { product:
                 <p className="text-[#6B7280] font-normal text-sm truncate mt-1">{productDescription}</p>
               </div>
             </div>
-          </Link>
+          </a>
         </>
       ) : (
         <>
-          <Link href={productHref} prefetch={false} className="flex flex-col w-full cursor-pointer flex-1" onClick={handleProductClick}>
+          <a href={productHref} className="flex flex-col w-full cursor-pointer flex-1" onClick={handleProductClick}>
             <div className="relative w-full aspect-square rounded-lg overflow-hidden">
               <Image
                 src={getProxiedImageUrl(product?.images?.[0]?.src)}
@@ -186,7 +185,7 @@ export default function ProductCard({ product, variant = 'default' }: { product:
                 <p className="text-[#6B7280] font-normal text-sm truncate mt-1">{productDescription}</p>
               </div>
             </div>
-          </Link>
+          </a>
           <div className="flex justify-between items-center w-full gap-3" onClick={(e) => e.stopPropagation()}>
         <button
           type="button"

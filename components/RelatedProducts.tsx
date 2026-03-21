@@ -79,7 +79,8 @@ export default function RelatedProducts({
   const isLoadingState = isLoading || (needFallback && isLoadingFallback);
 
   const titleText = t(titleKey);
-  const showArrows = filteredProducts.length > 2;
+  // Стрілки тільки коли товарів більше ніж вміщається на екрані (max 4 у breakpoints)
+  const showArrows = filteredProducts.length > 4;
 
   if (isLoadingState) {
     return (
