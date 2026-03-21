@@ -107,6 +107,11 @@ export default function DeliveryPage() {
           </article>
         </div>
 
+        <div className="mt-10 p-6 rounded-2xl bg-[#FFF7F7] border border-[#F5B7B7]">
+          <p className="text-[15px] leading-relaxed mb-2 text-[#1C1C1C]">{t('splitParcels')}</p>
+          <p className="text-[15px] leading-relaxed text-[#1C1C1C]">{t('splitParcelsManager')}</p>
+        </div>
+
         <div className="mt-10 p-6 rounded-2xl bg-[#1C1C1C] text-white">
           <p className="font-semibold text-lg mb-1">{t('questions')}</p>
           <p className="text-white/80 text-sm">

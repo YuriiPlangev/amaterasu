@@ -12,6 +12,7 @@ import { useAuthUser } from '../../../hooks/useAuth';
 export default function CartPage() {
   const t = useTranslations('cart');
   const tCommon = useTranslations('common');
+  const tDelivery = useTranslations('delivery');
   const locale = useLocale();
   const basePath = `/${locale}`;
   const router = useRouter();
@@ -513,14 +514,20 @@ export default function CartPage() {
                 </div>
               </div>
               {!allVirtual && (
-                <div className="bg-[#FFF7F7] border border-[#F5B7B7] rounded-xl p-4 text-sm text-black mb-6">
-                  <p className="font-semibold mb-2 text-black">Доставка та оплата</p>
-                  <ul className="space-y-1 text-[#5A5A5A]">
-                    <li>• Нова Пошта: від 45 грн</li>
-                    <li>• Укрпошта: від 45 грн</li>
-                    <li>• Оплата при отриманні</li>
-                  </ul>
-                </div>
+                <>
+                  <div className="bg-[#FFF7F7] border border-[#F5B7B7] rounded-xl p-4 text-sm text-black mb-4">
+                    <p className="font-semibold mb-2 text-black">Доставка та оплата</p>
+                    <ul className="space-y-1 text-[#5A5A5A]">
+                      <li>• Нова Пошта: від 45 грн</li>
+                      <li>• Укрпошта: від 45 грн</li>
+                      <li>• Оплата при отриманні</li>
+                    </ul>
+                  </div>
+                  <div className="bg-[#FFF7F7] border border-[#F5B7B7] rounded-xl p-4 text-sm mb-6">
+                    <p className="text-[#1C1C1C]">{tDelivery('splitParcels')}</p>
+                    <p className="text-[#1C1C1C] mt-2">{tDelivery('splitParcelsManager')}</p>
+                  </div>
+                </>
               )}
 
               {!showCheckout ? (

@@ -263,6 +263,8 @@
     "payment3": "Invoice for businesses.",
     "returnText": "Returns within 14 days if the product and packaging are intact. Contact support for details in",
     "returnLink": "Telegram (@amaterasu1shop)",
+    "splitParcels": "Some items ship directly from our suppliers, so your order may be split into multiple parcels. We always strive to make delivery as cost-effective as possible for you.",
+    "splitParcelsManager": "To find out whether your shipment will come from one location or be split into multiple parcels — contact our manager on Telegram to confirm your order details.",
     "questions": "Have questions?",
     "questionsText": "Message us on Telegram — we reply within an hour during business hours."
   },

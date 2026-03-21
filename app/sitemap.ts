@@ -29,11 +29,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  const MAX_PRODUCT_URLS = 2000; // limit for sitemap size
+  const MAX_PRODUCT_URLS = 5000; // limit for sitemap size
   try {
     const allProducts: any[] = [];
     const perPage = 100;
-    const maxPages = 100;
+    const maxPages = 350; // 350 * 100 = 35k, enough for ~3k products (WooCommerce may cap per_page server-side)
     let page = 1;
 
     while (page <= maxPages) {
@@ -44,7 +44,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       allProducts.push(...chunk);
       const totalHeader = productsRes.headers?.['x-wp-total'] ?? productsRes.headers?.['X-WP-Total'];
       const total = Number(totalHeader) || 0;
-      if (chunk.length < perPage || (total > 0 && page * perPage >= total) || allProducts.length >= MAX_PRODUCT_URLS) break;
+      // Break only when: no more products, or we've reached total, or hit our limit.
+      // Do NOT break on chunk.length < perPage — many hosts cap at 10–20 per request
+      if (chunk.length === 0 || (total > 0 && page * perPage >= total) || allProducts.length >= MAX_PRODUCT_URLS) break;
       page += 1;
     }
     // truncate to limit

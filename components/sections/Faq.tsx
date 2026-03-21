@@ -40,7 +40,7 @@ const FaqItem = ({ item }: { item: FaqItem }) => {
         <span className='text-[14px] md:text-[18px] font-semibold text-[#1C1C1C]'>{item.question}</span>
         <div className='flex-shrink-0'>
           <Image
-            src="/svg/arrow-up.svg"
+            src="/svg/arrow-down.svg"
             alt=""
             width={24}
             height={24}
