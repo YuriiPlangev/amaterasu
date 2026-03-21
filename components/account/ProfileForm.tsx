@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCartStore } from '../../store/cartStore';
 import { avatarIdToSrc, LOCAL_AVATAR_IDS } from '../../lib/avatars';
-import { getProxiedImageUrl } from '../../lib/imageProxy';
 import { useAuthUser } from '../../hooks/useAuth';
 
 type UserProfile = {
@@ -82,12 +81,11 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
         const mapped: AvatarItem[] = rawProducts
           .map((p: any) => {
             const sku = (p?.sku || '').trim();
-            const src = p?.images?.[0]?.src as string | undefined;
-            if (!sku || !src) return null;
+            if (!sku) return null;
             if (LOCAL_AVATAR_IDS.includes(sku as any)) return null;
             return {
               id: sku,
-              src,
+              src: `/api/avatars/${encodeURIComponent(sku)}`,
               type: 'premium' as const,
               sku,
             };
@@ -123,6 +121,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
         setProfile((p) => (p ? { ...p, ...data.profile } : p));
       }
       void queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
+      router.refresh();
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : t('error') });
     } finally {
@@ -300,9 +299,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
           <div className="mt-4 flex items-center gap-3">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-[#F3F4F6] border border-[#E5E7EB]">
               {(() => {
-                const premium = premiumAvatars.find((a) => a.id === form.avatarId);
-                const src =
-                  (premium ? getProxiedImageUrl(premium.src) : null) || avatarIdToSrc(form.avatarId);
+                const src = avatarIdToSrc(form.avatarId);
                 return src ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={src} alt="" className="w-full h-full object-cover" />
