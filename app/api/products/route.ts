@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { decodeHtmlEntities } from "../../../lib/html";
 import { woo } from "../../../lib/woo";
+import { toBooleanFlag, readMetaValue } from "../../../lib/wooUtils";
 
 export const revalidate = 60;
 
@@ -26,22 +27,6 @@ function clampPerPage(value: unknown): number {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed <= 0) return 16;
   return Math.min(30, Math.max(1, Math.floor(parsed)));
-}
-
-function toBooleanFlag(value: unknown): boolean {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "number") return value === 1;
-  if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-    return ["1", "true", "yes", "on"].includes(normalized);
-  }
-  return false;
-}
-
-function readMetaValue(metaData: any[] | undefined, key: string): unknown {
-  if (!Array.isArray(metaData)) return undefined;
-  const entry = metaData.find((m: any) => m?.key === key);
-  return entry?.value;
 }
 
 function parseIdList(value: string | undefined): number[] {

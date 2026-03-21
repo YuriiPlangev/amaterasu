@@ -53,30 +53,17 @@ export default function RelatedProducts({
           ? { category: categoryId }
           : { per_page: 100 };
 
-  const hasFilter = Boolean(attributeTitleId || attributeGamesId || tagId || categoryId);
   const { data: products, isLoading } = useProducts({ ...primaryParams, per_page: 12 });
-
-  const primaryEmpty = !isLoading && getProductsArray(products).length === 0;
-  const needFallback = hasFilter && primaryEmpty;
-
-  // Fallback только когда есть фильтр, но primary вернул пусто
-  const { data: allProducts, isLoading: isLoadingFallback } = useProducts(
-    { per_page: 24 },
-    { enabled: needFallback }
-  );
 
   const filteredProducts = React.useMemo(() => {
     let filtered = getProductsArray(products);
-    if (filtered.length === 0 && needFallback) {
-      filtered = getProductsArray(allProducts);
-    }
     if (excludeProductId) {
       filtered = filtered.filter((product: any) => product.id !== excludeProductId);
     }
     return filtered.slice(0, limit);
-  }, [products, allProducts, needFallback, excludeProductId, limit]);
+  }, [products, excludeProductId, limit]);
 
-  const isLoadingState = isLoading || (needFallback && isLoadingFallback);
+  const isLoadingState = isLoading;
 
   const titleText = t(titleKey);
   // Стрілки тільки коли товарів більше ніж вміщається на екрані (max 4 у breakpoints)

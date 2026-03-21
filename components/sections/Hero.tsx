@@ -52,15 +52,13 @@ const Hero = () => {
 
           {/* 2. ДЕСКТОП КАРТИНКА (Правая колонка) */}
           <div className="hidden md:block relative w-full h-full z-10">
-             <img 
-               src="/images/itachi.webp" 
-               alt="Itachi Uchiha" 
-               /* h-full — строго на всю высоту родителя.
-                  w-auto — ширина подстроится под высоту без искажений.
-                  max-w-none — отменяет стандартное ограничение по ширине колонки.
-                  left-1/2 -translate-x-1/2 — идеальная центровка внутри ПРАВОЙ колонки.
-               */
-               className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-none object-contain object-bottom select-none pointer-events-none" 
+             <Image
+               src="/images/itachi.webp"
+               alt="Itachi Uchiha"
+               width={800}
+               height={1200}
+               className="absolute bottom-0 left-1/2 -translate-x-1/2 h-full w-auto max-w-none object-contain object-bottom select-none pointer-events-none"
+               sizes="(max-width: 768px) 100vw, 50vw"
              />
           </div>
 
@@ -68,10 +66,13 @@ const Hero = () => {
         
         {/* МОБИЛЬНЫЙ ИТАЧИ */}
         <div className="md:hidden mt-auto -mx-[var(--site-gutter)] w-[calc(100%+2*var(--site-gutter))] leading-[0] z-0">
-          <img 
-            src="/images/itachi.webp" 
-            alt="Itachi Uchiha" 
-            className="w-full h-auto object-contain object-bottom select-none pointer-events-none" 
+          <Image
+            src="/images/itachi.webp"
+            alt="Itachi Uchiha"
+            width={600}
+            height={900}
+            className="w-full h-auto object-contain object-bottom select-none pointer-events-none"
+            sizes="100vw"
           />
         </div>
 

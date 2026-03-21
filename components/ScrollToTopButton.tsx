@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 export default function ScrollToTopButton() {
+  const t = useTranslations('a11y');
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export default function ScrollToTopButton() {
       type="button"
       onClick={handleClick}
       className="fixed right-4 bottom-4 z-40 flex h-10 w-10 items-center justify-center rounded-full bg-[#1C1C1C]/90 text-white shadow-lg border border-white/20 hover:bg-[#9C0000] transition-colors md:right-6 md:bottom-6"
-      aria-label="Повернутися вгору"
+      aria-label={t('scrollToTop')}
     >
       <span className="text-lg leading-none">↑</span>
     </button>

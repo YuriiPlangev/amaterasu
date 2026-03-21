@@ -72,13 +72,14 @@ export default function ProductGallery({ product, name, tag, images, fallbackSrc
             <button
               key={`${img?.src || idx}`}
               onClick={() => setActiveIndex(idx)}
+              aria-pressed={idx === activeIndex}
               className={`border-2 rounded-xl p-2 w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-white shrink-0 ${
                 idx === activeIndex ? 'border-[#9C0000]' : 'border-[#E6E6E6]'
               }`}
             >
               <Image
                 src={getProxiedImageUrl(img?.src || fallbackSrc)}
-                alt={name}
+                alt={`${name} — ${idx + 1}`}
                 width={80}
                 height={80}
                 className="w-full h-full object-contain"

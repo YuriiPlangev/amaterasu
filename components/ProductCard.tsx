@@ -8,6 +8,7 @@ import { useFavoritesStore } from '../store/favoritesStore';
 import { useToastStore } from '../store/toastStore';
 import { getProxiedImageUrl } from '../lib/imageProxy';
 import { cleanDescription } from '../lib/html';
+import { getProductBrand } from '../lib/productUtils';
 
 export default function ProductCard({ product, variant = 'default' }: { product: any; variant?: 'default' | 'catalog' }) {
   const t = useTranslations('toast');
@@ -57,25 +58,7 @@ export default function ProductCard({ product, variant = 'default' }: { product:
     showToast(wasFavorite ? t('removedFromFavorites') : t('addedToFavorites'), wasFavorite ? 'favorite_remove' : 'favorite_add');
   };
 
-  const brandFromList = Array.isArray(product?.brands)
-    ? product.brands.find((b: any) => {
-        if (!b) return false;
-        if (typeof b === 'string') return Boolean(b.trim());
-        return Boolean(String(b?.name || '').trim());
-      })
-    : null;
-
-  const productBrand =
-    (typeof brandFromList === 'string' ? brandFromList : brandFromList?.name) ||
-    (typeof product?.brand === 'string' ? product.brand : product?.brand?.name) ||
-    (Array.isArray(product?.attributes)
-      ? product.attributes.find((attr: any) => {
-          const attrName = String(attr?.name || '').toLowerCase();
-          const attrSlug = String(attr?.slug || '').toLowerCase();
-          return attrName.includes('brand') || attrName.includes('бренд') || attrSlug.includes('brand');
-        })?.options?.[0]
-      : '') ||
-    '';
+  const productBrand = getProductBrand(product);
   const productHref = product?.customUrl || `/${locale}/product/${product?.slug || product?.id}?id=${product?.id}`;
 
   const handleProductClick = (e: React.MouseEvent) => {
@@ -127,7 +110,7 @@ export default function ProductCard({ product, variant = 'default' }: { product:
               )}
             </button>
             {!isCustomDesign && (
-              <button type="button" onClick={handleToggleFavorite} className="hidden md:inline-flex heart-hover-pulse transition-transform duration-200">
+              <button type="button" onClick={handleToggleFavorite} className="hidden md:inline-flex heart-hover-pulse transition-transform duration-200" aria-label={isFavorite ? tCard('removeFromFavorites') : tCard('addToFavorites')}>
                 <Image src={isFavorite ? '/svg/heart-filled.svg' : '/svg/heart.svg'} alt="favorite" width={32} height={32} className="transition-transform duration-200" />
               </button>
             )}
@@ -141,7 +124,7 @@ export default function ProductCard({ product, variant = 'default' }: { product:
                   <p className={`mt-1 font-semibold text-[14px] ${isInStock ? 'text-[#2E7900]' : 'text-[#9C0000]'} sm:hidden`}>{isInStock ? tCard('inStock') : tCard('outOfStock')}</p>
                 </div>
                 {!isCustomDesign && (
-                  <button type="button" onClick={handleToggleFavorite} className="sm:hidden self-center p-1" aria-label="Додати в обране">
+                  <button type="button" onClick={handleToggleFavorite} className="sm:hidden self-center p-1" aria-label={isFavorite ? tCard('removeFromFavorites') : tCard('addToFavorites')}>
                     <Image src={isFavorite ? '/svg/heart-filled.svg' : '/svg/heart.svg'} alt="favorite" width={28} height={28} />
                   </button>
                 )}
@@ -174,7 +157,7 @@ export default function ProductCard({ product, variant = 'default' }: { product:
                   <p className={`mt-1 font-semibold text-[14px] ${isInStock ? 'text-[#2E7900]' : 'text-[#9C0000]'} sm:hidden`}>{isInStock ? tCard('inStock') : tCard('outOfStock')}</p>
                 </div>
                 {!isCustomDesign && (
-                  <button type="button" onClick={handleToggleFavorite} className="sm:hidden self-center p-1" aria-label="Додати в обране">
+                  <button type="button" onClick={handleToggleFavorite} className="sm:hidden self-center p-1" aria-label={isFavorite ? tCard('removeFromFavorites') : tCard('addToFavorites')}>
                     <Image src={isFavorite ? '/svg/heart-filled.svg' : '/svg/heart.svg'} alt="favorite" width={28} height={28} />
                   </button>
                 )}
@@ -221,6 +204,7 @@ export default function ProductCard({ product, variant = 'default' }: { product:
             type="button"
             onClick={handleToggleFavorite}
             className="hidden md:inline-flex heart-hover-pulse transition-transform duration-200"
+            aria-label={isFavorite ? tCard('removeFromFavorites') : tCard('addToFavorites')}
           >
             <Image
               src={isFavorite ? '/svg/heart-filled.svg' : '/svg/heart.svg'}

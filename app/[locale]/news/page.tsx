@@ -1,13 +1,15 @@
 'use client';
 
 import React from 'react';
-import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 import NewsCard from '../../../components/NewsCard';
 import { CardSkeleton } from '../../../components/ui/Skeletons';
 import { useNews } from '../../../hooks/useNews';
 
 export default function NewsPage() {
   const t = useTranslations('news');
+  const locale = useLocale();
   const { data: posts = [], isLoading: loading } = useNews();
 
   if (loading) {
@@ -42,8 +44,14 @@ export default function NewsPage() {
         {posts.length > 0 ? (
           posts.map((post) => <NewsCard key={post.id} post={post} />)
         ) : (
-          <div className='col-span-full text-center text-[18px] text-gray-500'>
-            {t('noPosts')}
+          <div className='col-span-full flex flex-col items-center gap-4 text-center'>
+            <p className='text-[18px] text-gray-500'>{t('noPosts')}</p>
+            <Link
+              href={`/${locale}/catalog`}
+              className='text-[#9C0000] font-semibold hover:underline'
+            >
+              {t('goToCatalog')}
+            </Link>
           </div>
         )}
       </div>

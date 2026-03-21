@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useNewsPost } from '../../../../hooks/useNews';
 import { getProxiedImageUrl } from '../../../../lib/imageProxy';
+import { sanitizeHtml } from '../../../../lib/sanitize';
 import NewsComments from '../../../../components/NewsComments';
 
 export default function NewsSlugPage() {
@@ -46,14 +47,13 @@ export default function NewsSlugPage() {
     );
   }
 
+  const locale = (params?.locale as string) || 'uk';
   const date = new Date(post.date);
-  const formattedDate = date.toLocaleDateString('uk-UA', {
+  const formattedDate = date.toLocaleDateString(locale === 'en' ? 'en-US' : 'uk-UA', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
-
-  const locale = (params?.locale as string) || 'uk';
   const basePath = `/${locale}`;
   const hasExcerpt = post.excerpt && String(post.excerpt).replace(/<[^>]*>/g, '').trim().length > 0;
   const hasContent = post.content && String(post.content).replace(/<[^>]*>/g, '').trim().length > 0;
@@ -100,13 +100,13 @@ export default function NewsSlugPage() {
               {hasExcerpt && (
                 <div
                   className="news-excerpt text-[#1C1C1C] text-lg leading-relaxed mb-8 pb-8 border-b border-[#E5E7EB] max-w-full break-words overflow-x-hidden [overflow-wrap:anywhere] [&_p]:!text-[#1C1C1C] [&_span]:!text-[#1C1C1C] [&_a]:break-words [&_a]:[overflow-wrap:anywhere]"
-                  dangerouslySetInnerHTML={{ __html: post.excerpt }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.excerpt) }}
                 />
               )}
               {hasContent ? (
                 <div
                   className="news-content text-[#1C1C1C] leading-[1.75] max-w-full break-words [overflow-wrap:anywhere] [&_p]:mb-4 [&_p:last-child]:mb-0 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-4 [&_li]:mb-1 [&_a]:!text-[#9C0000] [&_a]:underline [&_a:hover]:no-underline [&_a]:break-words [&_a]:[overflow-wrap:anywhere] [&_img]:rounded-lg [&_img]:my-4 [&_pre]:max-w-full [&_pre]:overflow-x-hidden [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:break-words [&_p]:!text-[#1C1C1C] [&_h2]:!text-[#1C1C1C] [&_h3]:!text-[#1C1C1C] [&_li]:!text-[#1C1C1C] [&_span]:!text-[#1C1C1C] [&_div]:!text-[#1C1C1C]"
-                  dangerouslySetInnerHTML={{ __html: post.content }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
                 />
               ) : hasExcerpt ? null : (
                 <p className="text-[#1C1C1C] italic">{t('noContent')}</p>

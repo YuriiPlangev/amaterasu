@@ -75,6 +75,21 @@ textarea:focus-visible {
   contain: layout;
 }
 
+/* Catalog: анимация появления нового товара */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.new-product-animate {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
 /* Logo slider: центрирование картинок в слайдах */
 .logo-slider .swiper-slide {
   display: flex !important;

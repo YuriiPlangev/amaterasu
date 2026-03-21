@@ -34,6 +34,7 @@ const FaqItem = ({ item }: { item: FaqItem }) => {
     <div className='border border-[#BCBCBC] rounded-lg'>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
         className='w-full px-4 md:px-8 py-4 flex items-center justify-between text-left gap-4'
       >
         <span className='text-[14px] md:text-[18px] font-semibold text-[#1C1C1C]'>{item.question}</span>

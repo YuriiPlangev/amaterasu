@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useCartStore } from '../../../store/cartStore';
+import { useToastStore } from '../../../store/toastStore';
 import { getProxiedImageUrl } from '../../../lib/imageProxy';
 import { useAuthUser } from '../../../hooks/useAuth';
 
@@ -20,6 +21,7 @@ export default function CartPage() {
   const updateQty = useCartStore((state) => state.updateQty);
   const clear = useCartStore((state) => state.clear);
   const total = useCartStore((state) => state.getTotal());
+  const showToast = useToastStore((state) => state.show);
 
   const [showCheckout, setShowCheckout] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -249,13 +251,13 @@ export default function CartPage() {
     if (!allVirtual && formData.paymentMethod !== 'pickup') {
       if (formData.deliveryMethod === 'nova_poshta') {
         if (!formData.novaPoshtaCityRef || !formData.novaPoshtaWarehouseRef) {
-          alert('Оберіть місто та відділення Нової Пошти');
+          showToast(t('selectNovaPoshtaCity'), 'error');
           return;
         }
       }
       if (formData.deliveryMethod === 'ukrposhta') {
         if (!formData.ukrposhtaCity || !formData.ukrposhtaBranch) {
-          alert('Оберіть місто та вкажіть номер відділення Укрпошти');
+          showToast(t('selectUkrposhtaBranch'), 'error');
           return;
         }
       }
@@ -347,11 +349,11 @@ export default function CartPage() {
           router.push(basePath);
         }, 3000);
       } else {
-        alert(`${t('error')}: ${data.error || t('orderError')}`);
+        showToast(`${t('error')}: ${data.error || t('orderError')}`, 'error');
       }
     } catch (error: any) {
       console.error('Order submission error:', error);
-      alert(t('orderError'));
+      showToast(t('orderError'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -413,7 +415,7 @@ export default function CartPage() {
     <div className="min-h-screen bg-white py-12 mt-16">
       <div className="max-w-[1920px] w-full mx-auto site-padding-x">
         <nav className="text-sm text-[#9C9C9C] mb-4">
-          <Link href={basePath} className="hover:text-black">Головна</Link>
+          <Link href={basePath} className="hover:text-black">{tCommon('home')}</Link>
           <span className="mx-2">/</span>
           <span className="text-black">{t('title')}</span>
         </nav>

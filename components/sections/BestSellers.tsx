@@ -12,15 +12,19 @@ import Image from 'next/image';
 import { ProductSkeleton, SquareSkeleton } from '../ui/Skeletons';
 
 const BestSellers = () => {
-  const t = useTranslations('a11y');
-  const { data: products, isLoading } = useProducts({ bestseller: true });
+  const t = useTranslations('bestSellers');
+  const tA11y = useTranslations('a11y');
+  const { data: products, isLoading } = useProducts(
+    { bestseller: true },
+    { staleTime: 5 * 60 * 1000, gcTime: 10 * 60 * 1000 }
+  );
 
 
   if (isLoading) {
     return (
       <section className='w-full bg-white'>
         <div className='max-w-[1920px] w-full mx-auto site-padding-x'>
-          <h2 className='text-[clamp(22px,2.2vw,55px)] font-bold uppercase text-black py-6 md:py-[clamp(20px,2.2vw,56px)]'>Хіти продажів</h2>
+          <h2 className='text-[clamp(22px,2.2vw,55px)] font-bold uppercase text-black py-6 md:py-[clamp(20px,2.2vw,56px)]'>{t('title')}</h2>
           <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6'>
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className={i === 3 ? 'hidden sm:block' : i === 4 ? 'hidden lg:block' : ''}>
@@ -36,19 +40,19 @@ const BestSellers = () => {
   return (
     <section className='w-full relative overflow-x-hidden overflow-y-visible bg-white'>
       <div className='max-w-[1920px] w-full mx-auto site-padding-x overflow-x-hidden'>
-        <h2 className='text-[clamp(22px,2.2vw,55px)] font-bold uppercase text-black py-6 md:py-[clamp(20px,2.2vw,56px)]'>Хіти продажів</h2>
+        <h2 className='text-[clamp(22px,2.2vw,55px)] font-bold uppercase text-black py-6 md:py-[clamp(20px,2.2vw,56px)]'>{t('title')}</h2>
         <div className='relative overflow-x-hidden overflow-y-visible'>
           {products && products.length > 4 && (
             <>
               <button
                 className="swiper-button-prev-custom absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer border border-[#1C1C1C] rounded-full p-2.5 shadow-md bg-white hidden md:flex items-center justify-center -left-[60px]"
-                aria-label={t('scrollLeft')}
+                aria-label={tA11y('scrollLeft')}
               >
                 <Image src='/svg/arrow-left.svg' alt="" width={24} height={24} />
               </button>
               <button
                 className="swiper-button-next-custom absolute top-1/2 -translate-y-1/2 z-10 cursor-pointer border border-[#1C1C1C] rounded-full p-2.5 shadow-md bg-white hidden md:flex items-center justify-center -right-[60px]"
-                aria-label={t('scrollRight')}
+                aria-label={tA11y('scrollRight')}
               >
                 <Image src='/svg/arrow-right.svg' alt="" width={24} height={24} />
               </button>
@@ -80,7 +84,7 @@ const BestSellers = () => {
               ))}
             </Swiper>
           ) : (
-            <div className="text-center py-8 text-black">Товари не знайдено</div>
+            <div className="text-center py-8 text-black">{t('noProducts')}</div>
           )}
         </div>
       </div>

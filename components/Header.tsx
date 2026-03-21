@@ -88,7 +88,7 @@ export default function Header() {
             <Link href={`${basePath}/favorites`} className='group flex items-center transition-transform duration-200 hover:scale-110'>
               <Image src='/svg/heart.svg' alt='heart' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)] md:h-[clamp(18px,1.4vw,24px)] transition-opacity duration-200 group-hover:opacity-80' />
             </Link>
-            <Link href={`${basePath}/cart`} className={`group flex items-center relative transition-transform duration-200 hover:scale-110 ${cartItemsCount > 0 ? 'cart-icon-has-items' : ''}`} aria-label={tCart('title')}>
+            <Link href={`${basePath}/cart`} className={`group flex items-center relative transition-transform duration-200 hover:scale-110 ${cartItemsCount > 0 ? 'cart-icon-has-items' : ''}`} aria-label={cartItemsCount > 0 ? tCart('itemsCount', { count: cartItemsCount }) : tCart('title')}>
               <Image src="/svg/cart.svg" alt="cart" width={24} height={24} className="w-6 h-6 md:w-[clamp(18px,1.4vw,24px)] transition-opacity duration-200 group-hover:opacity-80" />
             </Link>
             <Link href={profileHref} className='group flex items-center transition-transform duration-200 hover:scale-110'>
@@ -142,13 +142,7 @@ export default function Header() {
               </button>
             </div>
             <nav className='flex flex-col flex-1 px-6' aria-label={tA11y('mainNav')}>
-              {[
-                { href: `${basePath}/`, label: t('home'),},
-                { href: `${basePath}/catalog`, label: t('catalog') },
-                { href: `${basePath}/delivery`, label: t('delivery') },
-                { href: `${basePath}/contacts`, label: t('contacts'), },
-                { href: `${basePath}/news`, label: t('news'), },
-              ].map((link) => (
+              {navLinks.map((link) => (
                 <div key={link.href} className='first:border-t border-b border-[#BCBCBC]'>
                   <Link
                     href={link.href}

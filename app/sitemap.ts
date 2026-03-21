@@ -29,6 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  const MAX_PRODUCT_URLS = 2000; // limit for sitemap size
   try {
     const allProducts: any[] = [];
     const perPage = 100;
@@ -43,9 +44,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       allProducts.push(...chunk);
       const totalHeader = productsRes.headers?.['x-wp-total'] ?? productsRes.headers?.['X-WP-Total'];
       const total = Number(totalHeader) || 0;
-      if (chunk.length < perPage || (total > 0 && page * perPage >= total)) break;
+      if (chunk.length < perPage || (total > 0 && page * perPage >= total) || allProducts.length >= MAX_PRODUCT_URLS) break;
       page += 1;
     }
+    // truncate to limit
+    if (allProducts.length > MAX_PRODUCT_URLS) allProducts.length = MAX_PRODUCT_URLS;
 
     const categoriesRes = await woo.get('products/categories', {
       params: { per_page: 100, exclude: [1] },

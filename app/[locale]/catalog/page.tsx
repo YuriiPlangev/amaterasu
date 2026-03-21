@@ -9,27 +9,11 @@ import ProductCard from '../../../components/ProductCard';
 import CatalogSearch from '../../../components/ui/CatalogSearch';
 import Image from 'next/image';
 import CatalogFilters, { initialFilterState, type CatalogFilterState, type FilterOptions } from '../../../components/sections/CatalogFilters';
-import { Swiper, SwiperSlide,  } from 'swiper/react';
+import { ProductSkeleton } from '../../../components/ui/Skeletons';
+import { CATALOG_LOGO_SLIDES } from '../../../constants/catalog';
+import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
-
-// CSS для анимации
-const fadeInStyles = `
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .new-product-animate {
-    animation: fadeInUp 0.5s ease-out forwards;
-  }
-`;
 
 const FunnelIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -446,17 +430,7 @@ export default function CatalogPage() {
     }
   };
 
-  // titleFilter — значение из фильтра «Тайтли» (должно совпадать с атрибутом в WooCommerce)
-  const logoSlides: { src: string; alt: string; titleFilter: string }[] = [
-    { src: '/images/naruto.png', alt: 'Naruto', titleFilter: 'Наруто' },
-    { src: '/images/onepiece.png', alt: 'One Piece', titleFilter: 'Ван Піс' },
-    { src: '/images/bleach.png', alt: 'Bleach', titleFilter: 'Бліч' },
-    { src: '/images/attack.png', alt: 'Attack on Titan', titleFilter: 'Атака титанів' },
-    { src: '/images/berserk.png', alt: 'Berserk', titleFilter: 'Берсерк' },
-    { src: '/images/demonSlayer.png', alt: 'Demon Slayer', titleFilter: 'Клинок, що знищує демонів' },
-    { src: '/images/jujutsu.png', alt: 'Jujutsu Kaisen', titleFilter: 'Магічна битва' },
-    { src: '/images/kpop.png', alt: 'K-pop', titleFilter: 'K-pop' },
-  ];
+  const logoSlides = CATALOG_LOGO_SLIDES;
 
   const setTitleFilter = (titleValue: string) => {
     const titleId = titleLabelToId.get(normalizeFilterLabel(titleValue));
@@ -610,7 +584,6 @@ export default function CatalogPage() {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: fadeInStyles }} />
       <div className="max-w-[1920px] w-full mx-auto site-padding-x pb-10 mt-24">
       {/* Mobile: при открытых фильтрах — только фильтры, header и footer видны, контент скрыт */}
       {isMobileFiltersOpen ? (
@@ -829,9 +802,13 @@ export default function CatalogPage() {
 
             </header>
 
-          {/* Загрузка первой страницы */}
+          {/* Загрузка первой страницы — скелетоны товаров */}
           {isLoading && currentPage === 1 && (
-            <div className="py-10 text-center text-gray-600">{t('loadingProducts')}</div>
+            <section className="grid grid-cols-2 lg:grid-cols-3 [@media(min-width:1600px)]:grid-cols-4 gap-x-3 gap-y-3 md:gap-x-[13px] md:gap-y-5">
+              {Array.from({ length: perPage }).map((_, i) => (
+                <ProductSkeleton key={i} />
+              ))}
+            </section>
           )}
 
           {error && (

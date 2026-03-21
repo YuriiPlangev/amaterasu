@@ -65,6 +65,7 @@
   },
   "cart": {
     "title": "Cart",
+    "itemsCount": "Cart — {count} items",
     "empty": "Your cart is empty",
     "goToCatalog": "Go to Catalog",
     "clear": "Clear Cart",
@@ -119,7 +120,10 @@
     "consentPrivacy": "Privacy Policy",
     "consentAnd": "and",
     "consentDelivery": "Delivery and Payment terms",
-    "consentRequired": "Please accept the legal documents"
+    "consentRequired": "Please accept the legal documents",
+    "invalidPhone": "Enter a valid phone number (e.g. 050 123 45 67 or +380 50 123 45 67)",
+    "selectNovaPoshtaCity": "Please select city and Nova Poshta branch",
+    "selectUkrposhtaBranch": "Please select city and enter Ukrposhta branch number"
   },
   "favorites": {
     "title": "Favorites",
@@ -135,10 +139,12 @@
   },
   "common": {
     "loading": "Loading...",
-    "error": "Error"
+    "error": "Error",
+    "home": "Home"
   },
   "a11y": {
     "skipToContent": "Skip to main content",
+    "scrollToTop": "Back to top",
     "mainNav": "Main navigation",
     "userNav": "Actions and profile",
     "openMenu": "Open menu",
@@ -204,7 +210,13 @@
     "loading": "Loading...",
     "nothingFound": "Nothing found"
   },
+  "bestSellers": {
+    "title": "Best Sellers",
+    "noProducts": "No products found"
+  },
   "productCard": {
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites",
     "inStock": "In stock",
     "outOfStock": "Out of stock",
     "buy": "Buy",
@@ -277,6 +289,7 @@
     "title": "News",
     "subtitle": "Latest news, promotions, and store updates.",
     "noPosts": "No news found",
+    "goToCatalog": "Go to catalog",
     "viewAll": "View all news & promotions",
     "readMore": "Read more"
   },

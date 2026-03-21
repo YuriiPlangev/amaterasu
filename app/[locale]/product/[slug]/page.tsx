@@ -2,10 +2,13 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { woo } from '../../../../lib/woo';
 import { absoluteUrl } from '../../../../lib/seo';
 import { cleanDescription } from '../../../../lib/html';
+import { toBooleanFlag, readMetaValue } from '../../../../lib/wooUtils';
+import { getProductBrand } from '../../../../lib/productUtils';
 import dynamic from 'next/dynamic';
 
 const RelatedProducts = dynamic(
@@ -25,22 +28,6 @@ const PRODUCT_FIELDS =
 
 const ATTR_TERM_ID_CACHE_TTL_MS = 10 * 60 * 1000;
 const attrTermIdCache = new Map<string, { id: number | null; expiresAt: number }>();
-
-function toBooleanFlag(value: unknown): boolean {
-  if (typeof value === 'boolean') return value;
-  if (typeof value === 'number') return value === 1;
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    return ['1', 'true', 'yes', 'on'].includes(normalized);
-  }
-  return false;
-}
-
-function readMetaValue(metaData: any[] | undefined, key: string): unknown {
-  if (!Array.isArray(metaData)) return undefined;
-  const entry = metaData.find((m: any) => m?.key === key);
-  return entry?.value;
-}
 
 function normalizeTermLabel(value: unknown): string {
   return String(value || '').trim().toLowerCase();
@@ -203,7 +190,7 @@ export async function generateMetadata({
   const resolvedSearchParams = await Promise.resolve(searchParams || {});
   const requestedId = Number(resolvedSearchParams?.id);
   const product = await getProduct(slug, Number.isFinite(requestedId) && requestedId > 0 ? requestedId : undefined);
-  if (!product) return { title: 'Товар не знайдено' };
+  if (!product) return { title: locale === 'uk' ? 'Товар не знайдено' : 'Product not found' };
   const name = product.name || 'Product';
   const desc = cleanDescription(
     product.short_description || product.description || ''
@@ -215,8 +202,9 @@ export async function generateMetadata({
     price: String(product.price || ''),
     image: (product.images?.[0]?.src || '').slice(0, 500),
   }).toString();
+  const titleSuffix = locale === 'uk' ? 'Купити аніме мерч в Amaterasu' : 'Buy anime merch at Amaterasu';
   return {
-    title: `${name} | Купити аніме мерч в Amaterasu`,
+    title: `${name} | ${titleSuffix}`,
     description: desc,
     alternates: {
       canonical: absoluteUrl(path),
@@ -276,14 +264,7 @@ export default async function ProductPage({
           requestedId,
         });
       }
-      return (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Товар не знайдено</h1>
-            <p>Товар з таким slug не існує</p>
-          </div>
-        </div>
-      );
+      notFound();
     }
 
     const titleAttr = product?.attributes?.find((attr: any) =>
@@ -320,26 +301,7 @@ export default async function ProductPage({
     const productTag = productResolved?.tags?.[0]?.name || '';
     const productCategory = productResolved?.categories?.[0]?.name || '';
     const productCategoryId = productResolved?.categories?.[0]?.id || null;
-    // Берем бренд так же, как в карточке товара
-    const brandFromList = Array.isArray(productResolved?.brands)
-      ? productResolved.brands.find((b: any) => {
-          if (!b) return false;
-          if (typeof b === 'string') return Boolean(b.trim());
-          return Boolean(String(b?.name || '').trim());
-        })
-      : null;
-
-    const productBrand =
-      (typeof brandFromList === 'string' ? brandFromList : brandFromList?.name) ||
-      (typeof productResolved?.brand === 'string' ? productResolved.brand : productResolved?.brand?.name) ||
-      (Array.isArray(productResolved?.attributes)
-        ? productResolved.attributes.find((attr: any) => {
-            const attrName = String(attr?.name || '').toLowerCase();
-            const attrSlug = String(attr?.slug || '').toLowerCase();
-            return attrName.includes('brand') || attrName.includes('бренд') || attrSlug.includes('brand');
-          })?.options?.[0]
-        : '') ||
-      '';
+    const productBrand = getProductBrand(productResolved);
     const images = productResolved?.images || [];
     const mainImage = images?.[0]?.src || '/images/placeholder.jpg';
 

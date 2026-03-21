@@ -1,11 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 
 const PRODUCTS_STALE_MS = 60 * 1000; // 1 min
+const PRODUCTS_GC_MS = 10 * 60 * 1000; // 10 min — keep cache for instant display on revisit
 
-export function useProducts(params: any = {}, options?: { enabled?: boolean }) {
+export function useProducts(
+  params: any = {},
+  options?: { enabled?: boolean; staleTime?: number; gcTime?: number }
+) {
   return useQuery({
     queryKey: ['products', params],
-    staleTime: PRODUCTS_STALE_MS,
+    staleTime: options?.staleTime ?? PRODUCTS_STALE_MS,
+    gcTime: options?.gcTime ?? PRODUCTS_GC_MS,
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       const hasSearch = typeof params.search === 'string' && params.search.trim() !== '';
