@@ -58,9 +58,11 @@ export async function GET() {
       .filter((c: any) => c.is_custom_production)
       .map((c: any) => ({ id: c.id, name: c.name, slug: c.slug }));
 
-    // В "categories" отдаем вообще ВСЕ категории (как было раньше), 
-    // чтобы фронтенд точно ничего не потерял
-    const categories = allCategories.map((c: any) => ({ id: c.id, name: c.name, slug: c.slug }));
+    // В "categories" отдаем все категории, кроме avatar (id 7012) — аватарки не в каталоге
+    const AVATAR_CATEGORY_ID = 7012;
+    const categories = allCategories
+      .filter((c: any) => Number(c?.id) !== AVATAR_CATEGORY_ID && String(c?.slug || '').toLowerCase() !== 'avatars')
+      .map((c: any) => ({ id: c.id, name: c.name, slug: c.slug }));
 
     return NextResponse.json({
         categories,

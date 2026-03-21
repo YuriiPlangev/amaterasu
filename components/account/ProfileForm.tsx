@@ -41,7 +41,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
   const queryClient = useQueryClient();
   const addToCart = useCartStore((state) => state.add);
   const { data: userData, isLoading: userLoading } = useAuthUser({ enabled: true });
-  const { data: avatarProducts } = useProducts(
+  const { data: avatarProducts, isLoading: avatarProductsLoading } = useProducts(
     { category: '7012', per_page: '50' },
     {
       enabled: !!userData,
@@ -57,6 +57,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
   const [availableAvatars, setAvailableAvatars] = useState<string[]>(['default']);
   const [pendingPremiumSku, setPendingPremiumSku] = useState<string | null>(null);
   const [avatarTab, setAvatarTab] = useState<'free' | 'unique' | 'premium'>('free');
+  const [loadedPremiumImages, setLoadedPremiumImages] = useState<Set<string>>(new Set());
 
   const premiumAvatars = useMemo((): AvatarItem[] => {
     const raw = Array.isArray(avatarProducts) ? avatarProducts : [];
@@ -286,12 +287,26 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
                   </button>
                 );
               })}
-            {avatarTab === 'premium' &&
+            {avatarTab === 'premium' && avatarProductsLoading && (
+              <>
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-16 h-16 rounded-full border-2 border-[#E5E7EB] bg-[#F3F4F6] flex items-center justify-center shrink-0 animate-pulse"
+                    aria-hidden
+                  >
+                    <div className="w-6 h-6 border-2 border-[#9C0000]/30 border-t-[#9C0000] rounded-full animate-spin" />
+                  </div>
+                ))}
+              </>
+            )}
+            {avatarTab === 'premium' && !avatarProductsLoading &&
               premiumAvatars.map((avatar) => {
                 const sku = avatar.type === 'premium' ? avatar.sku : avatar.id;
                 const owned = availableAvatars.includes(sku);
                 const selected = form.avatarId === avatar.id;
                 const isPremiumLocked = !owned;
+                const imageLoaded = loadedPremiumImages.has(avatar.id);
                 return (
                   <button
                     key={avatar.id}
@@ -305,11 +320,17 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
                     }`}
                     aria-label={t('avatarPremiumOption')}
                   >
+                    {!imageLoaded && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-[#F3F4F6] z-[1]">
+                        <div className="w-6 h-6 border-2 border-[#9C0000]/30 border-t-[#9C0000] rounded-full animate-spin" />
+                      </div>
+                    )}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={avatar.src}
                       alt={t('avatarPremiumOption')}
                       className="w-full h-full object-cover"
+                      onLoad={() => setLoadedPremiumImages((s) => new Set(s).add(avatar.id))}
                     />
                     {isPremiumLocked && (
                       <span className="absolute top-0.5 right-0.5 z-10 w-5 h-5 rounded-full bg-[#FACC15] text-[#7C2D12] text-[10px] font-extrabold flex items-center justify-center shadow-md ring-2 ring-white">
