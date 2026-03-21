@@ -288,7 +288,8 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
               })}
             {avatarTab === 'premium' &&
               premiumAvatars.map((avatar) => {
-                const owned = availableAvatars.includes(avatar.sku);
+                const sku = avatar.type === 'premium' ? avatar.sku : avatar.id;
+                const owned = availableAvatars.includes(sku);
                 const selected = form.avatarId === avatar.id;
                 const isPremiumLocked = !owned;
                 return (
@@ -296,7 +297,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
                     key={avatar.id}
                     type="button"
                     onClick={() => {
-                      if (isPremiumLocked) setPendingPremiumSku(avatar.sku);
+                      if (isPremiumLocked) setPendingPremiumSku(sku);
                       else setForm((f) => ({ ...f, avatarId: avatar.id }));
                     }}
                     className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition shrink-0 ${
