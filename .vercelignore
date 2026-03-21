@@ -1,0 +1,4 @@
+# Exclude from Vercel upload (reduces trace scope)
+amaterasu-checkout/
+wordpress-custom-endpoint.php
+*.ipynb
