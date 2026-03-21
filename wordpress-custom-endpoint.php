@@ -225,6 +225,26 @@ add_action('rest_api_init', function () {
             'avatar_id' => array('required' => false),
         ),
     ));
+
+    // Редактирование комментария (PATCH)
+    register_rest_route('custom/v1', '/comments/(?P<id>\d+)', array(
+        'methods' => 'PATCH',
+        'callback' => 'custom_update_comment',
+        'permission_callback' => '__return_true',
+        'args' => array(
+            'id' => array('required' => true, 'validate_callback' => function($p) { return is_numeric($p); }),
+        ),
+    ));
+
+    // Удаление комментария (DELETE)
+    register_rest_route('custom/v1', '/comments/(?P<id>\d+)', array(
+        'methods' => 'DELETE',
+        'callback' => 'custom_delete_comment',
+        'permission_callback' => '__return_true',
+        'args' => array(
+            'id' => array('required' => true, 'validate_callback' => function($p) { return is_numeric($p); }),
+        ),
+    ));
 });
 
 /**
@@ -272,9 +292,20 @@ function custom_get_post_comments($request) {
                 }
             }
         }
+        $display_name = '';
+        if (!empty($comment->user_id)) {
+            $u = get_userdata($comment->user_id);
+            if ($u && !empty($u->display_name)) {
+                $display_name = $u->display_name;
+            }
+        }
+        if (empty($display_name)) {
+            $display_name = $comment->comment_author ?: __('Anonymous', 'amaterasu');
+        }
         $result[] = array(
             'id' => $comment->comment_ID,
             'author' => $comment->comment_author,
+            'displayName' => $display_name,
             'content' => $comment->comment_content,
             'date' => $comment->comment_date,
             'userId' => $comment->user_id,
@@ -339,13 +370,65 @@ function custom_create_comment($request) {
     }
     add_comment_meta($comment_id, 'avatar_id', $avatar_id, true);
 
+    $user = get_userdata($comment->user_id);
+    $display_name = ($user && !empty($user->display_name)) ? $user->display_name : $comment->comment_author;
     return rest_ensure_response(array(
         'id' => $comment->comment_ID,
         'author' => $comment->comment_author,
+        'displayName' => $display_name,
         'content' => $comment->comment_content,
         'date' => $comment->comment_date,
         'userId' => $comment->user_id,
         'avatarId' => $avatar_id,
     ));
+}
+
+/**
+ * Редактирование комментария (только владелец)
+ */
+function custom_update_comment($request) {
+    $comment_id = intval($request['id']);
+    $body = $request->get_json_params();
+    $user_id = isset($body['user_id']) ? intval($body['user_id']) : 0;
+    $content = isset($body['content']) ? sanitize_textarea_field(trim($body['content'])) : '';
+
+    if (empty($content) || $user_id <= 0) {
+        return new WP_Error('invalid_data', 'Invalid data', array('status' => 400));
+    }
+    $comment = get_comment($comment_id);
+    if (!$comment || $comment->user_id != $user_id) {
+        return new WP_Error('forbidden', 'Comment not found or access denied', array('status' => 403));
+    }
+    wp_update_comment(array('comment_ID' => $comment_id, 'comment_content' => $content));
+    $updated = get_comment($comment_id);
+    $user = get_userdata($updated->user_id);
+    $display_name = ($user && !empty($user->display_name)) ? $user->display_name : $updated->comment_author;
+    return rest_ensure_response(array(
+        'id' => $updated->comment_ID,
+        'author' => $updated->comment_author,
+        'displayName' => $display_name,
+        'content' => $updated->comment_content,
+        'date' => $updated->comment_date,
+        'userId' => $updated->user_id,
+    ));
+}
+
+/**
+ * Удаление комментария (только владелец)
+ */
+function custom_delete_comment($request) {
+    $comment_id = intval($request['id']);
+    $body = $request->get_json_params();
+    $user_id = isset($body['user_id']) ? intval($body['user_id']) : 0;
+
+    if ($user_id <= 0) {
+        return new WP_Error('invalid_data', 'Invalid data', array('status' => 400));
+    }
+    $comment = get_comment($comment_id);
+    if (!$comment || $comment->user_id != $user_id) {
+        return new WP_Error('forbidden', 'Comment not found or access denied', array('status' => 403));
+    }
+    wp_delete_comment($comment_id, true);
+    return rest_ensure_response(array('success' => true));
 }
 

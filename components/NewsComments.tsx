@@ -10,6 +10,7 @@ import { useAuthCheck, useAuthUser } from '../hooks/useAuth';
 interface Comment {
   id: string;
   author: string;
+  displayName?: string;
   content: string;
   date: string;
   parentId?: string | null;
@@ -233,12 +234,12 @@ export default function NewsComments({ slug }: { slug: string }) {
                   <div className="flex items-center gap-3">
                     <AvatarWithFallback
                       src={avatarSrc}
-                      alt={comment.author}
-                      fallbackChar={comment.author.charAt(0).toUpperCase()}
+                      alt={comment.displayName ?? comment.author}
+                      fallbackChar={(comment.displayName ?? comment.author).charAt(0).toUpperCase()}
                       size={36}
                       className="flex-shrink-0"
                     />
-                    <p className="font-semibold text-[#1C1C1C]">{comment.author}</p>
+                    <p className="font-semibold text-[#1C1C1C]">{comment.displayName ?? comment.author}</p>
                   </div>
                   <p className="text-sm text-[#9CA3AF] mt-1">{formattedDate}</p>
                 </div>

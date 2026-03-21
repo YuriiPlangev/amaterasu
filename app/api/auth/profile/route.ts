@@ -42,8 +42,8 @@ export async function PATCH(req: NextRequest) {
   if (body.phone !== undefined) profile.phone = String(body.phone).trim();
   if (body.avatarId !== undefined) profile.avatarId = String(body.avatarId).trim();
 
-  // Синхронизируем аватар в WordPress user meta — чтобы его видели все (комментарии, профиль)
-  if (body.avatarId !== undefined && userId) {
+  // Синхронизируем аватар и displayName в WordPress — чтобы их видели все (комментарии, профиль)
+  if (userId && (body.avatarId !== undefined || body.displayName !== undefined)) {
     const wpUrl = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
     const appLogin = process.env.WP_USER_LOGIN;
     const appPass = process.env.WP_USER_PASS;
@@ -51,16 +51,21 @@ export async function PATCH(req: NextRequest) {
       try {
         const url = `${wpUrl.replace(/\/+$/, "")}/wp-json/wp/v2/users/${userId}`;
         const authHeader = Buffer.from(`${appLogin}:${appPass}`).toString("base64");
-        await fetch(url, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Basic ${authHeader}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ current_avatar: profile.avatarId || "" }),
-        });
+        const wpBody: Record<string, string> = {};
+        if (body.avatarId !== undefined) wpBody.current_avatar = profile.avatarId || "";
+        if (body.displayName !== undefined && profile.displayName) wpBody.name = profile.displayName;
+        if (Object.keys(wpBody).length > 0) {
+          await fetch(url, {
+            method: "PATCH",
+            headers: {
+              Authorization: `Basic ${authHeader}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(wpBody),
+          });
+        }
       } catch (e) {
-        console.error("[Profile] Failed to sync avatar to WordPress:", e);
+        console.error("[Profile] Failed to sync to WordPress:", e);
       }
     }
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useProducts } from '../../../hooks/useProducts';
@@ -261,15 +261,16 @@ export default function CatalogPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [newProductIds, setNewProductIds] = useState<Set<number>>(new Set());
-  const [perPage, setPerPage] = useState(12);
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)');
-    const update = () => setPerPage(mq.matches ? 8 : 12);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
+  const isLargeScreen = useSyncExternalStore(
+    (cb) => {
+      const mq = window.matchMedia('(min-width: 1024px)');
+      mq.addEventListener('change', cb);
+      return () => mq.removeEventListener('change', cb);
+    },
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
+    () => true
+  );
+  const perPage = isLargeScreen ? 12 : 8;
 
   const {
     metadata: filterOptions,

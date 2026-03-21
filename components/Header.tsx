@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
 import HeaderSearch from './HeaderSearch';
 import { useCartStore } from '../store/cartStore';
+import { useFavoritesStore } from '../store/favoritesStore';
 import { useAuthCheck } from '../hooks/useAuth';
 
 export default function Header() {
@@ -38,6 +39,7 @@ export default function Header() {
   const isHomePage = pathname === basePath || pathname === `${basePath}/` || pathname === '/';
   const profileHref = isAuthenticated ? `${basePath}/account` : `${basePath}/auth/login`;
   const cartItemsCount = useCartStore((state) => state.items.length);
+  const favoritesCount = useFavoritesStore((state) => state.items.length);
 
   const navLinks = [
     { href: `${basePath}/`, label: t('home') },
@@ -85,7 +87,7 @@ export default function Header() {
                 </div>
               )}
             </div>
-            <Link href={`${basePath}/favorites`} className='group flex items-center transition-transform duration-200 hover:scale-110'>
+            <Link href={`${basePath}/favorites`} className={`group flex items-center relative transition-transform duration-200 hover:scale-110 ${favoritesCount > 0 ? 'favorites-icon-has-items' : ''}`}>
               <Image src='/svg/heart.svg' alt='heart' width={24} height={24} className='w-6 h-6 md:w-[clamp(18px,1.4vw,24px)] md:h-[clamp(18px,1.4vw,24px)] transition-opacity duration-200 group-hover:opacity-80' />
             </Link>
             <Link href={`${basePath}/cart`} className={`group flex items-center relative transition-transform duration-200 hover:scale-110 ${cartItemsCount > 0 ? 'cart-icon-has-items' : ''}`} aria-label={cartItemsCount > 0 ? tCart('itemsCount', { count: cartItemsCount }) : tCart('title')}>

@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCartStore } from '../../store/cartStore';
 import { avatarIdToSrc, LOCAL_AVATAR_IDS } from '../../lib/avatars';
 import { useAuthUser } from '../../hooks/useAuth';
+import { useProducts } from '../../hooks/useProducts';
 
 type UserProfile = {
   id: string;
@@ -45,13 +46,32 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
   const queryClient = useQueryClient();
   const addToCart = useCartStore((state) => state.add);
   const { data: userData, isLoading: userLoading } = useAuthUser({ enabled: true });
+  const { data: avatarProducts } = useProducts(
+    { category: '7012', per_page: '50' },
+    {
+      enabled: !!userData,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+    }
+  );
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [form, setForm] = useState({ displayName: '', email: '', phone: '', avatarId: 'photo_1' });
   const [availableAvatars, setAvailableAvatars] = useState<string[]>(['default']);
-  const [premiumAvatars, setPremiumAvatars] = useState<AvatarItem[]>([]);
   const [pendingPremiumSku, setPendingPremiumSku] = useState<string | null>(null);
+
+  const premiumAvatars = useMemo((): AvatarItem[] => {
+    const raw = Array.isArray(avatarProducts) ? avatarProducts : [];
+    const mapped: AvatarItem[] = [];
+    for (const p of raw) {
+      const sku = (p?.sku || '').trim();
+      if (!sku || LOCAL_AVATAR_IDS.includes(sku as any)) continue;
+      mapped.push({ id: sku, src: `/api/avatars/${encodeURIComponent(sku)}`, type: 'premium' as const, sku });
+    }
+    return mapped;
+  }, [avatarProducts]);
 
   useEffect(() => {
     if (!userData) return;
@@ -65,38 +85,6 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
       avatarId,
     });
   }, [userData]);
-
-  useEffect(() => {
-    // Загружаем покупные (преміум) аватари з WooCommerce категорії avatars (id=7012)
-    fetch('/api/products?category=7012&per_page=50')
-      .then((res) => (res.ok ? res.json() : Promise.reject(res)))
-      .then((data) => {
-        // API может вернуть либо { products: [...] }, либо просто [...]
-        const rawProducts = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.products)
-          ? data.products
-          : [];
-
-        const mapped: AvatarItem[] = rawProducts
-          .map((p: any) => {
-            const sku = (p?.sku || '').trim();
-            if (!sku) return null;
-            if (LOCAL_AVATAR_IDS.includes(sku as any)) return null;
-            return {
-              id: sku,
-              src: `/api/avatars/${encodeURIComponent(sku)}`,
-              type: 'premium' as const,
-              sku,
-            };
-          })
-          .filter((x: AvatarItem | null): x is AvatarItem => Boolean(x));
-        setPremiumAvatars(mapped);
-      })
-      .catch(() => {
-        // тихо игнорируем, если категорию або доступ не удалось прочитать
-      });
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

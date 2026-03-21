@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '../../../../../lib/auth';
+import { verifyToken } from '../../../../../../lib/auth';
 import { cookies } from 'next/headers';
 import axios from 'axios';
 
 const WP_URL = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
 
-// PATCH: редактирование комментария
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
-    const { slug: rawSlug } = await params;
-    const slug = decodeURIComponent(rawSlug);
+    await params;
     if (!WP_URL) {
       return NextResponse.json({ error: 'WP_URL не настроен' }, { status: 500 });
     }
@@ -32,8 +30,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!commentId || !content?.trim()) {
       return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
     }
-    // Проверяем владельца комментария через WordPress кастомный endpoint
-    // (реализуйте проверку userId на стороне WP API)
     const response = await axios.patch(
       `${WP_URL}/wp-json/custom/v1/comments/${commentId}`,
       { content: content.trim(), user_id: decoded.sub }
@@ -44,11 +40,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
-// DELETE: удаление комментария
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
-    const { slug: rawSlug } = await params;
-    const slug = decodeURIComponent(rawSlug);
+    await params;
     if (!WP_URL) {
       return NextResponse.json({ error: 'WP_URL не настроен' }, { status: 500 });
     }
@@ -71,12 +65,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!commentId) {
       return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
     }
-    // Проверяем владельца комментария через WordPress кастомный endpoint
-    // (реализуйте проверку userId на стороне WP API)
-    const response = await axios.delete(
-      `${WP_URL}/wp-json/custom/v1/comments/${commentId}`,
-      { data: { user_id: decoded.sub } }
-    );
+    await axios.delete(`${WP_URL}/wp-json/custom/v1/comments/${commentId}`, {
+      data: { user_id: decoded.sub },
+    });
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

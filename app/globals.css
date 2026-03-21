@@ -291,6 +291,21 @@ textarea:focus-visible {
   background-color: #9C0000;
 }
 
+/* Іконка сердечка в хедері — та сама анімація, якщо є збережені товари */
+.favorites-icon-has-items img {
+  animation: cart-icon-pulse 1.2s ease-in-out infinite;
+}
+.favorites-icon-has-items::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: #9C0000;
+}
+
 /* Плавна підсвітка посилань у футері */
 .footer-link-hover:hover p {
   color: #fff;

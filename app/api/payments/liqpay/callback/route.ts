@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
 
     const expected = calcSignature(privateKey, data);
     if (expected !== signature) {
+      console.warn("[LiqPay callback] Invalid signature — expected hash mismatch");
       return NextResponse.json({ ok: false, error: "Invalid signature" }, { status: 401 });
     }
 
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
     const wpOrderId = parseWpOrderId(payload);
 
     if (!wpOrderId) {
+      console.warn("[LiqPay callback] Cannot resolve order id — payload.info:", payload?.info, "payload.order_id:", payload?.order_id);
       return NextResponse.json({ ok: false, error: "Cannot resolve order id" }, { status: 400 });
     }
 
@@ -78,17 +80,27 @@ export async function POST(req: NextRequest) {
       nextStatus = "failed";
     }
 
+    console.log("[LiqPay callback] wpOrderId:", wpOrderId, "liqpayStatus:", liqpayStatus, "nextStatus:", nextStatus, "transactionId:", transactionId || "(none)");
+
     if (nextStatus) {
-      await woo.put(`orders/${wpOrderId}`, {
-        status: nextStatus,
-        set_paid: setPaid,
-        transaction_id: transactionId || undefined,
-      });
+      const wooPayload = { status: nextStatus, set_paid: setPaid, transaction_id: transactionId || undefined };
+      console.log("[LiqPay callback] WooCommerce PUT payload:", wooPayload);
+      const wooRes = await woo.put(`orders/${wpOrderId}`, wooPayload);
+      console.log("[LiqPay callback] WooCommerce response status:", wooRes?.status, "orderStatus:", wooRes?.data?.status, "datePaid:", wooRes?.data?.date_paid);
+    } else {
+      console.log("[LiqPay callback] Skipping WooCommerce update — unknown liqpayStatus:", liqpayStatus);
     }
 
     return NextResponse.json({ ok: true });
   } catch (error: any) {
-    console.error("LiqPay callback error:", error?.response?.data || error?.message || error);
+    const errData = error?.response?.data;
+    const errStatus = error?.response?.status;
+    console.error("[LiqPay callback] Error:", {
+      message: error?.message,
+      status: errStatus,
+      data: errData,
+      full: error?.response?.data || error?.message || error,
+    });
     return NextResponse.json({ ok: false, error: "Callback processing failed" }, { status: 500 });
   }
 }

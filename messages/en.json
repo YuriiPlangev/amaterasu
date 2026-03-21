@@ -368,7 +368,8 @@
     "send": "Send",
     "cancel": "Cancel",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "save": "Save"
   }
 }
 

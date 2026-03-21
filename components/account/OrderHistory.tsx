@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
+import { useOrders } from '../../hooks/useOrders';
 
 type OrderItem = {
   id: number;
@@ -26,9 +27,9 @@ function formatDate(iso: string | undefined, locale: string): string {
 export default function OrderHistory() {
   const locale = useLocale();
   const t = useTranslations('orderHistory');
-  const [orders, setOrders] = useState<OrderItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading: loading, error: queryError } = useOrders();
+  const orders = data?.orders ?? [];
+  const error = queryError ? 'loadError' : null;
 
   const STATUS_LABELS: Record<string, string> = {
     pending: t('statusPending'),
@@ -39,20 +40,6 @@ export default function OrderHistory() {
     refunded: t('statusRefunded'),
     failed: t('statusFailed'),
   };
-
-  useEffect(() => {
-    fetch('/api/orders', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : Promise.reject(res)))
-      .then((data) => {
-        setOrders(Array.isArray(data.orders) ? data.orders : []);
-        setError(null);
-      })
-      .catch(() => {
-        setOrders([]);
-        setError('loadError');
-      })
-      .finally(() => setLoading(false));
-  }, []);
 
   return (
     <div className="bg-white border border-[#E6E6E6] rounded-2xl p-6 md:p-8">
