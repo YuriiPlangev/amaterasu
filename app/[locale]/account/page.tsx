@@ -8,19 +8,31 @@ import { getTranslations } from 'next-intl/server';
 import LogoutButton from './LogoutButton';
 import ProfileForm from '../../../components/account/ProfileForm';
 import OrderHistory from '../../../components/account/OrderHistory';
+import AccountWelcomeToast from '../../../components/account/AccountWelcomeToast';
 import { avatarIdToSrc } from '../../../lib/avatars';
 import AvatarWithFallback from '../../../components/ui/AvatarWithFallback';
 
-export default async function AccountPage({ params }: { params: Promise<{ locale: string }> | { locale: string } }) {
+export default async function AccountPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }> | { locale: string };
+  searchParams?: Promise<{ welcome_avatar?: string }> | { welcome_avatar?: string };
+}) {
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
   const payload = token ? verifyToken(token) : null;
 
   const resolvedParams = await Promise.resolve(params);
+  const resolvedSearch = await Promise.resolve(searchParams || {});
   const locale = resolvedParams.locale || 'uk';
 
   if (!payload || typeof payload !== 'object') {
-    redirect(`/${locale}/auth/login`);
+    const returnTo =
+      resolvedSearch?.welcome_avatar === '1'
+        ? `/${locale}/account?welcome_avatar=1`
+        : `/${locale}/account`;
+    redirect(`/${locale}/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
   }
 
   const t = await getTranslations('account');
@@ -74,6 +86,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
 
   return (
     <div className="min-h-screen bg-white py-10 site-padding-x mt-16">
+      <AccountWelcomeToast />
       <div className="max-w-5xl mx-auto">
         <div className="bg-white border border-[#E6E6E6] shadow-[0px_12px_28px_0px_#0000001A] rounded-2xl overflow-hidden">
           <div className="px-6 py-7 bg-[#9C0000]">

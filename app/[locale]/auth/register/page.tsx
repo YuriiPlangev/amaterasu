@@ -60,8 +60,8 @@ export default function RegisterPage() {
         console.error("Auto login after register failed:", e);
       }
 
-      // Після реєстрації переводимо користувача в профіль
-      window.location.href = `/${locale}/account`;
+      // Після реєстрації переводимо користувача в профіль (параметр для поздравления с аватаркой)
+      window.location.href = `/${locale}/account?welcome_avatar=1`;
     } catch (error) {
       console.error("Registration error:", error);
       setError(t('generalError'));

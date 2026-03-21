@@ -13,13 +13,13 @@ import JsonLdOrganization from '../../components/seo/JsonLdOrganization';
 import ScrollToTopButton from '../../components/ScrollToTopButton';
 
 const TITLES: Record<string, string> = {
-  uk: 'Amaterasu — Аніме магазин',
-  en: 'Amaterasu — Anime Shop',
+  uk: 'Amaterasu — Аніме магазин у Білгороді-Дністровському',
+  en: 'Amaterasu — Anime Shop in Bilhorod-Dnistrovskyi',
 };
 
 const DESCRIPTIONS: Record<string, string> = {
-  uk: 'Інтернет-магазин аніме атрибутики. Плакати, наклейки, мерч з улюблених аніме та можливість замовити індивідуальний дизайн. Доставка по Україні.',
-  en: 'Anime merchandise shop. Posters, stickers, merch from your favorite anime and custom design orders. Delivery across Ukraine.',
+  uk: 'Аніме магазин у Білгороді-Дністровському. Плакати, наклейки, мерч з улюблених аніме та індивідуальний дизайн. Доставка по Україні.',
+  en: 'Anime shop in Bilhorod-Dnistrovskyi. Posters, stickers, merch from your favorite anime and custom design orders. Delivery across Ukraine.',
 };
 
 export async function generateMetadata({

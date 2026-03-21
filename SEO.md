@@ -49,6 +49,7 @@
 
 ### 3. JSON-LD (структуровані дані)
 - **Organization**: на всіх сторінках через `[locale]` layout — назва, url, опис, посилання на Telegram та Instagram.
+- **LocalBusiness (Store)**: адреса в Білгороді-Дністровському, areaServed: Ukraine — для місцевого пошуку ("аніме магазин Белгород-Днестровский").
 - **Product**: на сторінці товару — назва, опис, зображення, ціна (UAH), наявність.
 - **BreadcrumbList**: на сторінці товару — Головна → Каталог/тег → Назва товару.
 
@@ -80,7 +81,48 @@
 
 5. **Швидкість**  
    - Залишити підключення `next/image` для товарних зображень.  
-   - При великому каталозі розглянути пагінацію або lazy load для сітки товарів, щоб не перевантажувати перший екран.
+   - При великому каталозі розглянути пагінацію або lazy load для сітки товарів, щоб Звіт про SEO-оптимізацію
+   1. Динамічні метадані (Metadata API) — product/[slug]/page.tsx
+   title: {Product Name} | Купити аніме мерч в Amaterasu
+   description: з short_description (очищення від HTML через cleanDescription)
+   alternates.canonical: канонічне посилання на товар
+   openGraph: title, description, url, images (через /api/og)
+   twitter: summary_large_image
+   2. JSON-LD (Rich Snippets)
+   Product (JsonLdProduct.tsx): name, description, sku, image, offers (price, priceCurrency: UAH, availability)
+   
+   BreadcrumbList (JsonLdBreadcrumb.tsx): Головна → Каталог → Категорія → Тайтл/Персонаж → Товар
+   
+   3. Sitemap — app/sitemap.ts
+   Товари з WooCommerce (slug)
+   Категорії з WooCommerce (/catalog?categories=...)
+   Пости з WordPress (/news/[slug])
+   Статичні сторінки для uk/en
+   4. Robots — app/robots.ts
+   disallow: /api/, /auth/, /account, /cart, /checkout, /my-account
+   sitemap: {base}/sitemap.xml
+   5. OpenGraph Image — app/api/og/route.tsx
+   Використовує @vercel/og (Edge Runtime)
+   Параметри: name, price, image
+   Вміст: логотип Amaterasu, фото товару, назва, ціна (1200×630 px)
+   6. Image SEO
+   Головне фото в ProductGallery: priority
+   alt: на основі product.name
+   7. SEO для фільтрів каталогу — catalog/page.tsx
+   Динамічний document.title при виборі фільтра:
+   uk: Мерч по темі {Character/Title/Game/Category} | Amaterasu
+   en: Merch by {Character/Title/Game/Category} | Amaterasu
+   Змінені/створені файли
+   Файл	Зміни
+   app/[locale]/product/[slug]/page.tsx	generateMetadata, BreadcrumbList (Головна), OG image
+   app/api/og/route.tsx	новий роут для динамічних OG-зображень
+   app/sitemap.ts	додано категорії WooCommerce
+   app/robots.ts	disallow: /cart, /checkout, /my-account
+   components/ProductGallery.tsx	priority, alt
+   components/seo/JsonLdBreadcrumb.tsx	підтримка path='' для Головної
+   app/[locale]/catalog/page.tsx	динамічний document.title за фільтрами
+   SEO.md	звіт про впровадження
+   не перевантажувати перший екран.
 
 6. **Мобільна версія**  
    - Перевірити у Google Mobile-Friendly Test.  

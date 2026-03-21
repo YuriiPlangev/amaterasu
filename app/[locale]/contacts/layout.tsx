@@ -15,8 +15,8 @@ export async function generateMetadata({
     title: titles[locale] || titles.uk,
     description:
       locale === 'en'
-        ? 'Contact Amaterasu: Telegram, Instagram, support hours.'
-        : 'Контакти Amaterasu: Telegram, Instagram, години роботи підтримки.',
+        ? 'Contact Amaterasu anime shop in Bilhorod-Dnistrovskyi: Telegram, Instagram, support hours.'
+        : 'Контакти Amaterasu — аніме магазин у Білгороді-Дністровському: Telegram, Instagram, години роботи підтримки.',
   };
 }
 

@@ -26,18 +26,13 @@ type AvatarItem =
   | { id: string; src: string; type: 'launch'; sku: string }
   | { id: string; src: string; type: 'premium'; sku: string };
 
-const FREE_AVATARS: AvatarItem[] = [
-  { id: 'photo_1', src: '/avatars/photo_1.jpg', type: 'free' },
-  { id: 'photo_2', src: '/avatars/photo_2.jpg', type: 'free' },
-  { id: 'photo_3', src: '/avatars/photo_3.jpg', type: 'free' },
-  { id: 'photo_4', src: '/avatars/photo_4.jpg', type: 'free' },
-  { id: 'photo_5', src: '/avatars/photo_5.jpg', type: 'free' },
-  { id: 'photo_6', src: '/avatars/photo_6.jpg', type: 'free' },
-  { id: 'photo_7', src: '/avatars/photo_7.jpg', type: 'free' },
-  { id: 'photo_8', src: '/avatars/photo_8.jpg', type: 'free' },
-  { id: 'photo_9', src: '/avatars/photo_9.jpg', type: 'free' },
-  { id: 'photo_10', src: '/avatars/photo_10.jpg', type: 'free' },
-];
+const FREE_AVATAR_IDS = ['photo_1', 'photo_2', 'photo_3', 'photo_4', 'photo_5', 'photo_6', 'photo_7', 'photo_8', 'photo_9', 'photo_10', 'photo_11', 'photo_12', 'photo_13', 'photo_14', 'photo_15', 'photo_16', 'photo_17', 'photo_18', 'photo_19', 'photo_20', 'photo_21', 'photo_22', 'photo_23', 'photo_24', 'photo_25', 'photo_26'] as const;
+
+const FREE_AVATARS: AvatarItem[] = FREE_AVATAR_IDS.map((id) => ({
+  id,
+  src: `/avatars/${id}.jpg`,
+  type: 'free' as const,
+}));
 
 export default function ProfileForm({ initialLogin }: { initialLogin: string }) {
   const t = useTranslations('profileForm');
@@ -61,6 +56,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
   const [form, setForm] = useState({ displayName: '', email: '', phone: '', avatarId: 'photo_1' });
   const [availableAvatars, setAvailableAvatars] = useState<string[]>(['default']);
   const [pendingPremiumSku, setPendingPremiumSku] = useState<string | null>(null);
+  const [avatarTab, setAvatarTab] = useState<'free' | 'unique' | 'premium'>('free');
 
   const premiumAvatars = useMemo((): AvatarItem[] => {
     const raw = Array.isArray(avatarProducts) ? avatarProducts : [];
@@ -84,6 +80,13 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
       phone: userData.phone ?? '',
       avatarId,
     });
+    if (LOCAL_AVATAR_IDS.includes(avatarId as (typeof LOCAL_AVATAR_IDS)[number])) {
+      setAvatarTab('unique');
+    } else if (/^photo_\d+$/.test(avatarId)) {
+      setAvatarTab('free');
+    } else {
+      setAvatarTab('premium');
+    }
   }, [userData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -204,56 +207,117 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
         </div>
         <div>
           <p className="block text-sm font-medium text-[#374151] mb-2">{t('avatar')}</p>
-          <div className="grid grid-cols-5 gap-3">
-            {[
-              ...FREE_AVATARS,
-              ...(availableAvatars.some((a) => LOCAL_AVATAR_IDS.includes(a as any))
-                ? LOCAL_AVATAR_IDS.map((id) => ({ id, src: `/avatars/${id}.jpg`, type: 'launch' as const, sku: id }))
-                : []),
-              ...premiumAvatars,
-            ].map((avatar, index) => {
-              const ownedKey = avatar.type === 'premium' || avatar.type === 'launch' ? avatar.sku : avatar.id;
-              const owned = avatar.type === 'free' || availableAvatars.includes(ownedKey);
-              const selected = form.avatarId === avatar.id;
-              const isPremiumLocked = avatar.type === 'premium' && !owned;
-              const isLaunchLocked = avatar.type === 'launch' && !owned;
 
-              return (
-                <button
-                  key={avatar.id}
-                  type="button"
-                  onClick={() => {
-                    if (isPremiumLocked && avatar.type === 'premium') {
-                      setPendingPremiumSku(avatar.sku);
-                    } else if (!isLaunchLocked) {
-                      setForm((f) => ({ ...f, avatarId: avatar.id }));
-                    }
-                  }}
-                  className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition ${
-                    selected ? 'border-[#9C0000]' : 'border-transparent hover:border-[#D8D8D8]'
-                  }`}
-                  aria-label={
-                    avatar.type === 'premium'
-                      ? t('avatarPremiumOption')
-                      : avatar.type === 'launch'
-                      ? t('avatarLaunchOption')
-                      : t('avatarOption', { number: index + 1 })
-                  }
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={avatar.src}
-                    alt={avatar.type === 'premium' ? t('avatarPremiumOption') : avatar.type === 'launch' ? t('avatarLaunchOption') : t('avatarOption', { number: index + 1 })}
-                    className="w-full h-full object-cover"
-                  />
-                  {(isPremiumLocked || isLaunchLocked) && (
-                    <span className="absolute top-0.5 right-0.5 z-10 w-5 h-5 rounded-full bg-[#FACC15] text-[#7C2D12] text-[10px] font-extrabold flex items-center justify-center shadow-md ring-2 ring-white">
-                      ★
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          {/* Tabs */}
+          <div className="flex gap-1 mb-3 p-0.5 bg-[#F3F4F6] rounded-lg inline-flex">
+            {(['free', 'unique', 'premium'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setAvatarTab(tab)}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                  avatarTab === tab
+                    ? 'bg-white text-[#9C0000] shadow-sm'
+                    : 'text-[#6B7280] hover:text-[#374151]'
+                }`}
+              >
+                {tab === 'free' && t('avatarCategoryFree')}
+                {tab === 'unique' && t('avatarCategoryUnique')}
+                {tab === 'premium' && t('avatarCategoryPremium')}
+              </button>
+            ))}
+          </div>
+
+          {/* Avatar grid with scroll for free and premium */}
+          <div
+            className={`grid grid-cols-5 gap-3 ${
+              (avatarTab === 'free' || avatarTab === 'premium') ? 'max-h-[220px] overflow-y-auto pr-1' : ''
+            }`}
+          >
+            {avatarTab === 'free' &&
+              FREE_AVATARS.map((avatar, index) => {
+                const owned = true;
+                const selected = form.avatarId === avatar.id;
+                return (
+                  <button
+                    key={avatar.id}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, avatarId: avatar.id }))}
+                    className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition shrink-0 ${
+                      selected ? 'border-[#9C0000]' : 'border-transparent hover:border-[#D8D8D8]'
+                    }`}
+                    aria-label={t('avatarOption', { number: index + 1 })}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={avatar.src}
+                      alt={t('avatarOption', { number: index + 1 })}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                );
+              })}
+            {avatarTab === 'unique' &&
+              LOCAL_AVATAR_IDS.map((id) => ({ id, src: `/avatars/${id}.jpg`, type: 'launch' as const, sku: id })).map((avatar) => {
+                const owned = availableAvatars.includes(avatar.sku);
+                const selected = form.avatarId === avatar.id;
+                const isLaunchLocked = !owned;
+                return (
+                  <button
+                    key={avatar.id}
+                    type="button"
+                    onClick={() => !isLaunchLocked && setForm((f) => ({ ...f, avatarId: avatar.id }))}
+                    className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition shrink-0 ${
+                      selected ? 'border-[#9C0000]' : 'border-transparent hover:border-[#D8D8D8]'
+                    }`}
+                    aria-label={t('avatarLaunchOption')}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={avatar.src}
+                      alt={t('avatarLaunchOption')}
+                      className="w-full h-full object-cover"
+                    />
+                    {isLaunchLocked && (
+                      <span className="absolute top-0.5 right-0.5 z-10 w-5 h-5 rounded-full bg-[#FACC15] text-[#7C2D12] text-[10px] font-extrabold flex items-center justify-center shadow-md ring-2 ring-white">
+                        ★
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            {avatarTab === 'premium' &&
+              premiumAvatars.map((avatar) => {
+                const owned = availableAvatars.includes(avatar.sku);
+                const selected = form.avatarId === avatar.id;
+                const isPremiumLocked = !owned;
+                return (
+                  <button
+                    key={avatar.id}
+                    type="button"
+                    onClick={() => {
+                      if (isPremiumLocked) setPendingPremiumSku(avatar.sku);
+                      else setForm((f) => ({ ...f, avatarId: avatar.id }));
+                    }}
+                    className={`relative w-16 h-16 rounded-full border-2 overflow-hidden transition shrink-0 ${
+                      selected ? 'border-[#9C0000]' : 'border-transparent hover:border-[#D8D8D8]'
+                    }`}
+                    aria-label={t('avatarPremiumOption')}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={avatar.src}
+                      alt={t('avatarPremiumOption')}
+                      className="w-full h-full object-cover"
+                    />
+                    {isPremiumLocked && (
+                      <span className="absolute top-0.5 right-0.5 z-10 w-5 h-5 rounded-full bg-[#FACC15] text-[#7C2D12] text-[10px] font-extrabold flex items-center justify-center shadow-md ring-2 ring-white">
+                        ★
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
           </div>
           {pendingPremiumSku && (
             <div className="mt-3 rounded-lg border border-[#9C0000] bg-white px-4 py-3 text-[14px] md:text-sm">

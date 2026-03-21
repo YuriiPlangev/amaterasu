@@ -4,9 +4,9 @@
  */
 export const SITE_NAME = 'Amaterasu';
 export const DEFAULT_DESCRIPTION_UK =
-  'Інтернет-магазин аніме атрибутики. Плакати, наклейки, мерч з улюблених аніме та можливість замовити індивідуальний дизайн. Доставка по Україні.';
+  'Аніме магазин у Білгороді-Дністровському. Плакати, наклейки, мерч з улюблених аніме та індивідуальний дизайн. Доставка по Україні.';
 export const DEFAULT_DESCRIPTION_EN =
-  'Anime merchandise shop. Posters, stickers, merch from your favorite anime and custom design orders. Delivery across Ukraine.';
+  'Anime shop in Bilhorod-Dnistrovskyi. Posters, stickers, merch from your favorite anime and custom design orders. Delivery across Ukraine.';
 
 export function getBaseUrl(): string {
   if (typeof window !== 'undefined') {

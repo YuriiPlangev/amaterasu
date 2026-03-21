@@ -322,6 +322,9 @@
     "saved": "Контактні дані збережено",
     "error": "Помилка збереження",
     "avatar": "Аватар",
+    "avatarCategoryFree": "Безкоштовні",
+    "avatarCategoryUnique": "Унікальні",
+    "avatarCategoryPremium": "Преміум",
     "avatarOption": "Аватар №{number}",
     "avatarPremiumOption": "Преміум-аватар",
     "avatarLaunchOption": "Аватар дня запуску",
@@ -330,7 +333,8 @@
     "buyAvatarConfirmButton": "Купити аватар",
     "buyAvatarCancelButton": "Скасувати",
     "buyAvatarAdded": "Преміум-аватар додано до кошика. Ви будете перенаправлені до оформлення замовлення.",
-    "buyAvatarError": "Не вдалося додати аватар до кошика. Спробуйте ще раз."
+    "buyAvatarError": "Не вдалося додати аватар до кошика. Спробуйте ще раз.",
+    "launchAvatarToast": "Вітаємо! Ви отримали ексклюзивну аватарку дня запуску!"
   },
   "orderHistory": {
     "title": "Історія замовлень",

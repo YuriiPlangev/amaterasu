@@ -322,6 +322,9 @@
     "saved": "Contact details saved",
     "error": "Save failed",
     "avatar": "Avatar",
+    "avatarCategoryFree": "Free",
+    "avatarCategoryUnique": "Unique",
+    "avatarCategoryPremium": "Premium",
     "avatarOption": "Avatar #{number}",
     "avatarPremiumOption": "Premium avatar",
     "avatarLaunchOption": "Launch day avatar",
@@ -330,7 +333,8 @@
     "buyAvatarConfirmButton": "Buy avatar",
     "buyAvatarCancelButton": "Cancel",
     "buyAvatarAdded": "Premium avatar was added to your cart. You will be redirected to checkout.",
-    "buyAvatarError": "Failed to add avatar to cart. Please try again."
+    "buyAvatarError": "Failed to add avatar to cart. Please try again.",
+    "launchAvatarToast": "Congratulations! You've received the exclusive launch day avatar!"
   },
   "orderHistory": {
     "title": "Order history",
