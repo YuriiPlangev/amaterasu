@@ -12,8 +12,6 @@ import SetDocumentLang from '../../components/SetDocumentLang';
 import JsonLdOrganization from '../../components/seo/JsonLdOrganization';
 import ScrollToTopButton from '../../components/ScrollToTopButton';
 
-export const dynamic = 'force-dynamic';
-
 const TITLES: Record<string, string> = {
   uk: 'Amaterasu — Аніме магазин',
   en: 'Amaterasu — Anime Shop',

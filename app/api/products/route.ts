@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { decodeHtmlEntities } from "../../../lib/html";
 import { woo } from "../../../lib/woo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const WP_URL = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
 const WC_KEY = process.env.WC_KEY;

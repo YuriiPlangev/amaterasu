@@ -6,13 +6,22 @@ import { getTranslations } from 'next-intl/server';
 import { woo } from '../../../../lib/woo';
 import { absoluteUrl } from '../../../../lib/seo';
 import { cleanDescription } from '../../../../lib/html';
-import RelatedProducts from '../../../../components/RelatedProducts';
+import dynamic from 'next/dynamic';
+
+const RelatedProducts = dynamic(
+  () => import('../../../../components/RelatedProducts'),
+  { ssr: false, loading: () => <div className="h-48 animate-pulse rounded-xl bg-gray-100" /> }
+);
 import ProductGallery from '../../../../components/ProductGallery';
 import ProductActions from '../../../../components/ProductActions';
 import JsonLdProduct from '../../../../components/seo/JsonLdProduct';
 import JsonLdBreadcrumb from '../../../../components/seo/JsonLdBreadcrumb';
 
 export const revalidate = 300; // ISR: 5 min
+
+const PRODUCT_FIELDS =
+  'id,name,slug,description,short_description,price,regular_price,sale_price,stock_status,' +
+  'images,categories,tags,attributes,meta_data,brands,brand,sku,virtual,permalink';
 
 const ATTR_TERM_ID_CACHE_TTL_MS = 10 * 60 * 1000;
 const attrTermIdCache = new Map<string, { id: number | null; expiresAt: number }>();
@@ -80,7 +89,7 @@ async function mergeWpAcfForProduct(product: any): Promise<any> {
 
   try {
     const wpRes = await fetch(`${wpUrl}/wp-json/wp/v2/product/${productId}?_fields=id,acf`, {
-      cache: 'no-store',
+      next: { revalidate: 300 },
     });
     if (!wpRes.ok) return product;
 
@@ -99,19 +108,23 @@ async function mergeWpAcfForProduct(product: any): Promise<any> {
   }
 }
 
-async function getProductById(productId: number) {
+const getProductById = React.cache(async function getProductById(productId: number) {
   try {
-    const res = await woo.get(`products/${productId}`);
+    const res = await woo.get(`products/${productId}`, {
+      params: { _fields: PRODUCT_FIELDS },
+    });
     return res.data || null;
   } catch {
     return null;
   }
-}
+});
 
-async function getProductBySlug(slug: string) {
+const getProductBySlug = React.cache(async function getProductBySlug(slug: string) {
   try {
     const decoded = decodeURIComponent(slug);
-    const res = await woo.get('products', { params: { slug: decoded } });
+    const res = await woo.get('products', {
+      params: { slug: decoded, _fields: PRODUCT_FIELDS, per_page: 1 },
+    });
     
     const normalizeSlug = (s: string): string => {
       try {
@@ -158,7 +171,26 @@ async function getProductBySlug(slug: string) {
   } catch (error) {
     return null;
   }
-}
+});
+
+/** Единая точка получения товара — React.cache дедуплицирует вызовы из generateMetadata и ProductPage */
+const getProduct = React.cache(async function getProduct(
+  slug: string,
+  requestedId: number | undefined
+) {
+  if (Number.isFinite(requestedId) && requestedId! > 0) {
+    const byId = await getProductById(requestedId!);
+    if (byId) return byId;
+  }
+
+  const product = await getProductBySlug(slug);
+  if (product) return product;
+
+  if (Number.isFinite(requestedId) && requestedId! > 0) {
+    return await getProductById(requestedId!);
+  }
+  return null;
+});
 
 export async function generateMetadata({
   params,
@@ -170,9 +202,7 @@ export async function generateMetadata({
   const { slug, locale } = await Promise.resolve(params);
   const resolvedSearchParams = await Promise.resolve(searchParams || {});
   const requestedId = Number(resolvedSearchParams?.id);
-  const product = Number.isFinite(requestedId) && requestedId > 0
-    ? await getProductById(requestedId)
-    : await getProductBySlug(slug);
+  const product = await getProduct(slug, Number.isFinite(requestedId) && requestedId > 0 ? requestedId : undefined);
   if (!product) return { title: 'Товар не знайдено' };
   const name = product.name || 'Product';
   const desc = cleanDescription(
@@ -233,63 +263,17 @@ export default async function ProductPage({
     const tCard = await getTranslations('productCard');
     const tPage = await getTranslations('productPage');
 
-    let product: any = null;
+    const product = await getProduct(
+      productSlug,
+      Number.isFinite(requestedId) && requestedId > 0 ? requestedId : undefined
+    );
 
-    if (Number.isFinite(requestedId) && requestedId > 0) {
-      product = await getProductById(requestedId);
-    }
-    
-    let res: any = { data: [] };
-    if (!product) {
-      // Получаем товар по slug через WooCommerce API
-      res = await woo.get('products', { params: { slug: productSlug } });
-    }
-    
-    // Нормализуем и сравниваем slug'и
-    // Ищем товар с точным совпадением slug (нормализуем оба значения)
-    const normalizeSlug = (slug: string): string => {
-      try {
-        return decodeURIComponent(slug).toLowerCase().trim();
-      } catch {
-        return slug.toLowerCase().trim();
-      }
-    };
-    
-    const normalizedRequestSlug = normalizeSlug(productSlug);
-
-    if (!product) {
-      // Сначала пробуем найти по slug
-      product = res.data?.find((p: any) => {
-        const normalizedProductSlug = normalizeSlug(p.slug || '');
-        return normalizedProductSlug === normalizedRequestSlug;
-      }) || null;
-    }
-
-    // Если не найден по slug, пробуем как ID (на случай если slug - это число)
-    if (!product && !isNaN(Number(productSlug))) {
-      const productId = Number(productSlug);
-      product = res.data?.find((p: any) => p.id === productId) || null;
-    }
-
-    // Если все еще не найден, пробуем поиск без нормализации (на сдучай если был изменен slug)
-    if (!product && res.data && res.data.length > 0) {
-      // Ищем по частичному совпадению для товаров с проблемами кодирования
-      const searchSlug = productSlug.toLowerCase();
-      product = res.data.find((p: any) => 
-        (p.slug || '').toLowerCase().includes(searchSlug) ||
-        searchSlug.includes((p.slug || '').toLowerCase())
-      ) || null;
-    }
-    
-
-    
     if (!product) {
       if (process.env.NODE_ENV === 'development') {
         console.error('[ProductPage] not found', {
           rawSlug,
           decodedSlug: productSlug,
-          normalizedRequestSlug,
-          candidates: (res.data || []).map((p: any) => ({ id: p.id, slug: p.slug })),
+          requestedId,
         });
       }
       return (
@@ -302,29 +286,43 @@ export default async function ProductPage({
       );
     }
 
-    if (!product?.acf) {
-      product = await mergeWpAcfForProduct(product);
-    }
+    const titleAttr = product?.attributes?.find((attr: any) =>
+      attr?.name?.toLowerCase() === 'тайтл' || attr?.name?.toLowerCase() === 'title'
+    );
+    const characterAttr = product?.attributes?.find((attr: any) =>
+      attr?.name?.toLowerCase() === 'персонаж' || attr?.name?.toLowerCase() === 'character'
+    );
+    const gamesAttr = product?.attributes?.find((attr: any) =>
+      attr?.name?.toLowerCase() === 'гра' || attr?.name?.toLowerCase() === 'game' || attr?.name?.toLowerCase() === 'games'
+    );
+
+    const [productWithAcf, productTitleId, productCharacterId, productGameId] = await Promise.all([
+      product?.acf ? Promise.resolve(product) : mergeWpAcfForProduct(product),
+      resolveAttributeTermId(titleAttr),
+      resolveAttributeTermId(characterAttr),
+      resolveAttributeTermId(gamesAttr),
+    ]);
+    let productResolved = productWithAcf;
 
     // Получаем теги товара для поиска похожих товаров
-    const productTags = product.tags?.map((tag: any) => tag.id) || [];
+    const productTags = productResolved.tags?.map((tag: any) => tag.id) || [];
     const firstTagId = productTags.length > 0 ? productTags[0] : undefined;
-    const productCategories = product.categories?.map((category: any) => category.id) || [];
+    const productCategories = productResolved.categories?.map((category: any) => category.id) || [];
     const firstCategoryId = productCategories.length > 0 ? productCategories[0] : undefined;
 
     const locale = resolvedParams.locale || 'uk';
-    const isInStock = product?.stock_status === 'instock';
+    const isInStock = productResolved?.stock_status === 'instock';
     const hasLongDelivery =
-      toBooleanFlag(product?.acf?.delivery_status) ||
-      toBooleanFlag(readMetaValue(product?.meta_data, 'delivery_status')) ||
-      toBooleanFlag(readMetaValue(product?.meta_data, '_delivery_status')) ||
-      toBooleanFlag(readMetaValue(product?.meta_data, 'acf_delivery_status'));
-    const productTag = product?.tags?.[0]?.name || '';
-    const productCategory = product?.categories?.[0]?.name || '';
-    const productCategoryId = product?.categories?.[0]?.id || null;
+      toBooleanFlag(productResolved?.acf?.delivery_status) ||
+      toBooleanFlag(readMetaValue(productResolved?.meta_data, 'delivery_status')) ||
+      toBooleanFlag(readMetaValue(productResolved?.meta_data, '_delivery_status')) ||
+      toBooleanFlag(readMetaValue(productResolved?.meta_data, 'acf_delivery_status'));
+    const productTag = productResolved?.tags?.[0]?.name || '';
+    const productCategory = productResolved?.categories?.[0]?.name || '';
+    const productCategoryId = productResolved?.categories?.[0]?.id || null;
     // Берем бренд так же, как в карточке товара
-    const brandFromList = Array.isArray(product?.brands)
-      ? product.brands.find((b: any) => {
+    const brandFromList = Array.isArray(productResolved?.brands)
+      ? productResolved.brands.find((b: any) => {
           if (!b) return false;
           if (typeof b === 'string') return Boolean(b.trim());
           return Boolean(String(b?.name || '').trim());
@@ -333,36 +331,23 @@ export default async function ProductPage({
 
     const productBrand =
       (typeof brandFromList === 'string' ? brandFromList : brandFromList?.name) ||
-      (typeof product?.brand === 'string' ? product.brand : product?.brand?.name) ||
-      (Array.isArray(product?.attributes)
-        ? product.attributes.find((attr: any) => {
+      (typeof productResolved?.brand === 'string' ? productResolved.brand : productResolved?.brand?.name) ||
+      (Array.isArray(productResolved?.attributes)
+        ? productResolved.attributes.find((attr: any) => {
             const attrName = String(attr?.name || '').toLowerCase();
             const attrSlug = String(attr?.slug || '').toLowerCase();
             return attrName.includes('brand') || attrName.includes('бренд') || attrSlug.includes('brand');
           })?.options?.[0]
         : '') ||
       '';
-    const images = product?.images || [];
+    const images = productResolved?.images || [];
     const mainImage = images?.[0]?.src || '/images/placeholder.jpg';
 
-    const shortDescription = cleanDescription(product?.short_description || '');
-
-    // Extract title and character from attributes
-    const titleAttr = product?.attributes?.find((attr: any) => 
-      attr?.name?.toLowerCase() === 'тайтл' || attr?.name?.toLowerCase() === 'title'
-    );
-    const characterAttr = product?.attributes?.find((attr: any) => 
-      attr?.name?.toLowerCase() === 'персонаж' || attr?.name?.toLowerCase() === 'character'
-    );
-    
+    const shortDescription = cleanDescription(productResolved?.short_description || '');
     const productTitle = titleAttr?.options?.[0] || titleAttr?.option || '';
     const productCharacter = characterAttr?.options?.[0] || characterAttr?.option || '';
-    const [productTitleId, productCharacterId] = await Promise.all([
-      resolveAttributeTermId(titleAttr),
-      resolveAttributeTermId(characterAttr),
-    ]);
 
-    const attributes = (product?.attributes || [])
+    const attributes = (productResolved?.attributes || [])
       .filter((attr: any) => attr?.name && (attr?.options?.length || attr?.option))
       .slice(0, 5)
       .map((attr: any) => ({
@@ -396,11 +381,11 @@ export default async function ProductPage({
       });
     }
     
-    breadcrumbItems.push({ name: product.name, path: '' });
+    breadcrumbItems.push({ name: productResolved.name, path: '' });
 
     return (
       <div className="max-w-[1920px] w-full mx-auto site-padding-x py-6 md:py-8 pt-20 md:pt-24 mt-12">
-        <JsonLdProduct product={product} locale={locale} />
+        <JsonLdProduct product={productResolved} locale={locale} />
         <JsonLdBreadcrumb items={breadcrumbItems} locale={locale} />
         <nav className="text-sm text-[#9C9C9C] mb-4 md:mb-6 flex items-center flex-wrap gap-1 overflow-x-hidden">
           {breadcrumbItems.map((item, index) => (
@@ -419,8 +404,8 @@ export default async function ProductPage({
 
         <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-6 lg:gap-8 lg:items-stretch">
           <ProductGallery
-            product={product}
-            name={product?.name}
+            product={productResolved}
+            name={productResolved?.name}
             tag={productBrand}
             images={images}
             fallbackSrc={mainImage}
@@ -434,7 +419,7 @@ export default async function ProductPage({
                 </span>
               )}
               <h1 className="text-[clamp(20px,2.2vw,28px)] font-semibold text-[#1C1C1C] leading-snug">
-                {product?.name}
+                {productResolved?.name}
                 {shortDescription && (
                   <span className="block mt-1 text-base md:text-lg font-normal text-[#6B7280]">
                     {shortDescription}
@@ -444,9 +429,9 @@ export default async function ProductPage({
             </div>
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex flex-col items-start gap-1">
-                <p className="text-[#9C0000] text-[clamp(24px,2.5vw,32px)] font-bold">{product?.price} ₴</p>
-                {product?.regular_price && parseFloat(product?.regular_price) > parseFloat(product?.price || '0') && (
-                  <p className="text-[#9C9C9C] text-[clamp(16px,1.8vw,20px)] font-semibold line-through">{product?.regular_price} ₴</p>
+                <p className="text-[#9C0000] text-[clamp(24px,2.5vw,32px)] font-bold">{productResolved?.price} ₴</p>
+                {productResolved?.regular_price && parseFloat(productResolved?.regular_price) > parseFloat(productResolved?.price || '0') && (
+                  <p className="text-[#9C9C9C] text-[clamp(16px,1.8vw,20px)] font-semibold line-through">{productResolved?.regular_price} ₴</p>
                 )}
               </div>
               <span className={`text-sm font-semibold ${isInStock ? 'text-[#2E7900]' : 'text-[#9C0000]'}`}>
@@ -454,7 +439,7 @@ export default async function ProductPage({
               </span>
             </div>
 
-            <ProductActions product={product} />
+            <ProductActions product={productResolved} />
 
             <div className="border border-[#E6E6E6] rounded-xl p-4 md:p-5">
               <h2 className="text-base font-bold text-[#1C1C1C] mb-3">{tPage('characteristics')}</h2>
@@ -531,16 +516,18 @@ export default async function ProductPage({
 
         <section className="mt-12 md:mt-16 space-y-12 md:space-y-16">
           <RelatedProducts
+            attributeTitleId={productTitleId}
+            attributeGamesId={productGameId}
             tagId={firstTagId}
-            excludeProductId={product.id}
-            limit={10}
+            excludeProductId={productResolved.id}
+            limit={8}
             showTitle={true}
             titleKey="similarFromTitle"
           />
           <RelatedProducts
             categoryId={firstCategoryId}
-            excludeProductId={product.id}
-            limit={10}
+            excludeProductId={productResolved.id}
+            limit={8}
             showTitle={true}
             titleKey="similarFromCategory"
           />

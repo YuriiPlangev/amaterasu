@@ -11,6 +11,8 @@ import 'swiper/css';
 interface RelatedProductsProps {
   tagId?: number;
   categoryId?: number;
+  attributeTitleId?: number | null;
+  attributeGamesId?: number | null;
   excludeProductId?: number;
   limit?: number;
   showTitle?: boolean;
@@ -20,6 +22,8 @@ interface RelatedProductsProps {
 export default function RelatedProducts({
   tagId,
   categoryId,
+  attributeTitleId,
+  attributeGamesId,
   excludeProductId,
   limit = 4,
   showTitle = true,
@@ -32,41 +36,47 @@ export default function RelatedProducts({
   const prevSel = `.related-prev-${uniqueId}`;
   const nextSel = `.related-next-${uniqueId}`;
 
-  // Первичный запрос с фильтром
-  const params: any = {};
-  if (tagId) params.tag = tagId;
-  if (categoryId) params.category = categoryId;
+  const getProductsArray = (data: any) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    return data.products || [];
+  };
 
-  const { data: products, isLoading } = useProducts(params);
-  
-  // Fallback: загружаем последние товары если фильтр пусто
-  const { data: allProducts, isLoading: isLoadingFallback } = useProducts({
-    per_page: 100,
-  });
+  // Один запрос: attribute_title → attribute_games → tag → category → last 100
+  const primaryParams: any = attributeTitleId
+    ? { attribute_title: String(attributeTitleId) }
+    : attributeGamesId
+      ? { attribute_games: String(attributeGamesId) }
+      : tagId
+        ? { tag: tagId }
+        : categoryId
+          ? { category: categoryId }
+          : { per_page: 100 };
+
+  const hasFilter = Boolean(attributeTitleId || attributeGamesId || tagId || categoryId);
+  const { data: products, isLoading } = useProducts({ ...primaryParams, per_page: 12 });
+
+  const primaryEmpty = !isLoading && getProductsArray(products).length === 0;
+  const needFallback = hasFilter && primaryEmpty;
+
+  // Fallback только когда есть фильтр, но primary вернул пусто
+  const { data: allProducts, isLoading: isLoadingFallback } = useProducts(
+    { per_page: 24 },
+    { enabled: needFallback }
+  );
 
   const filteredProducts = React.useMemo(() => {
-    const getProductsArray = (data: any) => {
-      if (!data) return [];
-      if (Array.isArray(data)) return data;
-      return data.products || [];
-    };
-
     let filtered = getProductsArray(products);
-
-    // Если отфильтрованный результат пустой и нет специального фильтра - используем fallback
-    if (filtered.length === 0 && !tagId && !categoryId) {
+    if (filtered.length === 0 && needFallback) {
       filtered = getProductsArray(allProducts);
     }
-
-    // Исключаем товар если передан идентификатор
     if (excludeProductId) {
       filtered = filtered.filter((product: any) => product.id !== excludeProductId);
     }
-
     return filtered.slice(0, limit);
-  }, [products, allProducts, tagId, categoryId, excludeProductId, limit]);
+  }, [products, allProducts, needFallback, excludeProductId, limit]);
 
-  const isLoadingState = isLoading || (!products && !filteredProducts.length && isLoadingFallback);
+  const isLoadingState = isLoading || (needFallback && isLoadingFallback);
 
   const titleText = t(titleKey);
   const showArrows = filteredProducts.length > 2;

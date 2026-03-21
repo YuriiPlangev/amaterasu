@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 const PRODUCTS_STALE_MS = 60 * 1000; // 1 min
 
-export function useProducts(params: any = {}) {
+export function useProducts(params: any = {}, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['products', params],
     staleTime: PRODUCTS_STALE_MS,
@@ -49,6 +49,7 @@ export function useProducts(params: any = {}) {
       }
       return data;
     },
+    enabled: options?.enabled ?? true,
   });
 }
 

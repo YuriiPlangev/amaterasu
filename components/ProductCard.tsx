@@ -97,7 +97,7 @@ export default function ProductCard({ product, variant = 'default' }: { product:
 
       {variant === 'catalog' ? (
         <>
-          <Link href={productHref} className="order-1 w-full flex-shrink-0" onClick={handleProductClick}>
+          <Link href={productHref} prefetch={false} className="order-1 w-full flex-shrink-0" onClick={handleProductClick}>
             <div className="relative w-full aspect-square rounded-lg overflow-hidden">
               <Image
                 src={getProxiedImageUrl(product?.images?.[0]?.src)}
@@ -157,7 +157,7 @@ export default function ProductCard({ product, variant = 'default' }: { product:
         </>
       ) : (
         <>
-          <Link href={productHref} className="flex flex-col w-full cursor-pointer flex-1" onClick={handleProductClick}>
+          <Link href={productHref} prefetch={false} className="flex flex-col w-full cursor-pointer flex-1" onClick={handleProductClick}>
             <div className="relative w-full aspect-square rounded-lg overflow-hidden">
               <Image
                 src={getProxiedImageUrl(product?.images?.[0]?.src)}
