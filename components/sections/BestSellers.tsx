@@ -39,9 +39,9 @@ const BestSellers = () => {
 
   return (
     <section className='w-full relative overflow-x-hidden overflow-y-visible bg-white'>
-      <div className='max-w-[1920px] w-full mx-auto site-padding-x overflow-x-hidden'>
+      <div className='max-w-[1920px] w-full mx-auto site-padding-x overflow-visible'>
         <h2 className='text-[clamp(22px,2.2vw,55px)] font-bold uppercase text-black py-6 md:py-[clamp(20px,2.2vw,56px)]'>{t('title')}</h2>
-        <div className='relative overflow-x-hidden overflow-y-visible'>
+        <div className='relative overflow-visible'>
           {products && products.length > 4 && (
             <>
               <button
