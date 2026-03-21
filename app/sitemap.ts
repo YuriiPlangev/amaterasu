@@ -23,8 +23,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   try {
-    const productsRes = await woo.get('products', { params: { per_page: 500, status: 'publish' } });
+    const [productsRes, categoriesRes] = await Promise.all([
+      woo.get('products', { params: { per_page: 500, status: 'publish' } }),
+      woo.get('products/categories', { params: { per_page: 100, exclude: [1] } }),
+    ]);
     const products = productsRes.data || [];
+    const categories = categoriesRes.data || [];
     for (const product of products) {
       const slug = product.slug;
       if (!slug) continue;
@@ -37,8 +41,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         });
       }
     }
+    for (const cat of categories as { slug?: string; id?: number }[]) {
+      if (!cat?.slug) continue;
+      for (const locale of locales) {
+        entries.push({
+          url: `${base}/${locale}/catalog?categories=${cat.id}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly' as const,
+          priority: 0.6,
+        });
+      }
+    }
   } catch (e) {
-    console.warn('Sitemap: could not fetch products', e);
+    console.warn('Sitemap: could not fetch products/categories', e);
   }
 
   const wpUrl = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;

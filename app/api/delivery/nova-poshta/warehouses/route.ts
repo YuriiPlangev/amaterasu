@@ -51,7 +51,10 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    return NextResponse.json({ success: true, data: warehouses });
+    return NextResponse.json(
+      { success: true, data: warehouses },
+      { headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate' } }
+    );
   } catch (error) {
     console.error('Nova Poshta warehouses error:', error);
     return NextResponse.json(

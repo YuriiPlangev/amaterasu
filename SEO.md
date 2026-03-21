@@ -1,5 +1,39 @@
 # SEO: налаштування та рекомендації
 
+## Звіт про SEO-оптимізацію (16.03.2025)
+
+### Впроваджені зміни
+
+#### 1. Динамічні метадані (Metadata API) — товар
+- **title**: `{Product Name} | Купити аніме мерч в Amaterasu`
+- **description**: з `short_description` (очищено від HTML через `cleanDescription`)
+- **alternates.canonical**: посилання на поточний товар
+- **openGraph**: title, description, url, images (динамічна OG-картка)
+- **twitter**: summary_large_image
+
+#### 2. JSON-LD (Rich Snippets)
+- **Product**: name, description, sku, image, offers (price, priceCurrency: UAH, availability)
+- **BreadcrumbList**: Головна → Каталог → Категорія → Тайтл/Персонаж → Товар
+
+#### 3. OpenGraph Image Generation (ImageResponse)
+- **`app/api/og/route.tsx`**: динамічна генерація OG-зображень через `@vercel/og`
+- Параметри: `name`, `price`, `image`
+- Картка: логотип Amaterasu, фото товару, назва, ціна (1200×630 px)
+
+#### 4. Sitemap & Robots
+- **sitemap.ts**: товари з WooCommerce + категорії + пости з WordPress
+- **robots.ts**: disallow `/cart`, `/checkout`, `/my-account`, `/api/`, `/auth/`, `/account`
+
+#### 5. Image SEO
+- Головне фото товару: `priority` для LCP
+- `alt` на основі `product.name` у ProductGallery та ProductCard
+
+#### 6. SEO для фільтрів каталогу
+- Динамічний `document.title` при виборі фільтра:  
+  `Мерч по темі {Character/Title/Game/Category} | Amaterasu`
+
+---
+
 ## Що вже зроблено на сайті
 
 ### 1. Метадані (Metadata)

@@ -81,12 +81,6 @@ export default function ProductCard({ product, variant = 'default' }: { product:
 
   const handleProductClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('[ProductNav] click', {
-      id: product?.id,
-      slug: product?.slug,
-      name: product?.name,
-      href: productHref,
-    });
   };
 
   return (

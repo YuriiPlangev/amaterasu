@@ -69,7 +69,10 @@ export async function POST(req: NextRequest) {
       }));
     }
 
-    return NextResponse.json({ success: true, data: cities });
+    return NextResponse.json(
+      { success: true, data: cities },
+      { headers: { 'Cache-Control': 's-maxage=3600, stale-while-revalidate' } }
+    );
   } catch (error) {
     console.error('Nova Poshta cities error:', error);
     return NextResponse.json(

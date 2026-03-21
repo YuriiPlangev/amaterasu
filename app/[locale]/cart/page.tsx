@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useCartStore } from '../../../store/cartStore';
 import { getProxiedImageUrl } from '../../../lib/imageProxy';
+import { useAuthUser } from '../../../hooks/useAuth';
 
 export default function CartPage() {
   const t = useTranslations('cart');
@@ -63,6 +64,8 @@ export default function CartPage() {
   const npWarehouseRef = useRef<HTMLDivElement>(null);
   const ukrposhtaDropdownRef = useRef<HTMLDivElement>(null);
 
+  const { data: userData } = useAuthUser();
+
   const allVirtual =
     items.length > 0 &&
     items.every((i: any) => {
@@ -74,21 +77,16 @@ export default function CartPage() {
 
   // Попереднє заповнення email/телефону для залогіненого користувача
   useEffect(() => {
-    fetch('/api/auth/user')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!data) return;
-        const rawPhone = (data.phone || '').replace(/\D/g, '');
-        const normPhone = rawPhone.startsWith('380') ? rawPhone.slice(0, 12) : rawPhone.startsWith('0') ? rawPhone.slice(0, 10) : rawPhone.length <= 9 ? '0' + rawPhone : '380' + rawPhone.slice(-9);
-        setFormData((prev) => ({
-          ...prev,
-          firstName: prev.firstName || data.displayName || '',
-          email: prev.email || data.email || '',
-          phone: prev.phone || normPhone || '',
-        }));
-      })
-      .catch(() => {});
-  }, []);
+    if (!userData) return;
+    const rawPhone = (userData.phone || '').replace(/\D/g, '');
+    const normPhone = rawPhone.startsWith('380') ? rawPhone.slice(0, 12) : rawPhone.startsWith('0') ? rawPhone.slice(0, 10) : rawPhone.length <= 9 ? '0' + rawPhone : '380' + rawPhone.slice(-9);
+    setFormData((prev) => ({
+      ...prev,
+      firstName: prev.firstName || userData.displayName || '',
+      email: prev.email || userData.email || '',
+      phone: prev.phone || normPhone || '',
+    }));
+  }, [userData]);
 
   const fetchNpCities = useCallback(async (search: string) => {
     setLoadingCities(true);

@@ -83,9 +83,6 @@ export async function GET() {
     currentAvatar = String(profile.avatarId).trim();
   }
 
-  // Это лог в терминале твоего компьютера (где запущен npm run dev)
-  console.log("!!! FINAL DATA BEFORE SENDING TO FRONTEND:", availableAvatars);
-
   return NextResponse.json({
     id: payload.sub,
     login,

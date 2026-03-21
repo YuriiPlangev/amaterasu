@@ -1,8 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
+const PRODUCTS_STALE_MS = 60 * 1000; // 1 min
+
 export function useProducts(params: any = {}) {
   return useQuery({
     queryKey: ['products', params],
+    staleTime: PRODUCTS_STALE_MS,
     queryFn: async () => {
       const searchParams = new URLSearchParams();
       const hasSearch = typeof params.search === 'string' && params.search.trim() !== '';
@@ -21,7 +24,7 @@ export function useProducts(params: any = {}) {
       const basePath = hasSearch ? '/api/search' : '/api/products';
       const url = `${basePath}${query ? `?${query}` : ''}`;
 
-      const res = await fetch(url, { cache: 'no-store' });
+      const res = await fetch(url);
 
       if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();

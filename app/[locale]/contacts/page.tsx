@@ -106,7 +106,7 @@ export default function ContactsPage() {
             </a>
             </p>
             <a
-              href="https://t.me/amaterasuAnimeShopBot"
+              href="https://t.me/amaterasu1shop"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1C1C1C] text-white rounded-xl font-semibold text-sm hover:bg-[#9C0000] transition-colors"
@@ -123,7 +123,7 @@ export default function ContactsPage() {
             {t('fastReplyText')}
           </p>
           <Link
-            href="https://t.me/amaterasuAnimeShopBot"
+            href="https://t.me/amaterasu1shop"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-[#9C0000] font-semibold hover:underline"

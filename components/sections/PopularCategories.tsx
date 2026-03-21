@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useLocale } from 'next-intl';
 import PopularCategory from '../ui/PopularCategory';
 import { SquareSkeleton } from '../ui/Skeletons';
@@ -11,13 +11,6 @@ const PopularCategories = () => {
   const { data: categories = [], isLoading: loading } = useCategories();
   const visibleCategories = categories.slice(0, 6);
   const showPlaceholders = loading || visibleCategories.length === 0;
-
-  // Debug: выводим данные категорий в консоль
-  useEffect(() => {
-    if (categories && categories.length > 0) {
-      console.log('Popular categories loaded:', categories.length)
-    }
-  }, [categories]);
 
   return (
     <section className='w-full bg-white'>

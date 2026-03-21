@@ -58,22 +58,28 @@ export async function GET(
         }
         if (Object.keys(avatarMap).length === 0 && process.env.WP_USER_LOGIN && process.env.WP_USER_PASS) {
           const auth = Buffer.from(`${process.env.WP_USER_LOGIN}:${process.env.WP_USER_PASS}`).toString("base64");
-          for (const uid of userIdsNeedAvatar) {
-            try {
-              const r = await axios.get(`${WP_URL}/wp-json/wp/v2/users/${uid}`, {
-                params: { _fields: "id,current_avatar,currentAvatar" },
-                headers: { Authorization: `Basic ${auth}` },
-                validateStatus: () => true,
-              });
-              if (r.status === 200 && r.data) {
-                const av = (r.data as any).current_avatar ?? (r.data as any).currentAvatar;
-                if (av && String(av).trim() && String(av).trim() !== "default") {
-                  avatarMap[String(uid)] = String(av).trim();
+          const results = await Promise.all(
+            (userIdsNeedAvatar as string[]).map(async (uid: string) => {
+              try {
+                const r = await axios.get(`${WP_URL}/wp-json/wp/v2/users/${uid}`, {
+                  params: { _fields: "id,current_avatar,currentAvatar" },
+                  headers: { Authorization: `Basic ${auth}` },
+                  validateStatus: () => true,
+                });
+                if (r.status === 200 && r.data) {
+                  const av = (r.data as any).current_avatar ?? (r.data as any).currentAvatar;
+                  if (av && String(av).trim() && String(av).trim() !== "default") {
+                    return [String(uid), String(av).trim()] as const;
+                  }
                 }
+              } catch {
+                /* ignore */
               }
-            } catch {
-              /* ignore */
-            }
+              return null;
+            })
+          );
+          for (const pair of results) {
+            if (pair) avatarMap[pair[0]] = pair[1];
           }
         }
         comments = comments.map((c: any) => {

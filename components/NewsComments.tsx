@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { avatarIdToSrc } from '../lib/avatars';
 import AvatarWithFallback from './ui/AvatarWithFallback';
+import { useAuthCheck, useAuthUser } from '../hooks/useAuth';
 
 interface Comment {
   id: string;
@@ -23,47 +24,18 @@ export default function NewsComments({ slug }: { slug: string }) {
   const router = useRouter();
 
   const [comments, setComments] = useState<Comment[]>([]);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userAvatarId, setUserAvatarId] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
 
-  // Получить данные текущего пользователя (id + аватарId)
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch('/api/auth/user');
-        if (res.ok) {
-          const data = await res.json();
-          setUserId(data.id || null);
-          setUserAvatarId(data.currentAvatar || data.avatarId || null);
-        }
-      } catch {
-        setUserId(null);
-        setUserAvatarId(null);
-      }
-    };
-    fetchUser();
-  }, []);
-
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch('/api/auth/check');
-        setIsAuthenticated(res.ok);
-      } catch {
-        setIsAuthenticated(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
+  const { data: authCheckData } = useAuthCheck();
+  const { data: userData } = useAuthUser();
+  const isAuthenticated = authCheckData?.authenticated ?? null;
+  const userId = userData?.id ?? null;
+  const userAvatarId = userData?.currentAvatar ?? userData?.avatarId ?? null;
 
   // Load comments
   useEffect(() => {

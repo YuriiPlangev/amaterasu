@@ -27,8 +27,6 @@ export async function GET() {
       }
     );
 
-    console.log('Отримано новостей:', response.data.length);
-
     const posts = response.data.map((post: any) => {
       // 1. Достаем URL картинки из _embedded (благодаря параметру _embed: true)
       const imageUrl = post._embedded?.['wp:featuredmedia']?.[0]?.source_url 

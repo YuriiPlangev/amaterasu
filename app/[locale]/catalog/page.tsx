@@ -395,6 +395,28 @@ export default function CatalogPage() {
     ...filterState.games.map((id) => ({ key: `game-${id}`, label: gameIdToLabel[id] || String(id) })),
   ];
 
+  // Dynamic document title for SEO when filters are applied
+  const filterTitleLabel = filterState.characters[0]
+    ? characterIdToLabel[filterState.characters[0]]
+    : filterState.titles[0]
+    ? titleIdToLabel[filterState.titles[0]]
+    : filterState.games[0]
+    ? gameIdToLabel[filterState.games[0]]
+    : filterState.categoryIds[0]
+    ? categoryNames[filterState.categoryIds[0]]
+    : null;
+
+  useEffect(() => {
+    if (filterTitleLabel) {
+      document.title =
+        locale === 'uk'
+          ? `Мерч по темі ${filterTitleLabel} | Amaterasu`
+          : `Merch by ${filterTitleLabel} | Amaterasu`;
+    } else {
+      document.title = locale === 'uk' ? 'Каталог | Amaterasu' : 'Catalog | Amaterasu';
+    }
+  }, [filterTitleLabel, locale]);
+
   const clearFilters = () => {
     setFilterState(initialFilterState);
     setSearchInput('');

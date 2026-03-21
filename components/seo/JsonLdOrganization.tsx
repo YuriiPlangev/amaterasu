@@ -9,7 +9,7 @@ export default function JsonLdOrganization() {
     url: base,
     description: 'Інтернет-магазин аніме атрибутики. Плакати, наклейки, мерч.',
     sameAs: [
-      'https://t.me/amaterasuAnimeShopBot',
+      'https://t.me/amaterasuanimeshop',
       'https://instagram.com/amaterasu1shop',
     ],
   };

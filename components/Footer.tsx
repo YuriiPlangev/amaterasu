@@ -46,7 +46,7 @@ export default function Footer() {
         <div className='max-w-[1920px] mx-auto site-padding-x  flex flex-row flex-wrap justify-between items-start items-center gap-6'>
           <Logo />
           <div className='flex flex-col md:flex-row gap-4 md:gap-6'>
-            <a href="https://t.me/amaterasuAnimeShopBot" target="_blank" rel="noopener noreferrer" className='footer-link-hover flex gap-2 items-center transition-opacity duration-200 hover:opacity-90' aria-label="Telegram: @amaterasu1shop">
+            <a href="https://t.me/amaterasuanimeshop" target="_blank" rel="noopener noreferrer" className='footer-link-hover flex gap-2 items-center transition-opacity duration-200 hover:opacity-90' aria-label="Telegram: @amaterasu1shop">
               <Image src='/svg/tg.svg' alt="" width={24} height={24} className='shrink-0' aria-hidden />
               <p className='text-[#BCBCBC] text-sm md:text-base transition-colors duration-200'>@amaterasu1shop</p>
             </a>

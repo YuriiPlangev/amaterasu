@@ -13,5 +13,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  return NextResponse.json({ success: true, data: [...cities].slice(0, 50) });
+  return NextResponse.json(
+    { success: true, data: [...cities].slice(0, 50) },
+    { headers: { 'Cache-Control': 's-maxage=86400, stale-while-revalidate' } }
+  );
 }

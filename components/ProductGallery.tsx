@@ -56,9 +56,10 @@ export default function ProductGallery({ product, name, tag, images, fallbackSrc
         <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
           <Image
             src={getProxiedImageUrl(active)}
-            alt={name}
+            alt={name || 'Product image'}
             width={620}
             height={620}
+            priority
             className="w-auto max-w-full h-full max-h-full object-contain"
           />
         </div>

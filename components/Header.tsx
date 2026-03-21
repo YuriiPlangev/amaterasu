@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Logo from './ui/Logo';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
 import HeaderSearch from './HeaderSearch';
 import { useCartStore } from '../store/cartStore';
+import { useAuthCheck } from '../hooks/useAuth';
 
 export default function Header() {
   const t = useTranslations('header');
@@ -16,16 +17,10 @@ export default function Header() {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { data: authData } = useAuthCheck();
+  const isAuthenticated = authData?.authenticated ?? null;
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/auth/check')
-      .then(res => res.json())
-      .then(data => setIsAuthenticated(data.authenticated))
-      .catch(() => setIsAuthenticated(false));
-  }, []);
 
   useEffect(() => {
     if (isMobileMenuOpen) document.body.style.overflow = 'hidden';

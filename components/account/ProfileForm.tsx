@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCartStore } from '../../store/cartStore';
 import { avatarIdToSrc, LOCAL_AVATAR_IDS } from '../../lib/avatars';
 import { getProxiedImageUrl } from '../../lib/imageProxy';
+import { useAuthUser } from '../../hooks/useAuth';
 
 type UserProfile = {
   id: string;
@@ -41,9 +43,10 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
   const t = useTranslations('profileForm');
   const locale = useLocale();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const addToCart = useCartStore((state) => state.add);
+  const { data: userData, isLoading: userLoading } = useAuthUser({ enabled: true });
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [form, setForm] = useState({ displayName: '', email: '', phone: '', avatarId: 'photo_1' });
@@ -52,24 +55,20 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
   const [pendingPremiumSku, setPendingPremiumSku] = useState<string | null>(null);
 
   useEffect(() => {
-    // 1. Загружаем профиль пользователя
-    fetch('/api/auth/user', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : Promise.reject(res)))
-      .then((data) => {
-        setProfile(data);
-        setAvailableAvatars(Array.isArray(data.availableAvatars) ? data.availableAvatars : ['default']);
-        const avatarId = (data.currentAvatar || data.avatarId || 'photo_1') as string;
-        setForm({
-          displayName: data.displayName ?? data.login ?? '',
-          email: data.email ?? '',
-          phone: data.phone ?? '',
-          avatarId,
-        });
-      })
-      .catch(() => setProfile(null))
-      .finally(() => setLoading(false));
+    if (!userData) return;
+    setProfile(userData as UserProfile);
+    setAvailableAvatars(Array.isArray(userData.availableAvatars) ? userData.availableAvatars : ['default']);
+    const avatarId = (userData.currentAvatar || userData.avatarId || 'photo_1') as string;
+    setForm({
+      displayName: userData.displayName ?? userData.login ?? '',
+      email: userData.email ?? '',
+      phone: userData.phone ?? '',
+      avatarId,
+    });
+  }, [userData]);
 
-    // 2. Загружаем покупные (преміум) аватари з WooCommerce категорії avatars (id=7012)
+  useEffect(() => {
+    // Загружаем покупные (преміум) аватари з WooCommerce категорії avatars (id=7012)
     fetch('/api/products?category=7012&per_page=50')
       .then((res) => (res.ok ? res.json() : Promise.reject(res)))
       .then((data) => {
@@ -123,6 +122,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
       if (data.profile) {
         setProfile((p) => (p ? { ...p, ...data.profile } : p));
       }
+      void queryClient.invalidateQueries({ queryKey: ['auth', 'user'] });
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : t('error') });
     } finally {
@@ -159,7 +159,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
     }
   };
 
-  if (loading) {
+  if (userLoading) {
     return (
       <div className="bg-white border border-[#E6E6E6] rounded-2xl p-6 animate-pulse">
         <div className="h-6 bg-[#E5E7EB] rounded w-1/3 mb-4" />

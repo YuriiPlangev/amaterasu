@@ -14,7 +14,7 @@ export default function JsonLdBreadcrumb({
     '@type': 'ListItem',
     position: i + 1,
     name: item.name,
-    item: `${base}/${locale}${item.path}`,
+    item: item.path ? `${base}/${locale}${item.path}` : `${base}/${locale}`,
   }));
   const json = {
     '@context': 'https://schema.org',

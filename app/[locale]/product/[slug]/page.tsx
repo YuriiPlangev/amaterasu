@@ -12,8 +12,7 @@ import ProductActions from '../../../../components/ProductActions';
 import JsonLdProduct from '../../../../components/seo/JsonLdProduct';
 import JsonLdBreadcrumb from '../../../../components/seo/JsonLdBreadcrumb';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 300; // ISR: 5 min
 
 const ATTR_TERM_ID_CACHE_TTL_MS = 10 * 60 * 1000;
 const attrTermIdCache = new Map<string, { id: number | null; expiresAt: number }>();
@@ -177,24 +176,33 @@ export async function generateMetadata({
   if (!product) return { title: 'Товар не знайдено' };
   const name = product.name || 'Product';
   const desc = cleanDescription(
-    product.short_description ||
-    product.description ||
-    ''
+    product.short_description || product.description || ''
   ).slice(0, 160);
-  const image = product.images?.[0]?.src;
   const path = `/${locale}/product/${slug}`;
+  const baseUrl = absoluteUrl('');
+  const ogImageUrl = `${baseUrl}/api/og?` + new URLSearchParams({
+    name: name.slice(0, 80),
+    price: String(product.price || ''),
+    image: (product.images?.[0]?.src || '').slice(0, 500),
+  }).toString();
   return {
-    title: name,
+    title: `${name} | Купити аніме мерч в Amaterasu`,
     description: desc,
-    openGraph: {
-      title: name,
-      description: desc,
-      url: absoluteUrl(path),
-      images: image ? [{ url: image, alt: name }] : undefined,
-      locale: locale === 'uk' ? 'uk_UA' : 'en_GB',
-    },
     alternates: {
       canonical: absoluteUrl(path),
+    },
+    openGraph: {
+      title: `${name} | Amaterasu`,
+      description: desc,
+      url: absoluteUrl(path),
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: name }],
+      locale: locale === 'uk' ? 'uk_UA' : 'en_GB',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${name} | Amaterasu`,
+      description: desc,
     },
   };
 }
@@ -222,12 +230,6 @@ export default async function ProductPage({
       productSlug = resolvedParams.slug;
     }
 
-    console.log('[ProductPage] open', {
-      locale: resolvedParams.locale,
-      rawSlug,
-      decodedSlug: productSlug,
-      requestedId: Number.isFinite(requestedId) && requestedId > 0 ? requestedId : null,
-    });
     const tCard = await getTranslations('productCard');
     const tPage = await getTranslations('productPage');
 
@@ -235,20 +237,12 @@ export default async function ProductPage({
 
     if (Number.isFinite(requestedId) && requestedId > 0) {
       product = await getProductById(requestedId);
-      console.log('[ProductPage] direct id lookup', {
-        productId: requestedId,
-        found: Boolean(product),
-      });
     }
     
     let res: any = { data: [] };
     if (!product) {
       // Получаем товар по slug через WooCommerce API
       res = await woo.get('products', { params: { slug: productSlug } });
-      console.log('[ProductPage] woo candidates', {
-        count: Array.isArray(res.data) ? res.data.length : 0,
-        requestedSlug: productSlug,
-      });
     }
     
     // Нормализуем и сравниваем slug'и
@@ -269,21 +263,12 @@ export default async function ProductPage({
         const normalizedProductSlug = normalizeSlug(p.slug || '');
         return normalizedProductSlug === normalizedRequestSlug;
       }) || null;
-
-      console.log('[ProductPage] exact slug match', {
-        found: Boolean(product),
-        normalizedRequestSlug,
-      });
     }
 
     // Если не найден по slug, пробуем как ID (на случай если slug - это число)
     if (!product && !isNaN(Number(productSlug))) {
       const productId = Number(productSlug);
       product = res.data?.find((p: any) => p.id === productId) || null;
-      console.log('[ProductPage] fallback id match', {
-        found: Boolean(product),
-        productId,
-      });
     }
 
     // Если все еще не найден, пробуем поиск без нормализации (на сдучай если был изменен slug)
@@ -294,21 +279,19 @@ export default async function ProductPage({
         (p.slug || '').toLowerCase().includes(searchSlug) ||
         searchSlug.includes((p.slug || '').toLowerCase())
       ) || null;
-      console.log('[ProductPage] fallback partial match', {
-        found: Boolean(product),
-        searchSlug,
-      });
     }
     
 
     
     if (!product) {
-      console.error('[ProductPage] not found', {
-        rawSlug,
-        decodedSlug: productSlug,
-        normalizedRequestSlug,
-        candidates: (res.data || []).map((p: any) => ({ id: p.id, slug: p.slug })),
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[ProductPage] not found', {
+          rawSlug,
+          decodedSlug: productSlug,
+          normalizedRequestSlug,
+          candidates: (res.data || []).map((p: any) => ({ id: p.id, slug: p.slug })),
+        });
+      }
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
@@ -387,8 +370,9 @@ export default async function ProductPage({
         value: Array.isArray(attr.options) ? attr.options.join(', ') : attr.option || ''
       }));
 
-    // Build breadcrumbs: Catalog - Category - Title - Character - Product Name (skip if not available)
+    // Build breadcrumbs: Home - Catalog - Category - Title - Character - Product Name (skip if not available)
     const breadcrumbItems = [];
+    breadcrumbItems.push({ name: locale === 'uk' ? 'Головна' : 'Home', path: '' });
     breadcrumbItems.push({ name: locale === 'uk' ? 'Каталог' : 'Catalog', path: '/catalog' });
     
     if (productCategory && productCategoryId) {
@@ -422,8 +406,8 @@ export default async function ProductPage({
           {breadcrumbItems.map((item, index) => (
             <div key={index} className="flex items-center gap-1.5 min-w-0 max-w-full">
               {index > 0 && <span className="text-[#9C9C9C] flex-shrink-0">›</span>}
-              {item.path ? (
-                <Link href={`/${locale}${item.path}`} className="hover:text-[#1C1C1C] truncate min-w-0">
+              {index < breadcrumbItems.length - 1 ? (
+                <Link href={`/${locale}${item.path || ''}`} className="hover:text-[#1C1C1C] truncate min-w-0">
                   {item.name}
                 </Link>
               ) : (
