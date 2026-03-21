@@ -68,7 +68,7 @@ export async function GET(
               if (r.status === 200 && r.data) {
                 const av = (r.data as any).current_avatar ?? (r.data as any).currentAvatar;
                 if (av && String(av).trim() && String(av).trim() !== "default") {
-                  avatarMap[uid] = String(av).trim();
+                  avatarMap[String(uid)] = String(av).trim();
                 }
               }
             } catch {

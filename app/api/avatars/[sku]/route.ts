@@ -72,7 +72,7 @@ export async function GET(
         const data = await productsRes.json();
         const list = data?.products ?? [];
         const norm = (s: string) => String(s ?? "").trim().toLowerCase();
-        const found = list.find((p: { sku?: string }) => norm(p?.sku) === norm(decodedSku));
+        const found = list.find((p: { sku?: string }) => norm(p?.sku ?? "") === norm(decodedSku));
         if (found?.images?.[0]?.src) imageUrl = found.images[0].src;
       }
     }
