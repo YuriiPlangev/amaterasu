@@ -113,6 +113,10 @@ function amaterasu_process_checkout($request) {
         }
 
         $order->set_currency('UAH');
+
+        // Пересчитываем итог перед сохранением (обов'язково для LiqPay та коректної суми)
+        $order->calculate_totals();
+
         $order->set_status('pending', 'Заказ создан через API');
 
         $order_id = $order->save();

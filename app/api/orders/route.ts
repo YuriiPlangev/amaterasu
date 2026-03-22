@@ -137,8 +137,10 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const amount = Number.parseFloat(String(total ?? "0"));
+      const totalStr = String(total ?? "").trim().replace(",", ".");
+      const amount = Number.parseFloat(totalStr);
       if (!Number.isFinite(amount) || amount <= 0) {
+        console.error("[Orders] LiqPay: invalid total — raw:", total, "parsed:", amount, "response:", response.data);
         return NextResponse.json(
           {
             success: false,
