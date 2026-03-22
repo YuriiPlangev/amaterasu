@@ -97,7 +97,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
     try {
       const res = await fetch('/api/auth/profile', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
         credentials: 'include',
         body: JSON.stringify({
           displayName: form.displayName.trim() || undefined,
@@ -209,14 +209,14 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
         <div>
           <p className="block text-sm font-medium text-[#374151] mb-2">{t('avatar')}</p>
 
-          {/* Tabs */}
-          <div className="flex gap-1 mb-3 p-0.5 bg-[#F3F4F6] rounded-lg inline-flex">
-            {(['free', 'unique', 'premium'] as const).map((tab) => (
+          {/* Tabs: Free → Premium → Unique, горизонтальный скролл на малых экранах */}
+          <div className="flex gap-1 mb-3 p-0.5 bg-[#F3F4F6] rounded-lg overflow-x-auto max-w-full [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-[#D1D5DB] [&::-webkit-scrollbar-thumb]:rounded">
+            {(['free', 'premium', 'unique'] as const).map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setAvatarTab(tab)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition shrink-0 ${
                   avatarTab === tab
                     ? 'bg-white text-[#9C0000] shadow-sm'
                     : 'text-[#6B7280] hover:text-[#374151]'
@@ -231,7 +231,7 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
 
           {/* Avatar grid with scroll for free and premium */}
           <div
-            className={`grid grid-cols-5 gap-3 ${
+            className={`grid grid-cols-4 sm:grid-cols-5 gap-3 ${
               (avatarTab === 'free' || avatarTab === 'premium') ? 'max-h-[220px] overflow-y-auto pr-1' : ''
             }`}
           >
@@ -371,12 +371,12 @@ export default function ProfileForm({ initialLogin }: { initialLogin: string }) 
             </div>
           )}
           <div className="mt-4 flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-[#F3F4F6] border border-[#E5E7EB]">
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-[#F3F4F6] border border-[#E5E7EB] shrink-0">
               {(() => {
                 const src = avatarIdToSrc(form.avatarId);
                 return src ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <img src={src} alt="" className="w-full h-full object-cover rounded-full" />
                 ) : null;
               })()}
             </div>

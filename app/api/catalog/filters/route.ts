@@ -13,6 +13,21 @@ function toTermOptions(items: any[]) {
     .sort((a: any, b: any) => a.label.localeCompare(b.label, 'uk'));
 }
 
+/** Загрузка всех терминов атрибута с пагинацией (WooCommerce лимит 100/страница) */
+async function fetchAllAttributeTerms(attrId: number): Promise<any[]> {
+  const all: any[] = [];
+  let page = 1;
+  const perPage = 100;
+  while (true) {
+    const res = await woo.get(`products/attributes/${attrId}/terms?per_page=${perPage}&page=${page}`);
+    const data = Array.isArray(res.data) ? res.data : [];
+    all.push(...data);
+    if (data.length < perPage) break;
+    page++;
+  }
+  return all;
+}
+
 export async function GET() {
   try {
     // 1) Используем старый проверенный способ записи параметров в строку, 
@@ -29,12 +44,12 @@ export async function GET() {
       games: attrsRes.data.find((a: any) => a.slug === 'pa_game' || a.slug === 'game')?.id,
     };
 
-    // 2) Загружаем термины (тоже через строку для надежности) и ACF
+    // 2) Загружаем термины (с пагинацией — WooCommerce лимит 100/страница) и ACF
     const [charactersData, genresData, titlesData, gamesData, wpRes] = await Promise.all([
-      attrIds.character ? woo.get(`products/attributes/${attrIds.character}/terms?per_page=100`) : { data: [] },
-      attrIds.genre ? woo.get(`products/attributes/${attrIds.genre}/terms?per_page=100`) : { data: [] },
-      attrIds.title ? woo.get(`products/attributes/${attrIds.title}/terms?per_page=100`) : { data: [] },
-      attrIds.games ? woo.get(`products/attributes/${attrIds.games}/terms?per_page=100`) : { data: [] },
+      attrIds.character ? fetchAllAttributeTerms(attrIds.character) : [],
+      attrIds.genre ? fetchAllAttributeTerms(attrIds.genre) : [],
+      attrIds.title ? fetchAllAttributeTerms(attrIds.title) : [],
+      attrIds.games ? fetchAllAttributeTerms(attrIds.games) : [],
       fetch(`${WP_URL}/wp-json/wp/v2/product_cat?per_page=100&_fields=id,acf`, {
         next: { revalidate: 3600 }
       }).then(r => r.ok ? r.json() : [])
@@ -53,24 +68,33 @@ export async function GET() {
       is_custom_production: wpCategories[c.id]?.acf?.is_custom_production === true,
     }));
 
-    // Разделяем на обычные и кастомные, но возвращаем ОБА массива
+    // Разделяем на обычные и кастомные (чашки, брелки, значки, магниты)
     const customProductionCategories = allCategories
-      .filter((c: any) => c.is_custom_production)
+      .filter((c: any) => c.is_custom_production && Number(c?.id) !== 15)
       .map((c: any) => ({ id: c.id, name: c.name, slug: c.slug }));
 
-    // В "categories" отдаем все категории, кроме avatar (id 7012) — аватарки не в каталоге
+    // В "categories" отдаем все категории, кроме avatar и "Без категории" (ID 15)
     const AVATAR_CATEGORY_ID = 7012;
+    const UNCATEGORIZED_ID = 15;
+    const excludeSlugs = ['avatars', 'avatar', 'uncategorized', 'bez-kategorii'];
     const categories = allCategories
-      .filter((c: any) => Number(c?.id) !== AVATAR_CATEGORY_ID && String(c?.slug || '').toLowerCase() !== 'avatars')
+      .filter((c: any) => {
+        if (Number(c?.id) === AVATAR_CATEGORY_ID || Number(c?.id) === UNCATEGORIZED_ID) return false;
+        const slug = String(c?.slug || '').toLowerCase();
+        if (excludeSlugs.includes(slug)) return false;
+        const name = String(c?.name || '').toLowerCase();
+        if (name === 'без категории' || name === 'uncategorized') return false;
+        return true;
+      })
       .map((c: any) => ({ id: c.id, name: c.name, slug: c.slug }));
 
     return NextResponse.json({
         categories,
         customProductionCategories,
-        titles: toTermOptions(titlesData.data),
-        characters: toTermOptions(charactersData.data),
-        genres: toTermOptions(genresData.data),
-        games: toTermOptions(gamesData.data),
+        titles: toTermOptions(titlesData),
+        characters: toTermOptions(charactersData),
+        genres: toTermOptions(genresData),
+        games: toTermOptions(gamesData),
       },
       {
         headers: { "Cache-Control": "public, s-maxage=3600" }

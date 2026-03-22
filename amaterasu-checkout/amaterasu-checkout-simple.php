@@ -56,12 +56,19 @@ function amaterasu_handle_login_v2($request) {
         return new WP_Error('invalid_credentials', 'Неверный логин или пароль', array('status' => 401));
     }
     
+    $phone = get_user_meta($user->ID, 'billing_phone', true);
+    if (empty($phone)) {
+        $phone = get_user_meta($user->ID, 'phone', true);
+    }
+    
     return rest_ensure_response(array(
         'success' => true,
         'user' => array(
             'ID' => $user->ID,
             'user_login' => $user->user_login,
             'user_email' => $user->user_email,
+            'display_name' => $user->display_name,
+            'phone' => $phone,
             'roles' => $user->roles,
         ),
     ));
@@ -80,6 +87,11 @@ function amaterasu_handle_register_v2($request) {
     $username = sanitize_user($data['username']);
     $email = sanitize_email($data['email']);
     $password = $data['password'];
+    $phone = !empty($data['phone']) ? sanitize_text_field($data['phone']) : '';
+    
+    if (stripos($username, 'admin') !== false) {
+        return new WP_Error('invalid_username', 'Ім\'я користувача не може містити слово "Admin"', array('status' => 400));
+    }
     
     if (!is_email($email)) {
         return new WP_Error('invalid_email', 'Некорректный email адрес', array('status' => 400));
@@ -101,12 +113,19 @@ function amaterasu_handle_register_v2($request) {
     
     $user = get_user_by('id', $user_id);
     
+    if (!empty($phone)) {
+        update_user_meta($user_id, 'billing_phone', $phone);
+        update_user_meta($user_id, 'phone', $phone);
+    }
+    
     return rest_ensure_response(array(
         'success' => true,
         'user' => array(
             'ID' => $user->ID,
             'user_login' => $user->user_login,
             'user_email' => $user->user_email,
+            'display_name' => $user->display_name,
+            'phone' => $phone,
             'roles' => $user->roles,
         ),
     ));

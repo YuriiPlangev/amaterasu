@@ -100,20 +100,26 @@ export default function ContactsPage() {
             <h2 className="text-[clamp(18px,1.5vw,22px)] font-bold text-[#1C1C1C] mb-3">
               {t('socials')}
             </h2>
-            <p className="text-[#374151] text-[15px] mb-4 break-all">
-            <a href="https://instagram.com/amaterasu1shop" target="_blank" rel="noopener noreferrer" className="hover:text-[#9C0000] transition-colors">
-              @amaterasu1shop
-            </a>
-            </p>
-            <a
-              href="https://t.me/amaterasu1shop"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1C1C1C] text-white rounded-xl font-semibold text-sm hover:bg-[#9C0000] transition-colors"
-            >
-              <Image src="/svg/tg.svg" alt="" width={20} height={20} />
-              {t('writeTelegram')}
-            </a>
+            <div className="flex flex-col gap-3 w-fit">
+              <a
+                href="https://instagram.com/amaterasu1shop"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1C1C1C] text-white rounded-xl font-semibold text-sm hover:bg-[#9C0000] transition-colors w-fit"
+              >
+                <Image src="/svg/instagram.svg" alt="" width={20} height={20} className="brightness-0 invert" />
+                {t('writeInstagram')}
+              </a>
+              <a
+                href="https://t.me/amaterasu1shop"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1C1C1C] text-white rounded-xl font-semibold text-sm hover:bg-[#9C0000] transition-colors w-fit"
+              >
+                <Image src="/svg/tg.svg" alt="" width={20} height={20} />
+                {t('writeTelegram')}
+              </a>
+            </div>
           </article>
         </div>
 

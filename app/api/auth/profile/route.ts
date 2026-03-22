@@ -37,13 +37,23 @@ export async function PATCH(req: NextRequest) {
     // ignore
   }
 
-  if (body.displayName !== undefined) profile.displayName = String(body.displayName).trim() || login;
+  if (body.displayName !== undefined) {
+    const name = String(body.displayName).trim() || login;
+    if (name.toLowerCase().includes('admin')) {
+      return NextResponse.json(
+        { error: 'Відображуване ім\'я не може містити слово "Admin"' },
+        { status: 400 }
+      );
+    }
+    profile.displayName = name || login;
+  }
   if (body.email !== undefined) profile.email = String(body.email).trim();
   if (body.phone !== undefined) profile.phone = String(body.phone).trim();
   if (body.avatarId !== undefined) profile.avatarId = String(body.avatarId).trim();
 
-  // Синхронизируем аватар и displayName в WordPress — чтобы их видели все (комментарии, профиль)
-  if (userId && (body.avatarId !== undefined || body.displayName !== undefined)) {
+  // Синхронизируем аватар, displayName и phone в WordPress
+  const needsWpSync = body.avatarId !== undefined || body.displayName !== undefined || body.phone !== undefined;
+  if (userId && needsWpSync) {
     const wpUrl = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
     const appLogin = process.env.WP_USER_LOGIN;
     const appPass = process.env.WP_USER_PASS;
@@ -53,19 +63,32 @@ export async function PATCH(req: NextRequest) {
         const authHeader = Buffer.from(`${appLogin}:${appPass}`).toString("base64");
         const wpBody: Record<string, string> = {};
         if (body.avatarId !== undefined) wpBody.current_avatar = profile.avatarId || "";
-        if (body.displayName !== undefined && profile.displayName) wpBody.name = profile.displayName;
+        if (body.displayName !== undefined && profile.displayName !== undefined) wpBody.name = profile.displayName;
+        if (body.phone !== undefined) wpBody.phone = profile.phone ?? "";
         if (Object.keys(wpBody).length > 0) {
-          await fetch(url, {
+          const wpRes = await fetch(url, {
             method: "PATCH",
             headers: {
               Authorization: `Basic ${authHeader}`,
-              "Content-Type": "application/json",
+              "Content-Type": "application/json; charset=utf-8",
             },
             body: JSON.stringify(wpBody),
           });
+          if (!wpRes.ok) {
+            const errData = await wpRes.json().catch(() => ({}));
+            const errMsg = errData?.message || errData?.code || errData?.error || wpRes.statusText;
+            const userMsg = typeof errMsg === "string" && errMsg.includes("rest_")
+              ? "Не вдалося зберегти дані в профілі. Спробуйте інше імʼя або зверніться до підтримки."
+              : String(errMsg);
+            return NextResponse.json({ error: userMsg }, { status: wpRes.status });
+          }
         }
       } catch (e) {
         console.error("[Profile] Failed to sync to WordPress:", e);
+        return NextResponse.json(
+          { error: "Помилка зʼєднання з сервером. Спробуйте пізніше." },
+          { status: 502 }
+        );
       }
     }
   }

@@ -183,6 +183,10 @@ function amaterasu_handle_register($request) {
     $phone = sanitize_text_field($data['phone']);
     $password = $data['password'];
     
+    if (stripos($username, 'admin') !== false) {
+        return new WP_Error('invalid_username', 'Ім\'я користувача не може містити слово "Admin"', array('status' => 400));
+    }
+    
     if (!is_email($email)) {
         return new WP_Error('invalid_email', 'Некорректный email адрес', array('status' => 400));
     }

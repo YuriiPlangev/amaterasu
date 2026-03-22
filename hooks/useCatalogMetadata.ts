@@ -13,10 +13,10 @@ type CatalogInitResponse = {
   titles?: CatalogInitItem[];
 };
 
-function toTermOptions(items: CatalogInitItem[] | undefined): Array<{ id: number; label: string }> {
+function toTermOptions(items: Array<{ id?: number; name?: string; label?: string }> | undefined): Array<{ id: number; label: string }> {
   if (!Array.isArray(items)) return [];
   return items
-    .map((item) => ({ id: Number(item.id), label: item.name || '' }))
+    .map((item) => ({ id: Number(item.id), label: (item as any).label ?? (item as any).name ?? '' }))
     .filter((item) => Number.isFinite(item.id) && item.label)
     .sort((a, b) => a.label.localeCompare(b.label, 'uk'));
 }
@@ -50,7 +50,8 @@ export function useCatalogMetadata() {
   const query = useQuery({
     queryKey: ['catalog-metadata'],
     queryFn: async () => {
-      const res = await fetch('/api/catalog-init');
+      // catalog/filters — WooCommerce + ACF is_custom_production (чашки, брелки, значки, магниты)
+      const res = await fetch('/api/catalog/filters');
       if (!res.ok) throw new Error('Failed to fetch catalog metadata');
       const data: CatalogInitResponse = await res.json();
       return toFilterOptions(data);

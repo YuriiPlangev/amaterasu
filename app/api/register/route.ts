@@ -7,6 +7,10 @@ export async function POST(req: Request) {
   if (!body.username || !body.email || !body.phone || !body.password) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
   }
+  const usernameLower = String(body.username || '').toLowerCase();
+  if (usernameLower.includes('admin')) {
+    return NextResponse.json({ error: 'Ім\'я користувача не може містити слово "Admin"' }, { status: 400 });
+  }
 
   // Optional: recaptcha check here, rate-limit
 
@@ -16,10 +20,11 @@ export async function POST(req: Request) {
     body: JSON.stringify(body),
   });
 
-  const data = await wpRes.json();
+  const data = await wpRes.json().catch(() => ({}));
 
   if (!wpRes.ok) {
-    return NextResponse.json({ error: data.error || 'WP error' }, { status: wpRes.status });
+    const errMsg = data.message || data.error || data.code || 'Помилка реєстрації';
+    return NextResponse.json({ error: String(errMsg) }, { status: wpRes.status });
   }
 
   // After creating user, optionally auto-login: we can create JWT here

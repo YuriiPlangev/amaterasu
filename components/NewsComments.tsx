@@ -17,6 +17,7 @@ interface Comment {
   userId?: string | null;
   avatarId?: string | null;
   avatarSrc?: string | null;
+  isAdmin?: boolean;
 }
 
 export default function NewsComments({ slug }: { slug: string }) {
@@ -240,6 +241,11 @@ export default function NewsComments({ slug }: { slug: string }) {
                       className="flex-shrink-0"
                     />
                     <p className="font-semibold text-[#1C1C1C]">{comment.displayName ?? comment.author}</p>
+                    {comment.isAdmin && (
+                      <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#9C0000] text-white uppercase">
+                        Admin
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-[#9CA3AF] mt-1">{formattedDate}</p>
                 </div>

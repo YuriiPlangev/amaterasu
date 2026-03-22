@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -18,15 +18,6 @@ const News = () => {
   const tA11y = useTranslations('a11y')
   const { data: posts = [], isLoading: loading, error } = useNews(6)
   const errorMessage = error instanceof Error ? error.message : error ? 'Невідома помилка' : null
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
-    const update = () => setIsMobile(mq.matches)
-    update()
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
-  }, [])
 
   if (loading) {
     return (
@@ -108,13 +99,13 @@ const News = () => {
                   1600: { slidesPerView: 3, spaceBetween: 24 },
                 }}
                 loop={true}
-                pagination={isMobile ? { clickable: true } : false}
+                pagination={{ el: '.news-pagination', clickable: true }}
                 navigation={{
                   nextEl: '.news-swiper-next',
                   prevEl: '.news-swiper-prev',
                 }}
                 modules={[Navigation, Pagination]}
-                className='news-swiper pb-12 [&_.swiper-wrapper]:items-stretch [&_.swiper-slide]:h-auto [&_.swiper-slide]:flex'
+                className='news-swiper [&_.swiper-wrapper]:items-stretch [&_.swiper-slide]:h-auto [&_.swiper-slide]:flex'
               >
                 {posts.map((post) => (
                   <SwiperSlide key={post.id} className="h-auto flex">
@@ -122,6 +113,7 @@ const News = () => {
                   </SwiperSlide>
                 ))}
               </Swiper>
+              <div className="news-pagination flex justify-center gap-1 mt-4 md:hidden" />
             </div>
           </div>
         </>

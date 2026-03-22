@@ -88,22 +88,6 @@ export default function RelatedProducts({
         <h2 className="text-[clamp(20px,2.2vw,28px)] font-bold text-[#1C1C1C]">{titleText}</h2>
       )}
       <div className="relative overflow-visible -mx-2 md:mx-0 touch-pan-x">
-        {showArrows && (
-          <>
-            <button
-              className={`related-prev-${uniqueId} absolute left-2 md:-left-[60px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md`}
-              aria-label={tA11y('scrollLeft')}
-            >
-              <Image src="/svg/arrow-left.svg" alt="" width={24} height={24} />
-            </button>
-            <button
-              className={`related-next-${uniqueId} absolute right-2 md:-right-[60px] top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md`}
-              aria-label={tA11y('scrollRight')}
-            >
-              <Image src="/svg/arrow-right.svg" alt="" width={24} height={24} />
-            </button>
-          </>
-        )}
         <Swiper
           slidesPerView={2}
           spaceBetween={12}
@@ -126,6 +110,22 @@ export default function RelatedProducts({
             </SwiperSlide>
           ))}
         </Swiper>
+        {showArrows && (
+          <div className="flex justify-between items-center mt-3 px-2 md:mt-0 md:absolute md:inset-x-0 md:top-1/2 md:-translate-y-1/2 md:pointer-events-none">
+            <button
+              className={`related-prev-${uniqueId} z-10 w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md md:absolute md:-left-[60px] pointer-events-auto`}
+              aria-label={tA11y('scrollLeft')}
+            >
+              <Image src="/svg/arrow-left.svg" alt="" width={24} height={24} />
+            </button>
+            <button
+              className={`related-next-${uniqueId} z-10 w-10 h-10 rounded-full border border-[#1C1C1C] flex items-center justify-center bg-white shadow-md md:absolute md:-right-[60px] pointer-events-auto`}
+              aria-label={tA11y('scrollRight')}
+            >
+              <Image src="/svg/arrow-right.svg" alt="" width={24} height={24} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -92,7 +92,14 @@ export default async function AccountPage({
           <div className="px-6 py-7 bg-[#9C0000]">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-white mb-1">{t('profileTitle')}</h1>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-3xl font-bold text-white mb-1">{t('profileTitle')}</h1>
+                  {userRoles.includes('administrator') && (
+                    <span className="inline-flex px-2 py-0.5 rounded text-xs font-bold bg-white text-[#9C0000] uppercase">
+                      Admin
+                    </span>
+                  )}
+                </div>
                 <p className="text-white/80">{t('welcome')} {profileName}!</p>
               </div>
               <div className="w-14 h-14 bg-white rounded-full overflow-hidden">

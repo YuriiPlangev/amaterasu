@@ -167,15 +167,42 @@ add_action('rest_api_init', function () {
         },
         'schema' => array('type' => 'array', 'description' => 'Доступные аватары (SKU купленных)'),
     ));
+
+    register_rest_field('user', 'phone', array(
+        'get_callback' => function ($user) {
+            $phone = get_user_meta($user['id'], 'billing_phone', true);
+            if (empty($phone)) $phone = get_user_meta($user['id'], 'phone', true);
+            return $phone ?: '';
+        },
+        'update_callback' => function ($value, $user) {
+            $v = sanitize_text_field($value);
+            update_user_meta($user->ID, 'phone', $v);
+            update_user_meta($user->ID, 'billing_phone', $v);
+        },
+        'schema' => array('type' => 'string', 'description' => 'Номер телефона'),
+    ));
 });
 
-// Для совместимости с /api/auth/user (ожидает availableAvatars)
+// Запрет слова Admin в display_name при обновлении через REST API
+add_filter('rest_pre_dispatch', function ($result, $server, $request) {
+    if ($request->get_method() === 'PATCH' && preg_match('#/wp/v2/users/(\d+)$#', $request->get_route(), $m)) {
+        $params = $request->get_json_params();
+        if (!empty($params['name']) && is_string($params['name']) && stripos($params['name'], 'admin') !== false) {
+            return new WP_Error('invalid_display_name', 'Відображуване ім\'я не може містити слово "Admin"', array('status' => 400));
+        }
+    }
+    return $result;
+}, 10, 3);
+
+// Для совместимости с /api/auth/user (ожидает availableAvatars, phone)
 add_filter('rest_prepare_user', function ($response, $user, $request) {
     $meta = get_user_meta($user->ID, 'available_avatars', true);
     if (!is_array($meta)) {
         $meta = array('default');
     }
     $response->data['availableAvatars'] = $meta;
+    $phone = get_user_meta($user->ID, 'billing_phone', true) ?: get_user_meta($user->ID, 'phone', true);
+    $response->data['phone'] = $phone ?: '';
     return $response;
 }, 10, 3);
 
@@ -302,6 +329,11 @@ function custom_get_post_comments($request) {
         if (empty($display_name)) {
             $display_name = $comment->comment_author ?: __('Anonymous', 'amaterasu');
         }
+        $is_admin = false;
+        if (!empty($comment->user_id)) {
+            $user_obj = get_userdata($comment->user_id);
+            $is_admin = $user_obj && in_array('administrator', (array) $user_obj->roles, true);
+        }
         $result[] = array(
             'id' => $comment->comment_ID,
             'author' => $comment->comment_author,
@@ -310,6 +342,7 @@ function custom_get_post_comments($request) {
             'date' => $comment->comment_date,
             'userId' => $comment->user_id,
             'avatarId' => $avatar_id,
+            'isAdmin' => $is_admin,
         );
     }
     

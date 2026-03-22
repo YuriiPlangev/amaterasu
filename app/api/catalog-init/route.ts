@@ -25,6 +25,22 @@ export async function GET() {
 
     const data = await res.json();
 
+    // Убираем avatar и "Без категории" (ID 15) из списка категорий
+    if (data && Array.isArray(data.categories)) {
+      const AVATAR_ID = 7012;
+      const UNCATEGORIZED_ID = 15;
+      const excludeSlugs = ['avatars', 'avatar', 'uncategorized', 'bez-kategorii'];
+      const excludeNames = ['без категории', 'uncategorized'];
+      data.categories = data.categories.filter((c: any) => {
+        if (Number(c?.id) === AVATAR_ID || Number(c?.id) === UNCATEGORIZED_ID) return false;
+        const slug = String(c?.slug || '').toLowerCase();
+        if (excludeSlugs.includes(slug)) return false;
+        const name = String(c?.name || '').toLowerCase();
+        if (excludeNames.includes(name)) return false;
+        return true;
+      });
+    }
+
     return NextResponse.json(data, {
       headers: {
         "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=3600",

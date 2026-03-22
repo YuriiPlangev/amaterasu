@@ -194,20 +194,23 @@ textarea:focus-visible {
 
 
 /* News swiper pagination */
-.news-swiper .swiper-pagination-bullet {
+.news-swiper .swiper-pagination-bullet,
+.news-pagination .swiper-pagination-bullet {
   width: 8px;
   height: 8px;
   border: 2px solid #1C1C1C;
   background: transparent;
   opacity: 1;
 }
-.news-swiper .swiper-pagination-bullet-active {
+.news-swiper .swiper-pagination-bullet-active,
+.news-pagination .swiper-pagination-bullet-active {
   background: #1C1C1C;
   border-color: #1C1C1C;
 }
 @media (max-width: 767px) {
-  .news-swiper .swiper-pagination {
-    bottom: -6px !important;
+  .news-pagination.swiper-pagination {
+    position: relative !important;
+    bottom: auto !important;
   }
 }
 
