@@ -42,14 +42,16 @@ export async function GET() {
       genre: attrsRes.data.find((a: any) => a.slug === 'pa_genre' || a.slug === 'genre')?.id,
       title: attrsRes.data.find((a: any) => a.slug === 'pa_title' || a.slug === 'title')?.id,
       games: attrsRes.data.find((a: any) => a.slug === 'pa_game' || a.slug === 'game')?.id,
+      kpop: attrsRes.data.find((a: any) => a.slug === 'pa_kpop' || a.slug === 'kpop')?.id,
     };
 
     // 2) Загружаем термины (с пагинацией — WooCommerce лимит 100/страница) и ACF
-    const [charactersData, genresData, titlesData, gamesData, wpRes] = await Promise.all([
+    const [charactersData, genresData, titlesData, gamesData, kpopData, wpRes] = await Promise.all([
       attrIds.character ? fetchAllAttributeTerms(attrIds.character) : [],
       attrIds.genre ? fetchAllAttributeTerms(attrIds.genre) : [],
       attrIds.title ? fetchAllAttributeTerms(attrIds.title) : [],
       attrIds.games ? fetchAllAttributeTerms(attrIds.games) : [],
+      attrIds.kpop ? fetchAllAttributeTerms(attrIds.kpop) : [],
       fetch(`${WP_URL}/wp-json/wp/v2/product_cat?per_page=100&_fields=id,acf`, {
         next: { revalidate: 3600 }
       }).then(r => r.ok ? r.json() : [])
@@ -92,6 +94,7 @@ export async function GET() {
         categories,
         customProductionCategories,
         titles: toTermOptions(titlesData),
+        kpop: toTermOptions(kpopData),
         characters: toTermOptions(charactersData),
         genres: toTermOptions(genresData),
         games: toTermOptions(gamesData),

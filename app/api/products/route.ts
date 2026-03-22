@@ -21,6 +21,7 @@ const ATTR_TO_TAXONOMY: Record<string, string> = {
   character: "pa_character",
   genre: "pa_genre",
   game: "pa_game",
+  kpop: "pa_kpop",
 };
 
 function clampPerPage(value: unknown): number {
@@ -229,6 +230,7 @@ export async function GET(req: NextRequest) {
       { param: "attribute_character", taxonomy: ATTR_TO_TAXONOMY.character },
       { param: "attribute_genre", taxonomy: ATTR_TO_TAXONOMY.genre },
       { param: "attribute_games", taxonomy: ATTR_TO_TAXONOMY.game },
+      { param: "attribute_kpop", taxonomy: ATTR_TO_TAXONOMY.kpop },
     ] as const;
 
     const firstAttrWithIds = attrConfig.find((c) => {

@@ -9,6 +9,7 @@ export interface CatalogFilterState {
   priceTo: string;
   categoryIds: number[];
   titles: number[];
+  kpop: number[];
   characters: number[];
   genres: number[];
   games: number[];
@@ -24,6 +25,7 @@ const initialFilterState: CatalogFilterState = {
   priceTo: '',
   categoryIds: [],
   titles: [],
+  kpop: [],
   characters: [],
   genres: [],
   games: [],
@@ -33,6 +35,7 @@ export interface FilterOptions {
   categories: Array<{ id: number; name: string; slug: string }>;
   customProductionCategories: Array<{ id: number; name: string; slug: string }>;
   titles: TermOption[];
+  kpop: TermOption[];
   characters: TermOption[];
   genres: TermOption[];
   games: TermOption[];
@@ -210,9 +213,17 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
     update({ games: next });
   };
 
+  const toggleKpop = (v: number) => {
+    const next = value.kpop.includes(v)
+      ? value.kpop.filter((x) => x !== v)
+      : [...value.kpop, v];
+    update({ kpop: next });
+  };
+
   const categories = (data?.categories ?? []).map((c) => ({ id: c.id, label: c.name }));
   const customProductionCategories = (data?.customProductionCategories ?? []).map((c) => ({ id: c.id, label: c.name }));
   const titles = data?.titles ?? [];
+  const kpop = data?.kpop ?? [];
   const characters = data?.characters ?? [];
   const genres = data?.genres ?? [];
   const games = data?.games ?? [];
@@ -292,7 +303,7 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
         />
       )}
 
-      {/* Тайтли, Ігри, Персонаж, Жанр */}
+      {/* Тайтли, Ігри, Kpop, Персонаж, Жанр */}
       <FilterSection
         title={t('titles')}
         items={titles}
@@ -313,6 +324,18 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
         loadingText={t('loading')}
         nothingFoundText={t('nothingFound')}
       />
+      {kpop.length > 0 && (
+        <FilterSection
+          title={t('kpop')}
+          items={kpop}
+          selected={value.kpop}
+          onToggle={(v) => toggleKpop(Number(v))}
+          isLoading={isLoading}
+          placeholder={t('searchPlaceholder')}
+          loadingText={t('loading')}
+          nothingFoundText={t('nothingFound')}
+        />
+      )}
       <FilterSection
         title={t('character')}
         items={characters}

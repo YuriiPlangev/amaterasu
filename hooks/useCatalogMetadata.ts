@@ -11,6 +11,7 @@ type CatalogInitResponse = {
   games?: CatalogInitItem[];
   genres?: CatalogInitItem[];
   titles?: CatalogInitItem[];
+  kpop?: CatalogInitItem[];
 };
 
 function toTermOptions(items: Array<{ id?: number; name?: string; label?: string }> | undefined): Array<{ id: number; label: string }> {
@@ -40,6 +41,7 @@ function toFilterOptions(data: CatalogInitResponse | undefined): FilterOptions |
     categories,
     customProductionCategories,
     titles: toTermOptions(data.titles),
+    kpop: toTermOptions(data.kpop),
     characters: toTermOptions(data.characters),
     genres: toTermOptions(data.genres),
     games: toTermOptions(data.games),

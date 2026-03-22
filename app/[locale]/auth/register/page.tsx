@@ -19,6 +19,12 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [legalConsent, setLegalConsent] = useState(false);
 
+  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  const isValidPhone = (v: string) => {
+    const s = v.trim().replace(/\s/g, '');
+    return /^\+380\d{9}$/.test(s) || /^380\d{9}$/.test(s) || /^0\d{9}$/.test(s);
+  };
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -26,6 +32,16 @@ export default function RegisterPage() {
 
     if (!legalConsent) {
       setError(t('consentRequired'));
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setError(t('emailInvalid'));
+      return;
+    }
+
+    if (!isValidPhone(phone)) {
+      setError(t('phoneInvalid'));
       return;
     }
 
@@ -134,7 +150,7 @@ export default function RegisterPage() {
               <input
                 id="phone"
                 type="tel"
-                placeholder={t('phonePlaceholder')}
+                placeholder="+380XXXXXXXXX"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required

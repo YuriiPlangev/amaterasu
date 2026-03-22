@@ -53,7 +53,10 @@
       "consentTerms": "Умовами користування",
       "consentAnd": "та",
       "consentPrivacy": "Політикою конфіденційності",
-      "consentRequired": "Підтвердіть згоду з юридичними документами"
+      "consentRequired": "Підтвердіть згоду з юридичними документами",
+      "usernameHint": "Потрібно вводити латиницею (англійськими літерами)",
+      "emailInvalid": "Введіть коректну email-адресу",
+      "phoneInvalid": "Введіть коректний номер (наприклад +380XXXXXXXXX)"
     },
     "social": {
       "divider": "або",
@@ -203,6 +206,7 @@
     "productType": "Тип товару",
     "customOrder": "Товари на замовлення",
     "titles": "Тайтли",
+    "kpop": "K-pop",
     "character": "Персонаж",
     "genre": "Жанр",
     "games": "Ігри",

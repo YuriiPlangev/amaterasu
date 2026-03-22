@@ -281,6 +281,7 @@ export default function CatalogPage() {
   } = useCatalogMetadata();
 
   const titleIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.titles), [filterOptions]);
+  const kpopIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.kpop), [filterOptions?.kpop]);
   const characterIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.characters), [filterOptions]);
   const genreIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.genres), [filterOptions]);
   const gameIdToLabel = useMemo(() => buildIdToLabelMap(filterOptions?.games), [filterOptions]);
@@ -297,6 +298,7 @@ export default function CatalogPage() {
     if (filterState.priceFrom) params.set('price_min', filterState.priceFrom);
     if (filterState.priceTo) params.set('price_max', filterState.priceTo);
     if (filterState.titles.length) params.set('attribute_title', filterState.titles.join(','));
+    if (filterState.kpop.length) params.set('attribute_kpop', filterState.kpop.join(','));
     if (filterState.characters.length) params.set('attribute_character', filterState.characters.join(','));
     if (filterState.genres.length) params.set('attribute_genre', filterState.genres.join(','));
     if (filterState.games.length) params.set('attribute_games', filterState.games.join(','));
@@ -328,22 +330,30 @@ export default function CatalogPage() {
     [filterOptions?.customProductionCategories]
   );
 
+  const kpopIds = useMemo(
+    () => (filterOptions?.kpop ?? []).map((k) => k.id).filter((id): id is number => Number.isFinite(id)),
+    [filterOptions?.kpop]
+  );
+
   useEffect(() => {
     const nextTitles = resolveLegacyAttrIds(searchParams.get('attribute_title'), titleLabelToId);
+    const nextKpop = parseNumericList(searchParams.get('attribute_kpop'));
     const nextCharacters = resolveLegacyAttrIds(searchParams.get('attribute_character'), characterLabelToId);
     const nextGenres = resolveLegacyAttrIds(searchParams.get('attribute_genre'), genreLabelToId);
     const nextGames = resolveLegacyAttrIds(searchParams.get('attribute_games'), gameLabelToId);
 
-    if (!nextTitles.length && !nextCharacters.length && !nextGenres.length && !nextGames.length) return;
+    if (!nextTitles.length && !nextKpop.length && !nextCharacters.length && !nextGenres.length && !nextGames.length) return;
 
     setFilterState((current) => {
       const titles = nextTitles.length ? Array.from(new Set(nextTitles)) : current.titles;
+      const kpop = nextKpop.length ? Array.from(new Set(nextKpop)) : current.kpop;
       const characters = nextCharacters.length ? Array.from(new Set(nextCharacters)) : current.characters;
       const genres = nextGenres.length ? Array.from(new Set(nextGenres)) : current.genres;
       const games = nextGames.length ? Array.from(new Set(nextGames)) : current.games;
 
       const hasChanged =
         current.titles.join(',') !== titles.join(',') ||
+        current.kpop.join(',') !== kpop.join(',') ||
         current.characters.join(',') !== characters.join(',') ||
         current.genres.join(',') !== genres.join(',') ||
         current.games.join(',') !== games.join(',');
@@ -353,6 +363,7 @@ export default function CatalogPage() {
       return {
         ...current,
         titles,
+        kpop,
         characters,
         genres,
         games,
@@ -366,6 +377,7 @@ export default function CatalogPage() {
     filterState.priceTo !== '' ||
     filterState.categoryIds.length > 0 ||
     filterState.titles.length > 0 ||
+    filterState.kpop.length > 0 ||
     filterState.characters.length > 0 ||
     filterState.genres.length > 0 ||
     filterState.games.length > 0 ||
@@ -375,6 +387,7 @@ export default function CatalogPage() {
     ...(searchApplied.trim() ? [{ key: 'search', label: `${t('searchTag')} ${searchApplied.trim()}` }] : []),
     ...filterState.categoryIds.map((id) => ({ key: `cat-${id}`, label: categoryNames[id] || `${t('categoryTag')}${id}` })),
     ...filterState.titles.map((id) => ({ key: `title-${id}`, label: titleIdToLabel[id] || String(id) })),
+    ...filterState.kpop.map((id) => ({ key: `kpop-${id}`, label: kpopIdToLabel[id] || String(id) })),
     ...filterState.characters.map((id) => ({ key: `char-${id}`, label: characterIdToLabel[id] || String(id) })),
     ...filterState.genres.map((id) => ({ key: `genre-${id}`, label: genreIdToLabel[id] || String(id) })),
     ...filterState.games.map((id) => ({ key: `game-${id}`, label: gameIdToLabel[id] || String(id) })),
@@ -385,6 +398,8 @@ export default function CatalogPage() {
     ? characterIdToLabel[filterState.characters[0]]
     : filterState.titles[0]
     ? titleIdToLabel[filterState.titles[0]]
+    : filterState.kpop[0]
+    ? kpopIdToLabel[filterState.kpop[0]]
     : filterState.games[0]
     ? gameIdToLabel[filterState.games[0]]
     : filterState.categoryIds[0]
@@ -419,6 +434,9 @@ export default function CatalogPage() {
     } else if (key.startsWith('title-')) {
       const v = Number(key.replace('title-', ''));
       setFilterState((s) => ({ ...s, titles: s.titles.filter((x) => x !== v) }));
+    } else if (key.startsWith('kpop-')) {
+      const v = Number(key.replace('kpop-', ''));
+      setFilterState((s) => ({ ...s, kpop: s.kpop.filter((x) => x !== v) }));
     } else if (key.startsWith('char-')) {
       const v = Number(key.replace('char-', ''));
       setFilterState((s) => ({ ...s, characters: s.characters.filter((x) => x !== v) }));
@@ -434,17 +452,30 @@ export default function CatalogPage() {
   const logoSlides = CATALOG_LOGO_SLIDES;
 
   const setTitleFilter = (titleValue: string) => {
-    const titleId = titleLabelToId.get(normalizeFilterLabel(titleValue));
+    const normalized = normalizeFilterLabel(titleValue);
+
+    // K-pop: вибираємо всі kpop групи або знімаємо
+    if (normalized === 'k-pop' && kpopIds.length > 0) {
+      setFilterState((s) => {
+        const allSelected = kpopIds.every((id) => s.kpop.includes(id));
+        if (allSelected) {
+          return { ...s, titles: [], kpop: [] };
+        }
+        return { ...s, titles: [], kpop: kpopIds };
+      });
+      return;
+    }
+
+    const titleId = titleLabelToId.get(normalized);
     if (!titleId) return;
 
-    // При кліку по логотипу тайтла дозволяємо вибрати тільки ОДИН тайтл:
-    // якщо вже обраний — знімаємо фільтр, якщо інший — замінюємо попередній.
+    // При кліку по логотипу тайтла дозволяємо вибрати тільки ОДИН тайтл
     setFilterState((s) => {
       const has = s.titles.includes(titleId);
       if (has) {
-        return { ...s, titles: [] };
+        return { ...s, titles: [], kpop: [] };
       }
-      return { ...s, titles: [titleId] };
+      return { ...s, titles: [titleId], kpop: [] };
     });
   };
 
@@ -461,6 +492,7 @@ export default function CatalogPage() {
     if (filterState.priceFrom) params.price_min = filterState.priceFrom;
     if (filterState.priceTo) params.price_max = filterState.priceTo;
     if (filterState.titles.length) params.attribute_title = filterState.titles.join(',');
+    if (filterState.kpop.length) params.attribute_kpop = filterState.kpop.join(',');
     if (filterState.characters.length) params.attribute_character = filterState.characters.join(',');
     if (filterState.genres.length) params.attribute_genre = filterState.genres.join(',');
     if (filterState.games.length) params.attribute_games = filterState.games.join(',');
@@ -475,6 +507,7 @@ export default function CatalogPage() {
     filterState.priceFrom,
     filterState.priceTo,
     filterState.titles,
+    filterState.kpop,
     filterState.characters,
     filterState.genres,
     filterState.games,
@@ -496,6 +529,7 @@ export default function CatalogPage() {
     filterState.priceFrom,
     filterState.priceTo,
     filterState.titles.join(','),
+    filterState.kpop.join(','),
     filterState.characters.join(','),
     filterState.genres.join(','),
     filterState.games.join(','),
@@ -650,7 +684,11 @@ export default function CatalogPage() {
                   onClick={() => setTitleFilter(logo.titleFilter)}
                   className={`h-14 sm:h-16 md:h-20 w-[140px] sm:w-[160px] md:w-[200px] relative shrink-0 block transition-opacity hover:opacity-90 ${
                     (() => {
-                      const titleId = titleLabelToId.get(normalizeFilterLabel(logo.titleFilter));
+                      const norm = normalizeFilterLabel(logo.titleFilter);
+                      if (norm === 'k-pop') {
+                        return kpopIds.length > 0 && filterState.kpop.length > 0;
+                      }
+                      const titleId = titleLabelToId.get(norm);
                       return titleId ? filterState.titles.includes(titleId) : false;
                     })()
                       ? 'ring-2 ring-[#9C0000] rounded-lg'

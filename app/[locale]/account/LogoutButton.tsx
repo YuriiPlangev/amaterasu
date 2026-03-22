@@ -2,19 +2,24 @@
 
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function LogoutButton() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('account');
+  const queryClient = useQueryClient();
 
   async function handleLogout() {
     try {
       const res = await fetch('/api/auth/logout', {
         method: 'POST',
+        credentials: 'include',
       });
 
       if (res.ok) {
+        queryClient.removeQueries({ queryKey: ['auth', 'user'] });
+        queryClient.removeQueries({ queryKey: ['auth', 'check'] });
         router.push(`/${locale}/auth/login`);
         router.refresh();
       }

@@ -53,7 +53,10 @@
       "consentTerms": "Terms of Use",
       "consentAnd": "and",
       "consentPrivacy": "Privacy Policy",
-      "consentRequired": "Please accept the legal documents"
+      "consentRequired": "Please accept the legal documents",
+      "usernameHint": "Use Latin characters only",
+      "emailInvalid": "Enter a valid email address",
+      "phoneInvalid": "Enter a valid phone number (e.g. +380XXXXXXXXX)"
     },
     "social": {
       "divider": "or",
@@ -203,6 +206,7 @@
     "productType": "Product type",
     "customOrder": "Custom order",
     "titles": "Titles",
+    "kpop": "K-pop",
     "character": "Character",
     "genre": "Genre",
     "games": "Games",

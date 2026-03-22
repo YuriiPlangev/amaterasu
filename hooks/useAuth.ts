@@ -24,14 +24,15 @@ async function fetchAuthUser(): Promise<{
   return res.json();
 }
 
-/** Проверка авторизации — один запрос на всё приложение, кеш 1 мин */
+/** Проверка авторизации — при смене аккаунта обновляем */
 export function useAuthCheck() {
   return useQuery({
     queryKey: ['auth', 'check'],
     queryFn: fetchAuthCheck,
-    staleTime: AUTH_CHECK_STALE_MS,
+    staleTime: 0,
+    gcTime: 0,
     retry: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -41,9 +42,10 @@ export function useAuthUser(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['auth', 'user'],
     queryFn: fetchAuthUser,
-    staleTime: AUTH_USER_STALE_MS,
+    staleTime: 0,
+    gcTime: 0,
     enabled: options?.enabled ?? check.data?.authenticated === true,
     retry: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 }
