@@ -109,6 +109,8 @@ export async function POST(req: NextRequest) {
     const status = response.data.status;
     const total = response.data.total;
 
+    // Сповіщення в Telegram — через плагін Telegram Notify у WordPress (хуки woocommerce_new_order / woocommerce_checkout_order_processed у amaterasu-checkout)
+
     if (paymentMethod === "liqpay") {
       const publicKey = process.env.LIQPAY_PUBLIC_KEY;
       const privateKey = process.env.LIQPAY_PRIVATE_KEY;

@@ -125,6 +125,13 @@ function amaterasu_process_checkout($request) {
         }
 
         $saved_order = wc_get_order($order_id);
+
+        // Явно тригерим хуки для плагинів (наприклад Telegram Notify) — замовлення створюються через API, не через стандартний checkout
+        if ($saved_order) {
+            do_action('woocommerce_new_order', $order_id, $saved_order);
+            do_action('woocommerce_checkout_order_processed', $order_id, array(), $saved_order);
+        }
+
         return rest_ensure_response(array(
             'success' => true,
             'orderId' => $order_id,
