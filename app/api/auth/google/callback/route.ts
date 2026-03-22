@@ -107,6 +107,7 @@ export async function GET(req: NextRequest) {
     const profileData = {
       email: user.user_email || "",
       displayName: user.display_name || user.user_login || "",
+      phone: user.phone || "",
     };
     response.cookies.set("profile", encodeURIComponent(JSON.stringify(profileData)), {
       httpOnly: false,

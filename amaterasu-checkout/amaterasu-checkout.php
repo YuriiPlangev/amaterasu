@@ -273,6 +273,7 @@ function amaterasu_handle_social_auth($request) {
     }
 
     // 3) Создание нового пользователя
+    $was_created_now = false;
     if (!$user) {
         if (empty($username_seed) && !empty($email)) {
             $parts = explode('@', $email);
@@ -309,10 +310,11 @@ function amaterasu_handle_social_auth($request) {
         if (!$user) {
             return new WP_Error('user_creation_failed', 'Не удалось получить созданного пользователя', array('status' => 500));
         }
+        $was_created_now = true;
     }
 
-    // Обновляем display_name если предоставлен
-    if (!empty($display_name)) {
+    // Обновляем display_name только для только что созданных пользователей (не перезаписываем имя, изменённое в профиле)
+    if ($was_created_now && !empty($display_name)) {
         wp_update_user(array(
             'ID' => $user->ID,
             'display_name' => $display_name,
@@ -336,6 +338,13 @@ function amaterasu_handle_social_auth($request) {
         update_user_meta($user->ID, 'billing_email', $email);
     }
 
+    // Подтягиваем актуальные данные из БД (display_name, phone) — чтобы вернуть то, что сохранено в профиле
+    $user = get_user_by('id', $user->ID);
+    $phone = get_user_meta($user->ID, 'billing_phone', true);
+    if (empty($phone)) {
+        $phone = get_user_meta($user->ID, 'phone', true);
+    }
+
     return rest_ensure_response(array(
         'success' => true,
         'user' => array(
@@ -343,6 +352,7 @@ function amaterasu_handle_social_auth($request) {
             'user_login' => $user->user_login,
             'user_email' => $user->user_email,
             'display_name' => $user->display_name,
+            'phone' => $phone ?: '',
             'roles' => $user->roles,
         ),
     ));
