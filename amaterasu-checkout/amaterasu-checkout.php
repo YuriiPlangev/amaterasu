@@ -316,12 +316,17 @@ function amaterasu_handle_social_auth($request) {
     update_user_meta($user->ID, $meta_key, $provider_user_id);
 
     // Обновляем email если был технический и провайдер прислал реальный
-    if (!empty($email) && is_email($email) && $user->user_email !== $email && !email_exists($email)) {
-        wp_update_user(array(
-            'ID' => $user->ID,
-            'user_email' => $email,
-        ));
-        $user = get_user_by('id', $user->ID);
+    if (!empty($email) && is_email($email)) {
+        $needs_update = ($user->user_email !== $email) && !email_exists($email);
+        if ($needs_update) {
+            wp_update_user(array(
+                'ID' => $user->ID,
+                'user_email' => $email,
+            ));
+            $user = get_user_by('id', $user->ID);
+        }
+        // billing_email для WooCommerce/чекаута
+        update_user_meta($user->ID, 'billing_email', $email);
     }
 
     return rest_ensure_response(array(
@@ -330,6 +335,7 @@ function amaterasu_handle_social_auth($request) {
             'ID' => $user->ID,
             'user_login' => $user->user_login,
             'user_email' => $user->user_email,
+            'display_name' => $user->display_name,
             'roles' => $user->roles,
         ),
     ));

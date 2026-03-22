@@ -346,16 +346,18 @@ const CatalogFilters: React.FC<CatalogFiltersProps> = ({
         loadingText={t('loading')}
         nothingFoundText={t('nothingFound')}
       />
-      <FilterSection
-        title={t('genre')}
-        items={genres}
-        selected={value.genres}
-        onToggle={(v) => toggleGenre(Number(v))}
-        isLoading={isLoading}
-        placeholder={t('searchPlaceholder')}
-        loadingText={t('loading')}
-        nothingFoundText={t('nothingFound')}
-      />
+      {false && (
+        <FilterSection
+          title={t('genre')}
+          items={genres}
+          selected={value.genres}
+          onToggle={(v) => toggleGenre(Number(v))}
+          isLoading={isLoading}
+          placeholder={t('searchPlaceholder')}
+          loadingText={t('loading')}
+          nothingFoundText={t('nothingFound')}
+        />
+      )}
     </div>
   );
 };

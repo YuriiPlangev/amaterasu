@@ -83,8 +83,8 @@ export async function POST(req: NextRequest) {
     console.log("[LiqPay callback] wpOrderId:", wpOrderId, "liqpayStatus:", liqpayStatus, "nextStatus:", nextStatus, "transactionId:", transactionId || "(none)");
 
     if (nextStatus) {
-      const wooPayload = { status: nextStatus, set_paid: setPaid, transaction_id: transactionId || undefined };
-      console.log("[LiqPay callback] WooCommerce PUT payload:", wooPayload);
+      const wooPayload = { status: nextStatus, set_paid: setPaid };
+      console.log("[LiqPay callback] WooCommerce PUT payload:", wooPayload, "transactionId:", transactionId || "(none)");
       const wooRes = await woo.put(`orders/${wpOrderId}`, wooPayload);
       console.log("[LiqPay callback] WooCommerce response status:", wooRes?.status, "orderStatus:", wooRes?.data?.status, "datePaid:", wooRes?.data?.date_paid);
     } else {

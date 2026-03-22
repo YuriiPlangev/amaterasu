@@ -104,6 +104,18 @@ export async function GET(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
     });
 
+    const profileData = {
+      email: user.user_email || "",
+      displayName: user.display_name || user.user_login || "",
+    };
+    response.cookies.set("profile", encodeURIComponent(JSON.stringify(profileData)), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+    });
+
     response.cookies.set(OAUTH_STATE_COOKIE, "", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

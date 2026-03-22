@@ -46,7 +46,7 @@ export async function GET() {
     try {
       const url = new URL(`${wpUrl.replace(/\/+$/, "")}/wp-json/wp/v2/users/${userId}`);
       url.searchParams.set("v", Date.now().toString()); 
-      url.searchParams.set("_fields", "id,availableAvatars,currentAvatar,current_avatar,phone");
+      url.searchParams.set("_fields", "id,email,name,availableAvatars,currentAvatar,current_avatar,phone");
 
       // Формируем Basic Auth из Логина и Пароля приложения
       const authHeader = Buffer.from(`${appLogin}:${appPass}`).toString("base64");
@@ -75,6 +75,14 @@ export async function GET() {
         const wpPhone = data.phone;
         if (wpPhone && typeof wpPhone === "string") {
           profile.phone = wpPhone.trim();
+        }
+        const wpEmail = data.email;
+        if (wpEmail && typeof wpEmail === "string") {
+          profile.email = wpEmail.trim();
+        }
+        const wpName = data.name;
+        if (wpName && typeof wpName === "string") {
+          profile.displayName = wpName.trim();
         }
       } else {
         console.error("WP Response Error:", res.status);

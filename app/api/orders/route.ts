@@ -125,7 +125,8 @@ export async function POST(req: NextRequest) {
 
       const forwardedProto = req.headers.get("x-forwarded-proto");
       const host = req.headers.get("host");
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (host ? `${forwardedProto || "https"}://${host}` : "");
+      const rawBase = process.env.NEXT_PUBLIC_SITE_URL || (host ? `${forwardedProto || "https"}://${host}` : "");
+      const baseUrl = typeof rawBase === "string" ? rawBase.replace(/\/+$/, "") : "";
 
       if (!baseUrl) {
         return NextResponse.json(
