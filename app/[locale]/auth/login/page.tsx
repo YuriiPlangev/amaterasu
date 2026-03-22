@@ -12,7 +12,7 @@ export default function LoginPage() {
   const returnTo = searchParams.get('returnTo') || `/${locale}/account`;
   const errorParam = searchParams.get('error');
   
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(errorParam ? getErrorMessage(errorParam) : "");
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +37,7 @@ export default function LoginPage() {
     try {
       const res = await fetch("/api/login", {
         method: "POST",
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
         headers: { "Content-Type": "application/json" }
       });
 
@@ -79,15 +79,16 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-[#5A5A5A] mb-2">
-                {t('username')}
+              <label htmlFor="email" className="block text-sm font-medium text-[#5A5A5A] mb-2">
+                {t('email')}
               </label>
               <input
-                id="username"
-                placeholder={t('usernamePlaceholder')}
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                placeholder={t('emailPlaceholder')}
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-3 border border-[#D8D8D8] rounded-lg focus:ring-2 focus:ring-[#9C0000] focus:border-[#9C0000] outline-none transition-all"
                 disabled={isLoading}

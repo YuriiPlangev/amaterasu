@@ -47,6 +47,33 @@ add_action('rest_api_init', function() {
     ));
 });
 
+// REST API: phone і current_avatar для PATCH /wp/v2/users (збереження в профілі)
+add_action('rest_api_init', function () {
+    register_rest_field('user', 'phone', array(
+        'get_callback' => function ($user) {
+            $phone = get_user_meta($user['id'], 'billing_phone', true);
+            if (empty($phone)) $phone = get_user_meta($user['id'], 'phone', true);
+            return $phone ?: '';
+        },
+        'update_callback' => function ($value, $user) {
+            $v = sanitize_text_field($value);
+            update_user_meta($user->ID, 'phone', $v);
+            update_user_meta($user->ID, 'billing_phone', $v);
+        },
+        'schema' => array('type' => 'string', 'description' => 'Номер телефону'),
+    ));
+
+    register_rest_field('user', 'current_avatar', array(
+        'get_callback' => function ($user) {
+            return get_user_meta($user['id'], 'current_avatar', true) ?: '';
+        },
+        'update_callback' => function ($value, $user) {
+            update_user_meta($user->ID, 'current_avatar', sanitize_text_field($value));
+        },
+        'schema' => array('type' => 'string', 'description' => 'ID обраної аватарки'),
+    ));
+});
+
 /**
  * Checkout handler for WooCommerce orders.
  */
@@ -146,19 +173,26 @@ function amaterasu_process_checkout($request) {
 }
 
 /**
- * Обработка логина
+ * Обработка логина (по email и паролю)
  */
 function amaterasu_handle_login($request) {
     $data = $request->get_json_params();
-    
-    if (empty($data['username']) || empty($data['password'])) {
-        return new WP_Error('missing_fields', 'Username и password обязательны', array('status' => 400));
+
+    $email_raw = isset($data['email']) ? (string)$data['email'] : '';
+    $email = sanitize_email(trim($email_raw));
+    $password = isset($data['password']) ? $data['password'] : '';
+
+    if (empty($email) || empty($password)) {
+        return new WP_Error('missing_fields', 'Email і пароль обов\'язкові', array('status' => 400));
     }
-    
-    $user = wp_authenticate(sanitize_user($data['username']), $data['password']);
-    
-    if (is_wp_error($user)) {
-        return new WP_Error('invalid_credentials', 'Неверный логин или пароль', array('status' => 401));
+
+    if (!is_email($email)) {
+        return new WP_Error('invalid_email', 'Невірний формат email', array('status' => 400));
+    }
+
+    $user = get_user_by('email', $email);
+    if (!$user || !wp_check_password($password, $user->user_pass, $user->ID)) {
+        return new WP_Error('invalid_credentials', 'Невірний email або пароль', array('status' => 401));
     }
     
     $phone = get_user_meta($user->ID, 'billing_phone', true);
@@ -338,12 +372,13 @@ function amaterasu_handle_social_auth($request) {
         update_user_meta($user->ID, 'billing_email', $email);
     }
 
-    // Подтягиваем актуальные данные из БД (display_name, phone) — чтобы вернуть то, что сохранено в профиле
+    // Подтягиваем актуальные данные из БД (display_name, phone, current_avatar)
     $user = get_user_by('id', $user->ID);
     $phone = get_user_meta($user->ID, 'billing_phone', true);
     if (empty($phone)) {
         $phone = get_user_meta($user->ID, 'phone', true);
     }
+    $current_avatar = get_user_meta($user->ID, 'current_avatar', true) ?: '';
 
     return rest_ensure_response(array(
         'success' => true,
@@ -353,6 +388,7 @@ function amaterasu_handle_social_auth($request) {
             'user_email' => $user->user_email,
             'display_name' => $user->display_name,
             'phone' => $phone ?: '',
+            'current_avatar' => $current_avatar,
             'roles' => $user->roles,
         ),
     ));

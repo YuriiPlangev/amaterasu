@@ -108,6 +108,7 @@ export async function GET(req: NextRequest) {
       email: user.user_email || "",
       displayName: user.display_name || user.user_login || "",
       phone: user.phone || "",
+      avatarId: user.current_avatar || "photo_1",
     };
     response.cookies.set("profile", encodeURIComponent(JSON.stringify(profileData)), {
       httpOnly: false,

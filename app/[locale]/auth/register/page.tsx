@@ -70,7 +70,7 @@ export default function RegisterPage() {
         await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ email, password }),
         });
       } catch (e) {
         console.error("Auto login after register failed:", e);

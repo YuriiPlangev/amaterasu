@@ -20,20 +20,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    const { username, password } = await req.json();
-    if (!username || !password) {
-      return NextResponse.json({ error: 'Missing username or password' }, { status: 400 });
+    const { email, password } = await req.json();
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Missing email or password' }, { status: 400 });
     }
 
     const wpUrl = `${process.env.WP_URL}/wp-json/custom/v1/login`;
-
 
     let wpRes;
     try {
       wpRes = await fetch(wpUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ email, password })
       });
     } catch (fetchError) {
       console.error('Fetch error:', fetchError);

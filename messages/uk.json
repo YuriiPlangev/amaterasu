@@ -17,9 +17,11 @@
   "auth": {
     "login": {
       "title": "Вхід",
-      "subtitle": "Введіть дані для входу в акаунт",
+      "subtitle": "Введіть email та пароль для входу в акаунт",
       "username": "Ім'я користувача",
       "usernamePlaceholder": "Введіть ім'я користувача",
+      "email": "Email",
+      "emailPlaceholder": "Введіть email",
       "password": "Пароль",
       "passwordPlaceholder": "Введіть пароль",
       "submit": "Увійти",
