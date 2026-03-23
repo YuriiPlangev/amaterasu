@@ -87,6 +87,20 @@ export async function POST(req: NextRequest) {
       console.log("[LiqPay callback] WooCommerce PUT payload:", wooPayload, "transactionId:", transactionId || "(none)");
       const wooRes = await woo.put(`orders/${wpOrderId}`, wooPayload);
       console.log("[LiqPay callback] WooCommerce response status:", wooRes?.status, "orderStatus:", wooRes?.data?.status, "datePaid:", wooRes?.data?.date_paid);
+
+      if (nextStatus === "completed" && setPaid) {
+        const botToken = process.env.TELEGRAM_BOT_TOKEN;
+        const chatId = process.env.TELEGRAM_CHAT_ID;
+        if (botToken && chatId) {
+          const orderNumber = wooRes?.data?.number ?? wpOrderId;
+          const text = `✅ Замовлення #${orderNumber} оплачено через LiqPay`;
+          fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chatId, text }),
+          }).catch((err) => console.error("[LiqPay callback] Telegram paid notify error:", err));
+        }
+      }
     } else {
       console.log("[LiqPay callback] Skipping WooCommerce update — unknown liqpayStatus:", liqpayStatus);
     }

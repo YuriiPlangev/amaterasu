@@ -45,9 +45,55 @@ add_action('rest_api_init', function() {
         'callback' => 'amaterasu_handle_social_auth',
         'permission_callback' => '__return_true',
     ));
+
+    // Profile update (current_avatar, phone, name, email) — для Next.js, оминає обмеження wp/v2/users
+    register_rest_route('custom/v1', '/profile/(?P<id>\d+)', array(
+        'methods' => 'PATCH',
+        'callback' => 'amaterasu_handle_profile_update',
+        'permission_callback' => function ($request) {
+            return current_user_can('edit_users') || wp_get_current_user()->ID === (int)$request['id'];
+        },
+        'args' => array(
+            'id' => array('required' => true, 'type' => 'integer', 'validate_callback' => function ($v) {
+                return $v > 0;
+            }),
+        ),
+    ));
 });
 
-// REST API: phone і current_avatar для PATCH /wp/v2/users (збереження в профілі)
+/**
+ * Оновлення профілю (current_avatar, phone, name, email) — прямий запис у user meta
+ */
+function amaterasu_handle_profile_update($request) {
+    $user_id = (int) $request['id'];
+    $user = get_user_by('id', $user_id);
+    if (!$user) {
+        return new WP_Error('user_not_found', 'Користувача не знайдено', array('status' => 404));
+    }
+
+    $data = $request->get_json_params();
+
+    if (isset($data['current_avatar'])) {
+        update_user_meta($user_id, 'current_avatar', sanitize_text_field($data['current_avatar']));
+    }
+    if (isset($data['phone'])) {
+        $phone = sanitize_text_field($data['phone']);
+        update_user_meta($user_id, 'phone', $phone);
+        update_user_meta($user_id, 'billing_phone', $phone);
+    }
+    if (isset($data['name'])) {
+        wp_update_user(array('ID' => $user_id, 'display_name' => sanitize_text_field($data['name'])));
+    }
+    if (isset($data['email']) && is_email($data['email'])) {
+        if (!email_exists($data['email']) || get_user_by('email', $data['email'])->ID === $user_id) {
+            wp_update_user(array('ID' => $user_id, 'user_email' => sanitize_email($data['email'])));
+        }
+    }
+
+    return rest_ensure_response(array('success' => true));
+}
+
+// REST API: phone і current_avatar для PATCH /wp/v2/users (резервний варіант, /custom/v1/profile для аватарки надійніший)
 add_action('rest_api_init', function () {
     register_rest_field('user', 'phone', array(
         'get_callback' => function ($user) {
@@ -102,14 +148,33 @@ function amaterasu_process_checkout($request) {
 
         foreach ($data['items'] as $item) {
             $product_id = intval($item['id'] ?? 0);
-            $quantity = intval($item['qty'] ?? 0);
-            if ($product_id <= 0 || $quantity <= 0) {
-                continue;
-            }
+            $quantity = intval($item['qty'] ?? 1);
+            $quantity = max(1, $quantity);
+            $name = sanitize_text_field($item['name'] ?? 'Товар');
+            $price_raw = $item['price'] ?? '0';
+            $price = floatval(preg_replace('/[^\d.,]/', '', str_replace(',', '.', $price_raw)));
+            $is_virtual = !empty($item['virtual']);
 
-            $product = wc_get_product($product_id);
+            $product = $product_id > 0 ? wc_get_product($product_id) : null;
+
             if ($product) {
                 $order->add_product($product, $quantity);
+            } elseif (($is_virtual || $product_id <= 0) && $price >= 0) {
+                // Кастомні товари (чашка, брелок, магніт, значок) — немає в WooCommerce, додаємо як fee або line item
+                $line_total = max(0, (float) $price * $quantity);
+                if ($line_total > 0) {
+                    $fee_label = $quantity > 1 ? sprintf('%s (×%d)', $name, $quantity) : $name;
+                    if (class_exists('WC_Order_Item_Fee')) {
+                        $fee_item = new WC_Order_Item_Fee();
+                        $fee_item->set_name($fee_label);
+                        $fee_item->set_amount($line_total);
+                        $fee_item->set_total($line_total);
+                        $fee_item->set_tax_status('none');
+                        $order->add_item($fee_item);
+                    } else {
+                        $order->add_fee($fee_label, $line_total, false);
+                    }
+                }
             }
         }
 

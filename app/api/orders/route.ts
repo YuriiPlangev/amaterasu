@@ -66,8 +66,10 @@ export async function POST(req: NextRequest) {
     const orderData = {
       items: items.map((item: any) => ({
         id: item.id,
-        qty: item.qty,
+        qty: item.qty ?? 1,
         name: item.name,
+        price: item.price,
+        virtual: !!item.virtual,
       })),
       billing: {
         firstName: billing.firstName || "",
@@ -107,9 +109,18 @@ export async function POST(req: NextRequest) {
     const orderNumber = response.data.orderNumber;
     const orderKey = response.data.orderKey;
     const status = response.data.status;
-    const total = response.data.total;
+    let total = response.data.total;
 
-    // Сповіщення в Telegram — через плагін Telegram Notify у WordPress (хуки woocommerce_new_order / woocommerce_checkout_order_processed у amaterasu-checkout)
+    // Якщо total від WordPress 0/невалідний (наприклад тільки кастомні товари), рахуємо з items
+    const totalStr = String(total ?? "").trim().replace(",", ".");
+    if (!Number.isFinite(Number.parseFloat(totalStr)) || Number.parseFloat(totalStr) <= 0) {
+      const calculatedTotal = (body.items || []).reduce((sum: number, item: any) => {
+        const p = Number.parseFloat(String(item.price ?? 0).replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
+        const q = Math.max(1, Number(item.qty) || 1);
+        return sum + p * q;
+      }, 0);
+      if (calculatedTotal > 0) total = calculatedTotal;
+    }
 
     if (paymentMethod === "liqpay") {
       const publicKey = process.env.LIQPAY_PUBLIC_KEY;

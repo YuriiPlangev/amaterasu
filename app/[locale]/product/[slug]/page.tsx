@@ -457,7 +457,7 @@ export default async function ProductPage({
                       <p className="text-xs text-[#6B7280] mt-0.5">{tPage('deliveryNovaDesc')}</p>
                     </div>
                   </div>
-                  <span className="text-[#9C0000] font-semibold shrink-0">45–70 грн.</span>
+                  <span className="text-[#9C0000] font-semibold shrink-0">від 45 грн</span>
                 </div>
                 <div className="flex items-center items-start justify-between gap-4">
                   <div className="flex items-start items-center gap-3 min-w-0">
@@ -469,7 +469,7 @@ export default async function ProductPage({
                       <p className="text-xs text-[#6B7280] mt-0.5">{tPage('deliveryUkrDesc')}</p>
                     </div>
                   </div>
-                  <span className="text-[#9C0000] font-semibold shrink-0">45–70 грн.</span>
+                  <span className="text-[#9C0000] font-semibold shrink-0">від 45 грн</span>
                 </div>
               </div>
             </div>

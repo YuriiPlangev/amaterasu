@@ -51,7 +51,7 @@ export async function PATCH(req: NextRequest) {
   if (body.phone !== undefined) profile.phone = String(body.phone).trim();
   if (body.avatarId !== undefined) profile.avatarId = String(body.avatarId).trim();
 
-  // Синхронизируем аватар, displayName, phone і email в WordPress
+  // Синхронизируем аватар, displayName, phone і email в WordPress (через custom/v1/profile — надійніше зберігає аватар)
   const needsWpSync = body.avatarId !== undefined || body.displayName !== undefined || body.phone !== undefined || body.email !== undefined;
   if (userId && needsWpSync) {
     const wpUrl = process.env.WP_URL || process.env.NEXT_PUBLIC_WP_URL;
@@ -59,21 +59,22 @@ export async function PATCH(req: NextRequest) {
     const appPass = process.env.WP_USER_PASS;
     if (wpUrl && appLogin && appPass) {
       try {
-        const url = `${wpUrl.replace(/\/+$/, "")}/wp-json/wp/v2/users/${userId}`;
         const authHeader = Buffer.from(`${appLogin}:${appPass}`).toString("base64");
-        const wpBody: Record<string, string> = {};
-        if (body.avatarId !== undefined) wpBody.current_avatar = profile.avatarId || "";
-        if (body.displayName !== undefined && profile.displayName !== undefined) wpBody.name = profile.displayName;
-        if (body.phone !== undefined) wpBody.phone = profile.phone ?? "";
-        if (body.email !== undefined && profile.email) wpBody.email = profile.email;
-        if (Object.keys(wpBody).length > 0) {
-          const wpRes = await fetch(url, {
+        const profileBody: Record<string, string> = {};
+        if (body.avatarId !== undefined) profileBody.current_avatar = profile.avatarId || "";
+        if (body.displayName !== undefined && profile.displayName !== undefined) profileBody.name = profile.displayName;
+        if (body.phone !== undefined) profileBody.phone = profile.phone ?? "";
+        if (body.email !== undefined && profile.email) profileBody.email = profile.email;
+
+        if (Object.keys(profileBody).length > 0) {
+          const profileUrl = `${wpUrl.replace(/\/+$/, "")}/wp-json/custom/v1/profile/${userId}`;
+          const wpRes = await fetch(profileUrl, {
             method: "PATCH",
             headers: {
               Authorization: `Basic ${authHeader}`,
               "Content-Type": "application/json; charset=utf-8",
             },
-            body: JSON.stringify(wpBody),
+            body: JSON.stringify(profileBody),
           });
           if (!wpRes.ok) {
             const errData = await wpRes.json().catch(() => ({}));

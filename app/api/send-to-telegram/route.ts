@@ -123,7 +123,13 @@ export async function POST(request: NextRequest) {
     const blob2 = new Blob([mockupBuffer], { type: 'image/jpeg' });
     const file2 = new File([blob2], 'mockup.jpg', { type: 'image/jpeg' });
     formData2.append('photo', file2);
-    formData2.append('caption', `✨ Результат на ${productTypeLabel === 'брелок' ? 'брелоку' : productTypeLabel === 'значок' ? 'значку' : 'чашці'}`);
+    const mockupSuffix =
+      productTypeLabel === 'магніт' ? 'магніті'
+      : productTypeLabel === 'брелок' ? 'брелоку'
+      : productTypeLabel === 'значок' ? 'значку'
+      : productTypeLabel === 'чашка' ? 'чашці'
+      : productTypeLabel;
+    formData2.append('caption', `✨ Результат на ${mockupSuffix}`);
 
     const response2 = await fetch(
       `https://api.telegram.org/bot${botToken}/sendPhoto`,
