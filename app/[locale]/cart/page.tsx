@@ -39,11 +39,11 @@ export default function CartPage() {
     city: '',
     postcode: '',
     country: 'UA',
-    paymentMethod: 'cash_on_delivery' as 'cash_on_delivery' | 'liqpay' | 'pickup' | 'iban' | 'card_number',
+    paymentMethod: 'cash_on_delivery' as 'cash_on_delivery' | 'liqpay' | 'iban' | 'card_number',
     contactPreference: 'call' as '' | 'call' | 'tg' | 'no_call',
     notes: '',
     shippingSameAsBilling: true,
-    deliveryMethod: 'nova_poshta' as 'nova_poshta' | 'ukrposhta',
+    deliveryMethod: 'nova_poshta' as 'nova_poshta' | 'ukrposhta' | 'pickup',
     novaPoshtaCityRef: '',
     novaPoshtaCityName: '',
     novaPoshtaWarehouseRef: '',
@@ -220,6 +220,9 @@ export default function CartPage() {
   };
 
   const getAddressFromDelivery = () => {
+    if (formData.deliveryMethod === 'pickup') {
+      return locale === 'uk' ? 'Самовивіз (за попереднім узгодженням)' : 'Pickup (by appointment)';
+    }
     if (formData.deliveryMethod === 'nova_poshta') {
       return formData.novaPoshtaWarehouseDesc || '';
     }
@@ -232,6 +235,9 @@ export default function CartPage() {
   };
 
   const getCityFromDelivery = () => {
+    if (formData.deliveryMethod === 'pickup') {
+      return locale === 'uk' ? 'Білгород-Дністровський' : 'Bilhorod-Dnistrovskyi';
+    }
     if (formData.deliveryMethod === 'nova_poshta') return formData.novaPoshtaCityName;
     if (formData.deliveryMethod === 'ukrposhta') return formData.ukrposhtaCity;
     return formData.city;
@@ -249,7 +255,7 @@ export default function CartPage() {
     }
     const allVirtual = items.length > 0 && items.every((i: any) => i.virtual);
 
-    if (!allVirtual && formData.paymentMethod !== 'pickup') {
+    if (!allVirtual && formData.deliveryMethod !== 'pickup') {
       if (formData.deliveryMethod === 'nova_poshta') {
         if (!formData.novaPoshtaCityRef || !formData.novaPoshtaWarehouseRef) {
           showToast(t('selectNovaPoshtaCity'), 'error');
@@ -265,8 +271,8 @@ export default function CartPage() {
     }
     setIsSubmitting(true);
 
-    const address = allVirtual || formData.paymentMethod === 'pickup' ? '' : getAddressFromDelivery();
-    const city = allVirtual || formData.paymentMethod === 'pickup' ? '' : getCityFromDelivery();
+    const address = allVirtual ? '' : getAddressFromDelivery();
+    const city = allVirtual ? '' : getCityFromDelivery();
 
     const contactPreferenceLabels: Record<string, string> = {
       call: locale === 'uk' ? 'Очікую на дзвінок для уточнення деталей замовлення' : "I'm waiting for a call to clarify order details",
@@ -295,11 +301,11 @@ export default function CartPage() {
             postcode: formData.postcode || '',
             country: formData.country,
             notes: notesWithPref,
-            deliveryMethod: allVirtual ? 'virtual' : formData.paymentMethod === 'pickup' ? 'pickup' : formData.deliveryMethod,
-            novaPoshtaCity: (allVirtual || formData.paymentMethod === 'pickup') ? '' : formData.novaPoshtaCityName,
-            novaPoshtaWarehouse: (allVirtual || formData.paymentMethod === 'pickup') ? '' : formData.novaPoshtaWarehouseDesc,
-            ukrposhtaCity: (allVirtual || formData.paymentMethod === 'pickup') ? '' : formData.ukrposhtaCity,
-            ukrposhtaBranch: (allVirtual || formData.paymentMethod === 'pickup') ? '' : formData.ukrposhtaBranch,
+            deliveryMethod: allVirtual ? 'virtual' : formData.deliveryMethod,
+            novaPoshtaCity: (allVirtual || formData.deliveryMethod !== 'nova_poshta') ? '' : formData.novaPoshtaCityName,
+            novaPoshtaWarehouse: (allVirtual || formData.deliveryMethod !== 'nova_poshta') ? '' : formData.novaPoshtaWarehouseDesc,
+            ukrposhtaCity: (allVirtual || formData.deliveryMethod !== 'ukrposhta') ? '' : formData.ukrposhtaCity,
+            ukrposhtaBranch: (allVirtual || formData.deliveryMethod !== 'ukrposhta') ? '' : formData.ukrposhtaBranch,
           },
           shipping: allVirtual || formData.shippingSameAsBilling
             ? undefined
@@ -518,9 +524,10 @@ export default function CartPage() {
                   <div className="bg-[#FFF7F7] border border-[#F5B7B7] rounded-xl p-4 text-sm text-black mb-4">
                     <p className="font-semibold mb-2 text-black">Доставка та оплата</p>
                     <ul className="space-y-1 text-[#5A5A5A]">
-                      <li>• Нова Пошта: від 45 грн</li>
-                      <li>• Укрпошта: від 45 грн</li>
-                      <li>• Оплата при отриманні</li>
+                      <li>• {locale === 'uk' ? 'Нова Пошта: від 45 грн' : 'Nova Poshta: from 45 UAH'}</li>
+                      <li>• {locale === 'uk' ? 'Укрпошта: від 45 грн' : 'Ukrposhta: from 45 UAH'}</li>
+                      <li>• {locale === 'uk' ? 'Самовивіз: за попереднім узгодженням' : 'Pickup: by appointment'}</li>
+                      <li>• {locale === 'uk' ? 'Оплата при отриманні' : 'Cash on delivery'}</li>
                     </ul>
                   </div>
                   <div className="bg-[#FFF7F7] border border-[#F5B7B7] rounded-xl p-4 text-sm mb-6">
@@ -580,10 +587,10 @@ export default function CartPage() {
                     className="w-full px-4 py-2 border border-[#D8D8D8] rounded-md focus:outline-none focus:border-[#9C0000]"
                   />
 
-                  {!allVirtual && formData.paymentMethod !== 'pickup' && (
+                  {!allVirtual && (
                     <div>
                       <label className="block text-sm font-medium text-black mb-2">{t('deliveryMethod')}</label>
-                      <div className="flex gap-4">
+                      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="radio"
@@ -606,11 +613,27 @@ export default function CartPage() {
                           />
                           <span>{t('ukrposhta')}</span>
                         </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="deliveryMethod"
+                            value="pickup"
+                            checked={formData.deliveryMethod === 'pickup'}
+                            onChange={() => setFormData((p) => ({ ...p, deliveryMethod: 'pickup' }))}
+                            className="w-4 h-4 text-[#9C0000] border-gray-300 focus:ring-[#9C0000]"
+                          />
+                          <span>{t('pickup')}</span>
+                        </label>
                       </div>
+                      {formData.deliveryMethod === 'pickup' && (
+                        <p className="mt-2 text-sm text-[#5A5A5A] bg-[#FFF7F7] border border-[#F5B7B7] rounded-lg px-3 py-2">
+                          {t('pickupMessage')}
+                        </p>
+                      )}
                     </div>
                   )}
 
-                  {!allVirtual && formData.paymentMethod !== 'pickup' && formData.deliveryMethod === 'nova_poshta' && (
+                  {!allVirtual && formData.deliveryMethod === 'nova_poshta' && (
                     <div className="space-y-4" ref={npDropdownRef}>
                       <div className="relative">
                         <label className="block text-sm font-medium text-black mb-1">{t('selectCity')}</label>
@@ -709,7 +732,7 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  {!allVirtual && formData.paymentMethod !== 'pickup' && formData.deliveryMethod === 'ukrposhta' && (
+                  {!allVirtual && formData.deliveryMethod === 'ukrposhta' && (
                     <div className="space-y-4" ref={ukrposhtaDropdownRef}>
                       <div className="relative">
                         <label className="block text-sm font-medium text-black mb-1">{t('selectCity')}</label>
@@ -785,11 +808,10 @@ export default function CartPage() {
                       >
                         <option value="cash_on_delivery">{t('cashOnDelivery')}</option>
                         <option value="liqpay">{t('liqpay')}</option>
-                        <option value="pickup">{t('pickup')}</option>
                         <option value="iban">{t('paymentIban')}</option>
                         <option value="card_number">{t('paymentCardNumber')}</option>
                       </select>
-                      {(formData.paymentMethod === 'pickup' || formData.paymentMethod === 'iban' || formData.paymentMethod === 'card_number') && (
+                      {(formData.paymentMethod === 'iban' || formData.paymentMethod === 'card_number') && (
                         <p className="mt-2 text-sm text-[#5A5A5A] bg-[#FFF7F7] border border-[#F5B7B7] rounded-lg px-3 py-2">
                           {t('pickupMessage')}
                         </p>
